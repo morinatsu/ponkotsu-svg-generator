@@ -1,86 +1,119 @@
-import { useState, type MouseEvent } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { SVG, Svg, Rect } from '@svgdotjs/svg.js';
 import './App.css'
 
-// Type for a single rectangle
-interface Rectangle {
+// Type for a single rectangle data
+interface RectangleData {
   x: number;
   y: number;
   width: number;
   height: number;
 }
 
-// Type for a point
-interface Point {
-  x: number;
-  y: number;
-}
-
 function App() {
-  const [rectangles, setRectangles] = useState<Rectangle[]>([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [startPoint, setStartPoint] = useState<Point | null>(null);
-  const [currentRect, setCurrentRect] = useState<Rectangle | null>(null);
+  // State to hold the data of created rectangles, for export purposes
+  const [rectangles, setRectangles] = useState<RectangleData[]>([]);
 
-  const getMousePosition = (e: MouseEvent<SVGSVGElement>): Point => {
-    const svg = e.currentTarget;
-    const CTM = svg.getScreenCTM();
-    if (CTM) {
-      return {
-        x: (e.clientX - CTM.e) / CTM.a,
-        y: (e.clientY - CTM.f) / CTM.d
-      };
+  // Refs for SVG.js instance and container element
+  const svgContainer = useRef<HTMLDivElement>(null);
+  const draw = useRef<Svg | null>(null);
+
+  // Refs for drawing logic
+  const isDrawing = useRef(false);
+  const startPoint = useRef({ x: 0, y: 0 });
+  const currentRect = useRef<Rect | null>(null);
+
+  useEffect(() => {
+    if (svgContainer.current && !draw.current) {
+      // Initialize SVG.js canvas
+      const svg = SVG().addTo(svgContainer.current).size(800, 600);
+      draw.current = svg;
+
+      // Attach event listeners
+      svg.on('mousedown', handleMouseDown as EventListener);
+      svg.on('mousemove', handleMouseMove as EventListener);
+      svg.on('mouseup', handleMouseUp as EventListener);
+      svg.on('mouseleave', handleMouseUp as EventListener);
+    }
+  }, []);
+
+  const getMousePosition = (e: globalThis.MouseEvent): { x: number, y: number } => {
+    if (draw.current) {
+        const point = draw.current.point(e.clientX, e.clientY);
+        return { x: point.x, y: point.y };
     }
     return { x: 0, y: 0 };
   };
 
-  const handleMouseDown = (e: MouseEvent<SVGSVGElement>) => {
-    setIsDrawing(true);
+  const handleMouseDown = (e: globalThis.MouseEvent) => {
+    isDrawing.current = true;
     const pos = getMousePosition(e);
-    setStartPoint(pos);
-    setCurrentRect({ x: pos.x, y: pos.y, width: 0, height: 0 });
+    startPoint.current = pos;
+
+    // Create a temporary rectangle with SVG.js
+    currentRect.current = draw.current!.rect(0, 0)
+      .move(pos.x, pos.y)
+      .attr({
+        fill: 'none',
+        stroke: 'black',
+      });
   };
 
-  const handleMouseMove = (e: MouseEvent<SVGSVGElement>) => {
-    if (!isDrawing || !startPoint) return;
+  const handleMouseMove = (e: globalThis.MouseEvent) => {
+    if (!isDrawing.current || !currentRect.current) return;
 
     const pos = getMousePosition(e);
-    const x = Math.min(pos.x, startPoint.x);
-    const y = Math.min(pos.y, startPoint.y);
-    const width = Math.abs(pos.x - startPoint.x);
-    const height = Math.abs(pos.y - startPoint.y);
+    const x = Math.min(pos.x, startPoint.current.x);
+    const y = Math.min(pos.y, startPoint.current.y);
+    const width = Math.abs(pos.x - startPoint.current.x);
+    const height = Math.abs(pos.y - startPoint.current.y);
 
-    setCurrentRect({ x, y, width, height });
+    // Update the temporary rectangle's size and position
+    currentRect.current.size(width, height).move(x, y);
   };
 
   const handleMouseUp = () => {
-    setIsDrawing(false);
-    setStartPoint(null);
-    if (currentRect && currentRect.width > 0 && currentRect.height > 0) {
-      setRectangles(prevRects => [...prevRects, currentRect]);
+    if (!isDrawing.current || !currentRect.current) return;
+
+    isDrawing.current = false;
+    const finalRect = currentRect.current;
+
+    if (Number(finalRect.width()) > 0 && Number(finalRect.height()) > 0) {
+      // Persist the rectangle data to our state
+      setRectangles(prevRects => [...prevRects, {
+        x: Number(finalRect.x()),
+        y: Number(finalRect.y()),
+        width: Number(finalRect.width()),
+        height: Number(finalRect.height()),
+      }]);
+    } else {
+      // If the rect has no size, remove it from the canvas
+      finalRect.remove();
     }
-    setCurrentRect(null);
+
+    currentRect.current = null;
   };
 
   const handleClear = () => {
+    if (draw.current) {
+      draw.current.clear();
+    }
     setRectangles([]);
   };
 
   const handleExport = () => {
-    const svgContent = `<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
-      ${rectangles.map(rect =>
-        `<rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" fill="none" stroke="black" />`
-      ).join('\n')}
-    </svg>`;
-
-    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'ponkotsu.svg';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (draw.current) {
+      const svgContent = draw.current.svg();
+      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ponkotsu.svg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   };
 
   return (
@@ -90,38 +123,8 @@ function App() {
         <button onClick={handleClear}>クリア</button>
         <button onClick={handleExport} disabled={rectangles.length === 0}>エクスポート</button>
       </div>
-      <svg
-        width="800"
-        height="600"
-        style={{ border: '1px solid black' }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp} // Stop drawing if mouse leaves canvas
-      >
-        {rectangles.map((rect, index) => (
-          <rect
-            key={index}
-            x={rect.x}
-            y={rect.y}
-            width={rect.width}
-            height={rect.height}
-            fill="none"
-            stroke="black"
-          />
-        ))}
-        {currentRect && (
-          <rect
-            x={currentRect.x}
-            y={currentRect.y}
-            width={currentRect.width}
-            height={currentRect.height}
-            fill="none"
-            stroke="black"
-            strokeDasharray="5,5" // Dashed line for the temporary rectangle
-          />
-        )}
-      </svg>
+      {/* This div will contain the SVG.js canvas */}
+      <div ref={svgContainer} style={{ width: 800, height: 600, border: '1px solid black' }}></div>
     </div>
   )
 }
