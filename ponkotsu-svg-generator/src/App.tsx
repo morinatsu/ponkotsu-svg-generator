@@ -1,4 +1,4 @@
-import { useState, MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import './App.css'
 
 // Type for a single rectangle
