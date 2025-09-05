@@ -98,6 +98,9 @@ function App() {
       // Create a clone of the SVG node to avoid modifying the one in the DOM
       const svgNode = svgRef.current.cloneNode(true) as SVGSVGElement;
 
+      // Add the required xmlns attribute for standalone SVG files
+      svgNode.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
       // Set a background color for the exported SVG
       svgNode.style.backgroundColor = 'white';
 
