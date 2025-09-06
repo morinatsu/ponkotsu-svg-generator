@@ -46,6 +46,9 @@ export const reducer = (state: AppState, action: Action): AppState => {
                 },
             };
         case 'DRAWING': {
+            if (!state.drawingState) {
+                return state;
+            }
             const { x, y, startX, startY } = action.payload;
             const newX = Math.min(x, startX);
             const newY = Math.min(y, startY);
@@ -54,7 +57,7 @@ export const reducer = (state: AppState, action: Action): AppState => {
             return {
                 ...state,
                 drawingState: {
-                    ...state.drawingState!,
+                    ...state.drawingState,
                     x: newX,
                     y: newY,
                     width: newWidth,
