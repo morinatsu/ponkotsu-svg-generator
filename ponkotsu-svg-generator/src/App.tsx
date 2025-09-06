@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
+import Toolbar from './components/Toolbar';
+import SvgCanvas from './components/SvgCanvas';
 // import { SVG, Svg, Rect } from '@svgdotjs/svg.js'; // svg.js is no longer used for rendering
 import './App.css'
 
-// Type for a single rectangle data
-interface RectangleData {
-  id: string; // Unique ID for each rectangle
+// Type for a single shape data
+export interface ShapeData {
+  id: string; // Unique ID for each shape
+  type: 'rectangle';
   x: number;
   y: number;
   width: number;
@@ -12,12 +15,12 @@ interface RectangleData {
 }
 
 function App() {
-  // State to hold the data of created rectangles
-  const [rectangles, setRectangles] = useState<RectangleData[]>([]);
+  // State to hold the data of created shapes
+  const [shapes, setShapes] = useState<ShapeData[]>([]);
   // State to hold the ID of the currently selected shape
   const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
-  // State to hold the rectangle currently being drawn
-  const [drawingState, setDrawingState] = useState<RectangleData | null>(null);
+  // State to hold the shape currently being drawn
+  const [drawingState, setDrawingState] = useState<ShapeData | null>(null);
 
   // Ref for the SVG element itself, used for getting mouse position and for export
   const svgRef = useRef<SVGSVGElement>(null);
@@ -49,6 +52,7 @@ function App() {
     startPoint.current = pos;
     setDrawingState({
       id: 'drawing', // temporary ID
+      type: 'rectangle',
       x: pos.x,
       y: pos.y,
       width: 0,
@@ -67,6 +71,7 @@ function App() {
 
     setDrawingState({
       id: 'drawing',
+      type: 'rectangle',
       x,
       y,
       width,
@@ -80,16 +85,16 @@ function App() {
     isDrawing.current = false;
 
     if (drawingState.width > 0 && drawingState.height > 0) {
-      // Add the new rectangle to the main state with a permanent, unique ID
-      setRectangles(prev => [...prev, { ...drawingState, id: crypto.randomUUID() }]);
+      // Add the new shape to the main state with a permanent, unique ID
+      setShapes(prev => [...prev, { ...drawingState, id: crypto.randomUUID() }]);
     }
 
-    // Clear the temporary drawing rectangle
+    // Clear the temporary drawing shape
     setDrawingState(null);
   };
 
   const handleClear = () => {
-    setRectangles([]);
+    setShapes([]);
     setSelectedShapeId(null); // Also clear selection
   };
 
@@ -129,7 +134,7 @@ function App() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedShapeId) {
-        setRectangles(prev => prev.filter(rect => rect.id !== selectedShapeId));
+        setShapes(prev => prev.filter(shape => shape.id !== selectedShapeId));
         setSelectedShapeId(null);
       }
     };
@@ -145,50 +150,23 @@ function App() {
   return (
     <div className="App">
       <h1>ぽんこつSVGジェネレーター</h1>
-      <div className="controls">
-        <button onClick={handleClear}>クリア</button>
-        <button onClick={handleExport} disabled={rectangles.length === 0}>エクスポート</button>
-      </div>
-      {/* SVG canvas is now rendered by React */}
-      <svg
+      <Toolbar
+        onClear={handleClear}
+        onExport={handleExport}
+        shapesCount={shapes.length}
+      />
+      <SvgCanvas
         ref={svgRef}
-        width={800}
-        height={600}
-        style={{ border: '1px solid black' }}
-        onClick={handleCanvasClick}
+        shapes={shapes}
+        drawingState={drawingState}
+        selectedShapeId={selectedShapeId}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp} // End drawing if mouse leaves canvas
-      >
-        {rectangles.map((rect) => (
-          <rect
-            key={rect.id}
-            x={rect.x}
-            y={rect.y}
-            width={rect.width}
-            height={rect.height}
-            fill="none"
-            stroke={selectedShapeId === rect.id ? 'blue' : 'black'}
-            strokeWidth={2}
-            onClick={(e) => handleShapeClick(rect.id, e)}
-            style={{ cursor: 'pointer' }}
-          />
-        ))}
-        {/* Render the rectangle being currently drawn */}
-        {drawingState && (
-          <rect
-            x={drawingState.x}
-            y={drawingState.y}
-            width={drawingState.width}
-            height={drawingState.height}
-            fill="none"
-            stroke="black"
-            strokeWidth={1}
-            strokeDasharray="5,5"
-          />
-        )}
-      </svg>
+        onMouseLeave={handleMouseUp}
+        onCanvasClick={handleCanvasClick}
+        onShapeClick={handleShapeClick}
+      />
     </div>
   )
 }
