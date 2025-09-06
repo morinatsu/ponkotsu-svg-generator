@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useReducer, useRef, useEffect } from 'react';
 import Toolbar from './components/Toolbar';
 import SvgCanvas from './components/SvgCanvas';
-// import { SVG, Svg, Rect } from '@svgdotjs/svg.js'; // svg.js is no longer used for rendering
+import { reducer, initialState } from './state/reducer';
 import './App.css'
 
 // Type for a single shape data
@@ -15,12 +15,8 @@ export interface ShapeData {
 }
 
 function App() {
-  // State to hold the data of created shapes
-  const [shapes, setShapes] = useState<ShapeData[]>([]);
-  // State to hold the ID of the currently selected shape
-  const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
-  // State to hold the shape currently being drawn
-  const [drawingState, setDrawingState] = useState<ShapeData | null>(null);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { shapes, selectedShapeId, drawingState } = state;
 
   // Ref for the SVG element itself, used for getting mouse position and for export
   const svgRef = useRef<SVGSVGElement>(null);
@@ -50,52 +46,27 @@ function App() {
     isDrawing.current = true;
     const pos = getMousePosition(e);
     startPoint.current = pos;
-    setDrawingState({
-      id: 'drawing', // temporary ID
-      type: 'rectangle',
-      x: pos.x,
-      y: pos.y,
-      width: 0,
-      height: 0,
-    });
+    dispatch({ type: 'START_DRAWING', payload: pos });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDrawing.current) return;
 
     const pos = getMousePosition(e);
-    const x = Math.min(pos.x, startPoint.current.x);
-    const y = Math.min(pos.y, startPoint.current.y);
-    const width = Math.abs(pos.x - startPoint.current.x);
-    const height = Math.abs(pos.y - startPoint.current.y);
-
-    setDrawingState({
-      id: 'drawing',
-      type: 'rectangle',
-      x,
-      y,
-      width,
-      height,
+    dispatch({
+        type: 'DRAWING',
+        payload: { x: pos.x, y: pos.y, startX: startPoint.current.x, startY: startPoint.current.y },
     });
   };
 
   const handleMouseUp = () => {
-    if (!isDrawing.current || !drawingState) return;
-
+    if (!isDrawing.current) return;
     isDrawing.current = false;
-
-    if (drawingState.width > 0 && drawingState.height > 0) {
-      // Add the new shape to the main state with a permanent, unique ID
-      setShapes(prev => [...prev, { ...drawingState, id: crypto.randomUUID() }]);
-    }
-
-    // Clear the temporary drawing shape
-    setDrawingState(null);
+    dispatch({ type: 'END_DRAWING' });
   };
 
   const handleClear = () => {
-    setShapes([]);
-    setSelectedShapeId(null); // Also clear selection
+    dispatch({ type: 'CLEAR_CANVAS' });
   };
 
   const handleExport = () => {
@@ -123,19 +94,18 @@ function App() {
   };
 
   const handleCanvasClick = () => {
-    setSelectedShapeId(null);
+    dispatch({ type: 'SELECT_SHAPE', payload: null });
   };
 
   const handleShapeClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent canvas click from firing
-    setSelectedShapeId(id);
+    dispatch({ type: 'SELECT_SHAPE', payload: id });
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedShapeId) {
-        setShapes(prev => prev.filter(shape => shape.id !== selectedShapeId));
-        setSelectedShapeId(null);
+        dispatch({ type: 'DELETE_SELECTED_SHAPE' });
       }
     };
 
