@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Action } from '../state/reducer';
+import type { Action } from '../state/reducer';
 
 export const useDrawing = (
   dispatch: React.Dispatch<Action>,

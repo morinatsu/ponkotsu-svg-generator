@@ -21,7 +21,7 @@ export const initialState: AppState = {
 };
 
 // Actions that can be dispatched
-type Action =
+export type Action =
     | { type: 'START_DRAWING'; payload: { x: number; y: number } }
     | { type: 'DRAWING'; payload: { x: number; y: number; startX: number; startY: number } }
     | { type: 'END_DRAWING' }

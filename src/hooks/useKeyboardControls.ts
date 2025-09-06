@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Action } from '../state/reducer';
+import type { Action } from '../state/reducer';
 
 export const useKeyboardControls = (
   dispatch: React.Dispatch<Action>,
