@@ -1,7 +1,8 @@
-import { useReducer, useRef } from 'react';
+import { useReducer, useRef, useCallback } from 'react';
 import Toolbar from './components/Toolbar';
 import SvgCanvas from './components/SvgCanvas';
 import { reducer, initialState } from './state/reducer';
+import { undoable } from './state/historyReducer';
 import { useDrawing } from './hooks/useDrawing';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useSvgExport } from './hooks/useSvgExport';
@@ -17,10 +18,16 @@ export interface ShapeData {
   height: number;
 }
 
-function App() {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const { shapes, selectedShapeId, drawingState } = state;
+const undoableReducer = undoable(reducer);
 
+function App() {
+  const [state, dispatch] = useReducer(undoableReducer, {
+    past: [],
+    present: initialState,
+    future: [],
+  });
+
+  const { shapes, selectedShapeId, drawingState } = state.present;
   const svgRef = useRef<SVGSVGElement>(null);
 
   const { handleMouseDown, handleMouseMove, handleMouseUp } = useDrawing(dispatch, svgRef);
@@ -30,6 +37,14 @@ function App() {
   const handleClear = () => {
     dispatch({ type: 'CLEAR_CANVAS' });
   };
+
+  const handleUndo = useCallback(() => {
+    dispatch({ type: 'UNDO' });
+  }, [dispatch]);
+
+  const handleRedo = useCallback(() => {
+    dispatch({ type: 'REDO' });
+  }, [dispatch]);
 
   const handleCanvasClick = () => {
     dispatch({ type: 'SELECT_SHAPE', payload: null });
@@ -47,6 +62,10 @@ function App() {
         onClear={handleClear}
         onExport={handleExport}
         shapesCount={shapes.length}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={state.past.length > 0}
+        canRedo={state.future.length > 0}
       />
       <SvgCanvas
         ref={svgRef}
