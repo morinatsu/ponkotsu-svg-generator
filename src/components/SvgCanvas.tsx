@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ShapeData } from '../App';
+import type { ShapeData } from '../state/reducer';
 import Shape from './Shape';
 
 interface SvgCanvasProps {
