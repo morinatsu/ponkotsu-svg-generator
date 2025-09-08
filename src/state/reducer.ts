@@ -36,6 +36,7 @@ export const reducer = (state: AppState, action: Action): AppState => {
         case 'START_DRAWING':
             return {
                 ...state,
+                selectedShapeId: null, // Deselect any selected shape
                 drawingState: {
                     id: 'drawing',
                     type: 'rectangle',

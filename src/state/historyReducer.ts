@@ -1,4 +1,4 @@
-import { Action, AppState, reducer as originalReducer, initialState as originalInitialState } from './reducer';
+import { type Action, type AppState, reducer as originalReducer, initialState as originalInitialState } from './reducer';
 import isEqual from 'lodash/isEqual';
 
 // The new state structure that includes history
@@ -32,8 +32,13 @@ export const undoable = (reducer: typeof originalReducer) => {
                 if (past.length === 0) {
                     return state;
                 }
-                const previous = past[past.length - 1];
+                const previous = { ...past[past.length - 1] };
                 const newPast = past.slice(0, past.length - 1);
+
+                // On undo, always clear the selection and drawing state.
+                previous.selectedShapeId = null;
+                previous.drawingState = null;
+
                 return {
                     past: newPast,
                     present: previous,
@@ -44,8 +49,13 @@ export const undoable = (reducer: typeof originalReducer) => {
                 if (future.length === 0) {
                     return state;
                 }
-                const next = future[0];
+                const next = { ...future[0] };
                 const newFuture = future.slice(1);
+
+                // On redo, always clear the selection and drawing state.
+                next.selectedShapeId = null;
+                next.drawingState = null;
+
                 return {
                     past: [...past, present],
                     present: next,
