@@ -1,22 +1,12 @@
 import { useReducer, useRef, useCallback } from 'react';
 import Toolbar from './components/Toolbar';
 import SvgCanvas from './components/SvgCanvas';
-import { reducer, initialState } from './state/reducer';
+import { reducer, initialState, type ShapeData } from './state/reducer';
 import { undoable } from './state/historyReducer';
 import { useDrawing } from './hooks/useDrawing';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useSvgExport } from './hooks/useSvgExport';
-import './App.css'
-
-// Type for a single shape data
-export interface ShapeData {
-  id: string; // Unique ID for each shape
-  type: 'rectangle';
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+import './App.css';
 
 const undoableReducer = undoable(reducer);
 
