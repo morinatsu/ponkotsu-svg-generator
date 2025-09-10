@@ -1,70 +1,121 @@
-### **プロジェクト名:**
+# Julesへの指示書 (v0.4 - 単体テスト導入)
 
-ぽんこつSVGジェネレーター (v0.3 - Undo/Redo機能)
+## プロジェクト名:
 
-### **プロジェクト概要:**
+ぽんkotsu-svg-generator (v0.4 - 単体テスト導入)
 
-v0.2で実装した選択・消去機能に加え、**「元に戻す (Undo)」** と **「やり直す (Redo)」** 機能を実装します。ユーザーが行った操作（図形の追加、削除、全消去）を履歴として管理し、時間を遡って状態を復元できるようにします。
+## プロジェクト概要:
 
-### **技術スタック:**
+アプリケーションの品質と保守性を向上させるため、テストフレームワーク Vitest を導入し、状態管理のコアロジックである Reducer 関数の単体テストを作成します。これにより、今後のリファクタリングや機能追加を安全に行うための基盤を築きます。
 
-* 変更ありません。Reactの `useReducer` を引き続き使用します。
+## 実装ステップの提案:
 
----
+Jules、以下のステップでテスト環境の構築とテストコードの実装を進めてください。
 
-### **機能要件 (変更・追加点):**
+### 1. テスト関連ライブラリのインストール
 
-#### 1\. 画面構成
+まず、開発用の依存ライブラリとしてVitestと、Reactコンポーネントのテストに必要なライブラリをインストールします。
 
-* **ツールバーの更新:**
+```Bash
 
-  * 既存の「クリア」「エクスポート」ボタンの隣に、\*\*「Undo」**と**「Redo」\*\*ボタンを追加してください。
-  * Undoができない場合（履歴がない場合）は「Undo」ボタンを、Redoができない場合は「Redo」ボタンを無効化（`disabled`）してください。
+pnpm add -D vitest happy-dom @testing-library/react @testing-library/jest-dom
+```
 
-#### 2\. コア機能
+- vitest: 高速なテストランナーです。
+- happy-dom: Node.js環境でDOM APIをシミュレートするためのライブラリです。JSDOMよりも高速です。
+- @testing-library/react: Reactコンポーネントをテストするためのユーティリティです。
+- @testing-library/jest-dom: expect に toBeInTheDocument のようなカスタムマッチャーを追加します。
 
-* **状態管理の拡張:**
+### 2. 設定ファイルの更新
 
-  * 現在の `AppState` を**履歴管理可能な新しいState**でラップしてください。新しいStateは `{ past: AppState\\\[], present: AppState, future: AppState\\\[] }` という構造を持ちます。
+ViteとTypeScriptにVitestの設定を追記します。
 
-* **【新機能】Undo (元に戻す)**
+`vite.config.ts` の *更新* :
 
-  * 「Undo」ボタンをクリックするか、キーボードで `Ctrl+Z` (macOSでは `Cmd+Z`) を押すと、直前の状態に戻るようにしてください。
-  * 具体的には、`past` 配列の最後の状態を新しい `present` にし、元々の `present` を `future` 配列の先頭に追加します。
+VitestがブラウザのAPI（DOMなど）を正しく扱えるように、テスト環境の設定を追加します。
 
-* **【新機能】Redo (やり直す)**
+```コード スニペット
 
-  * 「Redo」ボタンをクリックするか、キーボードで `Ctrl+Y` (macOSでは `Cmd+Shift+Z`) を押すと、Undoで戻した操作をやり直せるようにしてください。
-  * 具体的には、`future` 配列の最初の状態を新しい `present` にし、元々の `present` を `past` 配列の末尾に追加します。
+/// <reference types="vitest" />
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-* **履歴のリセット:**
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    setupFiles: './src/test/setup.ts',
+  },
+})
+```
 
-  * 図形を新しく描き始めたり、消去したりするなど、`present` の状態に新しい変更が加わった際には、`future` の履歴はすべて破棄（空の配列にリセット）してください。
+`tsconfig.app.json` *の更新* :
 
----
+`"include"` 配列にテストファイルが含まれるように設定を変更します。
 
-### **実装ステップの提案:**
+```コード スニペット
 
-Jules、以下のステップで実装を進めてください。
+{
+  // ... (compilerOptionsはそのまま)
+  "include": ["src", "src/test"]
+}
+```
 
-1. **新しいReducerの作成:**
+*テストセットアップファイルの作成:*
 
-   * `src/state` ディレクトリに、**`historyReducer.ts`** のような新しいファイルを作成します。
-   * このファイルで、履歴を管理する高階Reducer（`undoable` のような名前の関数）を定義します。この関数は、引数として既存の図形操作Reducerを受け取ります。
-   * `undoable` Reducerは、新しいアクションタイプ `'UNDO'` と `'REDO'` を処理します。それ以外のアクションが来た場合は、受け取ったReducerを実行し、その結果を使って `past`, `present`, `future` を更新します。
+`src/test/setup.ts` という名前で新しいファイルを作成し、以下の内容を記述してください。これにより、すべてのテストファイルで *jest-dom* のマッチャーが利用可能になります。
 
-2. **`App.tsx` の更新:**
+```コード スニペット
 
-   * `useReducer` を、新しく作成した `undoable(reducer)` で初期化します。
-   * `state` からは `state.present.shapes` や `state.present.selectedShapeId` のように、一段深くオブジェクトを辿って現在の状態を取得するように変更します。
-   * Undo/Redoボタンのための `handleUndo`, `handleRedo` 関数を定義し、それぞれ `'UNDO'`, `'REDO'` アクションをdispatchするようにします。
+import '@testing-library/jest-dom';
+```
 
-3. **`Toolbar.tsx` の更新:**
+### 3. Reducerのテスト作成
 
-   * 新しいPropsとして `onUndo`, `onRedo`, `canUndo`, `canRedo` を受け取るようにします。
-   * `canUndo` (state.past.length > 0) と `canRedo` (state.future.length > 0) の状態に応じて、ボタンの `disabled` 属性を制御してください。
+アプリケーションの心臓部である `reducer` と `historyReducer` のロジックが正しく動作することを保証するテストを作成します。
 
-4. **`useKeyboardControls.ts` の更新:**
+`src/state/reducer.test.ts` *の作成:*
 
-   * 既存の `handleKeyDown` イベントリスナーを拡張します。
-   * `e.ctrlKey || e.metaKey` をチェックし、`e.key === 'z'` であればUndo、`e.key === 'y'` であればRedoのアクションをdispatchするようにしてください。 (Shift+Zの対応も忘れずに)
+まず、基本的な図形操作のReducerからテストします。以下のテストケースを含めてください。
+
+- ADD_SHAPE: 新しい図形が `shapes` 配列に正しく追加されること。
+- DELETE_SELECTED_SHAPE: 選択された図形が `shapes` 配列から正しく削除され、 `selectedShapeId` が `null` になること。
+- CLEAR_CANVAS: `shapes` 配列が空になり、`selectedShapeId` が `null` になること。
+- SELECT_SHAPE: 指定した図形のIDが `selectedShapeId` に正しく設定されること。
+
+`src/state/historyReducer.test.ts` の作成:
+
+次に、Undo/Redoを管理する高階Reducerをテストします。
+
+- UNDO: 状態が一つ前に戻ること (present が past の最後の要素になる)。
+- REDO: Undoした状態をやり直せること (present が future の最初の要素になる)。
+- 履歴のクリア: UNDO した後に新しいアクションを実行すると、future (やり直し履歴) がクリアされること。
+- 履歴の境界: past が空のときに UNDO しても状態が変わらないこと。future が空のときに REDO しても状態が変わらないこと。
+
+### 4. テストの実行
+
+`package.json` にテスト実行用のスクリプトを追加してください。
+
+`package.json` *の更新:*
+
+```コード スニペット
+
+"scripts": {
+  // ... (既存のスクリプト)
+  "test": "vitest",
+  "test:ui": "vitest --ui"
+},
+```
+
+以下のコマンドでテストを実行できます。
+
+```Bash
+
+# CUIでテストを実行
+pnpm run test
+
+# ブラウザUIでテストを実行
+pnpm run test:ui
+```
