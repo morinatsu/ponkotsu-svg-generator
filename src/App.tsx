@@ -1,17 +1,23 @@
 import { useReducer, useRef, useCallback } from 'react';
 import Toolbar from './components/Toolbar';
 import SvgCanvas from './components/SvgCanvas';
+import DebugInfo from './components/DebugInfo'; // Import DebugInfo
 import { reducer, initialState, type ShapeData } from './state/reducer';
 import { undoable } from './state/historyReducer';
+import { logger } from './state/logger'; // Import logger
 import { useDrawing } from './hooks/useDrawing';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useSvgExport } from './hooks/useSvgExport';
 import './App.css';
 
 const undoableReducer = undoable(reducer);
+// Apply logger only in debug mode
+const rootReducer = import.meta.env.VITE_DEBUG_MODE === 'true'
+  ? logger(undoableReducer)
+  : undoableReducer;
 
 function App() {
-  const [state, dispatch] = useReducer(undoableReducer, {
+  const [state, dispatch] = useReducer(rootReducer, {
     past: [],
     present: initialState,
     future: [],
@@ -76,6 +82,7 @@ function App() {
         onCanvasClick={handleCanvasClick}
         onShapeClick={handleShapeClick}
       />
+      <DebugInfo history={state} />
     </div>
   )
 }
