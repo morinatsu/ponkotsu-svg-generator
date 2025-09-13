@@ -29,6 +29,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <div className="controls">
       <div className="tool-group">
+        <button onClick={onUndo} disabled={!canUndo}>Undo</button>
+        <button onClick={onRedo} disabled={!canRedo}>Redo</button>
+      </div>
+      <div className="tool-group">
         <button
           onClick={() => onToolSelect('rectangle')}
           className={isActive('rectangle') ? 'active' : ''}
@@ -49,14 +53,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
         </button>
       </div>
       <div className="tool-group">
-        <button onClick={onUndo} disabled={!canUndo}>Undo</button>
-        <button onClick={onRedo} disabled={!canRedo}>Redo</button>
-      </div>
-      <div className="tool-group">
-        <button onClick={onExport} disabled={shapesCount === 0}>エクスポート</button>
-      </div>
-      <div className="tool-group">
         <button onClick={onClear}>クリア</button>
+        <button onClick={onExport} disabled={shapesCount === 0}>エクスポート</button>
       </div>
     </div>
   );

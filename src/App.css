@@ -4,40 +4,13 @@
 }
 
 .controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   margin: 1rem;
 }
 
-.tool-group {
-  display: inline-flex;
-  align-items: center;
-  border-right: 1px solid #ccc;
-  padding: 0 1rem;
-  margin: 0;
-}
-
-.tool-group:last-child {
-  border-right: none;
-}
-
 button {
-  margin: 0 0.25rem;
+  margin: 0 0.5rem;
   padding: 0.5rem 1rem;
   font-size: 1rem;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #f0f0f0;
-}
-
-button.active {
-  background-color: #e0f7ff;
-  border-color: #007bff;
 }
 
 svg {

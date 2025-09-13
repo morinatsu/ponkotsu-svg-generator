@@ -1,109 +1,68 @@
-### Julesへの指示書 (v0.3.1 - Undo/Redo修正)
+# ぽんこつSVGジェネレーター (v0.5 - 複数図形への対応)
 
-### **プロジェクト名:**
+## プロジェクト概要
 
-ぽんこつSVGジェネレーター (v0.3.1 - Undo/Redo修正)
+現在の長方形のみを描画できる機能に加え、**「楕円」** と **「線」**を描画できるように機能を拡張します。ユーザーがツールバーから描画したい図形を選択できるUIを設け、アプリケーションの表現力を向上させます。
 
-### **プロジェクト概要:**
+## 機能要件 (変更・追加点)
 
-現在のUndo/Redo機構を修正し、**図形の追加・削除・全消去といった、キャンバスの内容が変更される操作のみを履歴として記録**するように変更します。図形の選択状態のような一時的なUIの状態は履歴管理から除外し、より直感的で安定した動作を目指します。
+### 1. 画面構成
 
------
+- **ツールバーの更新:**
+  - 既存のボタン群の近くに、描画ツールを選択するための**「長方形」「楕円」「線」**ボタンを設置してください。
+  - 現在選択されている描画ツールがどれか、視覚的にわかるようにしてください（例：選択中のボタンの背景色を変える）。
 
-### **実装ステップの提案:**
+### 2. コア機能
 
-Jules、以下のステップで `historyReducer.ts` を修正してください。
+- **データ構造の拡張**:
+  - `src/state/reducer.ts`の`ShapeData`型を、Discriminated Union（判別可能な合併型）に変更し、`rectangle, ellipse, line`の3種類の型を扱えるようにしてください。
 
-#### 1\. 履歴管理するStateの対象を `shapes` に絞る
+    - 各型は`type`プロパティ（例: `type: 'rectangle'`）で識別できるようにします。
+    - **Ellipse**: `{ id, type: 'ellipse', cx, cy, rx, ry }`
+    - **Line**: `{ id, type: 'line', x1, y1, x2, y2 }`
+  - `AppState`に、現在選択されている描画ツールを保持するための`currentTool: 'rectangle' | 'ellipse' | 'line'`のようなプロパティを追加してください。
+- **ツールの切り替え**:
+  - ユーザーがツールバーの図形ボタンをクリックすると、`AppState`の`currentTool`が切り替わるようにしてください。
+- **描画ロジックの汎用化**:
+  - マウスのドラッグ操作による描画ロジックを、`currentTool`の状態に応じて適切な図形を描画できるように変更してください。
+    - **長方形**: 従来通り。
+    - **楕円**: ドラッグで描かれる矩形に内接する楕円として描画します。
+    - **線**: ドラッグの始点から終点まで直線を引きます。
 
-`historyReducer.ts` を開き、`HistoryState` の構造を変更します。`AppState` まるごとではなく、`shapes` 配列のみを履歴として管理するようにします。
+### 3. レンダリング
 
-**`src/state/historyReducer.ts` の修正:**
+- `Shape.tsx`の更新:
+  - 現在`if (shape.type === 'rectangle')`となっている条件分岐を`switch`文に変更し、`shape.type`の値に応じて`<rect>, <ellipse>, <line>`の各SVG要素を正しくレンダリングできるようにしてください。
 
-```typescript
-// 変更前
-// export interface HistoryState {
-//   past: AppState[];
-//   present: AppState;
-//   future: AppState[];
-// }
+## 実装ステップの提案:
 
-// 変更後
-export interface HistoryState {
-    past: ShapeData[][]; // 過去の図形リスト
-    present: AppState;   // 現在のフル状態
-    future: ShapeData[][]; // 未来の図形リスト
-}
-```
+Jules、以下のステップで実装を進めてください。
 
-#### 2\. アクションに基づいて履歴を管理するようにロジックを修正
+1. Stateと型の定義変更 (src/state/reducer.ts):
 
-`isEqual` による比較をやめ、特定のアクションタイプに基づいて履歴を更新するロジックに変更します。
+- `ShapeData`を`RectangleData, EllipseData, LineData`のUnion型として再定義します。それぞれに必要なプロパティ（cx, ry, x1など）を定義してください。
+- `AppState`に`currentTool: ShapeData['type']`プロパティを追加し、`initialState`では`'rectangle'`を初期値とします。
+- `Action`型に`{ type: 'SELECT_TOOL'; payload: ShapeData['type'] }`を追加します。
 
-**`src/state/historyReducer.ts` の `undoable` Reducer内のロジックを以下のように修正してください:**
+2. Reducerのロジック拡張 (src/state/reducer.ts):
 
-```typescript
-// ... (HistoryStateの定義後)
+- `SELECT_TOOL`アクションを処理する`case`を追加し、`state.currentTool`を更新するようにします。
+- `END_DRAWING`のロジックを修正し、`state.currentTool`の値を見て、適切な型の図形オブジェクト（長方形、楕円、または線）を生成し、`shapes`配列に追加するように変更してください。
 
-// 履歴に残すアクションのリスト
-const recordableActions = new Set<string>([
-    'END_DRAWING',
-    'DELETE_SELECTED_SHAPE',
-    'CLEAR_CANVAS',
-]);
+3. ツールバーのUI実装 (Toolbar.tsx):
 
-export const undoable = (reducer: typeof originalReducer) => {
-    const initialState: HistoryState = {
-        past: [],
-        present: originalInitialState,
-        future: [],
-    };
+- 長方形、楕円、線の3つのボタンを追加します。
+- `App.tsx`から`currentTool`と`onToolSelect`(ツール選択時にActionをdispatchする関数) をPropsとして受け取ります。
+- `currentTool`の値と各ボタンを比較し、選択中のボタンに`active`などのCSSクラスを付与して見た目を変えてください。
 
-    return (state: HistoryState = initialState, action: HistoryAction): HistoryState => {
-        const { past, present, future } = state;
+4. 描画プレビューの更新 (SvgCanvas.tsx):
 
-        switch (action.type) {
-            case 'UNDO': {
-                if (past.length === 0) return state;
-                const previousShapes = past[past.length - 1];
-                const newPast = past.slice(0, past.length - 1);
-                return {
-                    past: newPast,
-                    present: { ...present, shapes: previousShapes, selectedShapeId: null }, // 選択は解除
-                    future: [present.shapes, ...future],
-                };
-            }
-            case 'REDO': {
-                if (future.length === 0) return state;
-                const nextShapes = future[0];
-                const newFuture = future.slice(1);
-                return {
-                    past: [...past, present.shapes],
-                    present: { ...present, shapes: nextShapes, selectedShapeId: null }, // 選択は解除
-                    future: newFuture,
-                };
-            }
-            default: {
-                const newPresent = reducer(present, action as Action);
+- 現在はドラッグ中に破線の長方形を描画していますが、ここも`currentTool`に応じて楕円や線がプレビューされるようにロジックを拡張してください。
 
-                // アクションが記録対象で、かつshapesの内容が実際に変更された場合のみ履歴を更新
-                if (
-                    recordableActions.has((action as Action).type) &&
-                    !isEqual(present.shapes, newPresent.shapes)
-                ) {
-                    return {
-                        past: [...past, present.shapes],
-                        present: newPresent,
-                        future: [], // 新しい操作が行われたらfutureはクリア
-                    };
-                }
+5. 図形コンポーネントの汎用化 (Shape.tsx):
 
-                // 記録対象外のアクションの場合は、present stateのみを更新
-                return { ...state, present: newPresent };
-            }
-        }
-    };
-};
-```
+- `shape.type`に基づいてレンダリングを切り替える`switch`文を実装します。各`case`で`<rect>, <ellipse>, <line>`をそれぞれのプロパティ（x, width, cx, rx, x1など）を使って正しく描画してください。
 
-この修正により、`SELECT_SHAPE` のようなUI操作は履歴に影響を与えず、図形の状態が変更されたときだけUndo/Redoが可能になります。また、Undo/Redo時には常に選択が解除されるため、より予測可能な動作になります。
+6. テストコードの更新:
+
+- `src/state/reducer.test.ts`と`src/state/historyReducer.test.ts`を開き、新しい図形の追加やツールの選択に関するテストケースを追加・修正してください。
