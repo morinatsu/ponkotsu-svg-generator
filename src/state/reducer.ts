@@ -69,7 +69,7 @@ export const reducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 selectedShapeId: null, // Deselect any selected shape
                 drawingState: {
-                    type: 'rectangle', // Always use a rectangle for the drag box
+                    type: state.currentTool,
                     x: action.payload.x,
                     y: action.payload.y,
                     width: 0,

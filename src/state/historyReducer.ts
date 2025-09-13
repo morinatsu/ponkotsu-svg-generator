@@ -50,23 +50,30 @@ export const undoable = (reducer: typeof originalReducer) => {
 
                 return {
                     past: [...past, present],
-                    present: next,
+                    present: { ...next, selectedShapeId: null },
                     future: newFuture,
                 };
             }
             default: {
                 // Delegate handling the action to the original reducer
-                const newPresent = reducer(present, action);
+                const newPresent = reducer(present, action as Action);
 
                 // If the action is non-recordable or the state hasn't changed,
                 // just update the present state without affecting history.
-                if (isEqual(present, newPresent) || nonRecordableActions.has(action.type)) {
+                if (isEqual(present, newPresent) || nonRecordableActions.has((action as Action).type)) {
                     return { ...state, present: newPresent };
                 }
 
-                // For recordable actions that change the state
+                // For recordable actions that change the state, clear drawing state from history
+                const presentForHistory = { ...present, drawingState: null };
+
+                // If deleting, also clear the selection from the history state
+                if ((action as Action).type === 'DELETE_SELECTED_SHAPE') {
+                    presentForHistory.selectedShapeId = null;
+                }
+
                 return {
-                    past: [...past, present],
+                    past: [...past, presentForHistory],
                     present: newPresent,
                     future: [], // Clear future on new action
                 };

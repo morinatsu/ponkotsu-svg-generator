@@ -22,11 +22,16 @@ describe('reducer', () => {
         const startPoint = { x: 10, y: 20 };
         const endPoint = { x: 60, y: 80 };
 
-        it('START_DRAWING: should start drawing a shape', () => {
+        it.each([
+            { tool: 'rectangle' as const },
+            { tool: 'ellipse' as const },
+            { tool: 'line' as const },
+        ])('START_DRAWING: should start drawing with the current tool ($tool)', ({ tool }) => {
+            const stateWithTool: AppState = { ...initialState, currentTool: tool };
             const action = { type: 'START_DRAWING' as const, payload: startPoint };
-            const newState = reducer(initialState, action);
+            const newState = reducer(stateWithTool, action);
             expect(newState.drawingState).toEqual({
-                type: 'rectangle',
+                type: tool,
                 x: startPoint.x,
                 y: startPoint.y,
                 width: 0,
@@ -59,7 +64,7 @@ describe('reducer', () => {
             const startState: AppState = {
                 ...initialState,
                 currentTool: 'line',
-                drawingState: { type: 'rectangle', x: startPoint.x, y: startPoint.y, width: 0, height: 0 },
+                drawingState: { type: 'line', x: startPoint.x, y: startPoint.y, width: 0, height: 0 },
             };
             const action = {
                 type: 'DRAWING' as const,
@@ -67,7 +72,7 @@ describe('reducer', () => {
             };
             const newState = reducer(startState, action);
             expect(newState.drawingState).toEqual({
-                type: 'rectangle',
+                type: 'line',
                 x: startPoint.x,
                 y: startPoint.y,
                 width: endPoint.x - startPoint.x,
@@ -100,7 +105,7 @@ describe('reducer', () => {
             const drawingState: AppState = {
                 ...initialState,
                 currentTool: 'ellipse',
-                drawingState: { type: 'rectangle', x: 10, y: 20, width: 50, height: 60 },
+                drawingState: { type: 'ellipse', x: 10, y: 20, width: 50, height: 60 },
             };
             const action = { type: 'END_DRAWING' as const };
             const newState = reducer(drawingState, action);
@@ -121,7 +126,7 @@ describe('reducer', () => {
             const drawingState: AppState = {
                 ...initialState,
                 currentTool: 'line',
-                drawingState: { type: 'rectangle', x: 10, y: 20, width: 50, height: 60 }, // width/height store the deltas
+                drawingState: { type: 'line', x: 10, y: 20, width: 50, height: 60 }, // width/height store the deltas
             };
             const action = { type: 'END_DRAWING' as const };
             const newState = reducer(drawingState, action);

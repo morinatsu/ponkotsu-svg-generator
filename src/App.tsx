@@ -17,12 +17,16 @@ function App() {
     future: [],
   });
 
-  const { shapes, selectedShapeId, drawingState } = state.present;
+  const { shapes, selectedShapeId, drawingState, currentTool } = state.present;
   const svgRef = useRef<SVGSVGElement>(null);
 
   const { handleMouseDown, handleMouseMove, handleMouseUp } = useDrawing(dispatch, svgRef);
   useKeyboardControls(dispatch, selectedShapeId);
   const { handleExport } = useSvgExport(svgRef);
+
+  const handleToolSelect = (tool: ShapeData['type']) => {
+    dispatch({ type: 'SELECT_TOOL', payload: tool });
+  };
 
   const handleClear = () => {
     dispatch({ type: 'CLEAR_CANVAS' });
@@ -56,12 +60,15 @@ function App() {
         onRedo={handleRedo}
         canUndo={state.past.length > 0}
         canRedo={state.future.length > 0}
+        currentTool={currentTool}
+        onToolSelect={handleToolSelect}
       />
       <SvgCanvas
         ref={svgRef}
         shapes={shapes}
         drawingState={drawingState}
         selectedShapeId={selectedShapeId}
+        currentTool={currentTool}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

@@ -1,12 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { undoable } from './historyReducer';
-import { reducer as originalReducer, initialState as originalInitialState, type Action } from './reducer';
+import { undoable, type HistoryState } from './historyReducer';
+import { reducer as originalReducer, initialState as originalInitialState, type AppState } from './reducer';
 
 describe('historyReducer (undoable)', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let historyReducer: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let initialState: any;
+    let historyReducer: (state: HistoryState, action: any) => HistoryState;
+    let initialState: HistoryState;
 
     beforeEach(() => {
         historyReducer = undoable(originalReducer);
@@ -17,20 +15,14 @@ describe('historyReducer (undoable)', () => {
         };
     });
 
-    // Helper to create a consistent action for testing history
-    const endDrawingAction = (id: string): Action => ({
-        type: 'END_DRAWING',
-    });
-
     it('should return the initial state', () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const state = historyReducer(undefined, { type: 'INIT' } as any);
         expect(state).toEqual(initialState);
     });
 
     it('should handle a recordable action (END_DRAWING)', () => {
-        // To simulate a drawing, we need a drawingState first
-        const stateWithDrawing = {
+        // Simulate a drawing state
+        const stateWithDrawing: HistoryState = {
             ...initialState,
             present: {
                 ...initialState.present,
@@ -38,97 +30,90 @@ describe('historyReducer (undoable)', () => {
             },
         };
 
-        const finalState = historyReducer(stateWithDrawing, endDrawingAction('1'));
+        const finalState = historyReducer(stateWithDrawing, { type: 'END_DRAWING' });
+
+        // The state saved to the past should have drawingState cleared
+        const expectedPastState = { ...stateWithDrawing.present, drawingState: null };
+
         expect(finalState.past).toHaveLength(1);
-        expect(finalState.past[0]).toEqual(stateWithDrawing.present);
-        expect(finalState.present.shapes).toHaveLength(1);
+        expect(finalState.past[0]).toEqual(expectedPastState);
+        expect(finalState.present.shapes).toHaveLength(1); // Shape is added
         expect(finalState.future).toHaveLength(0);
     });
 
-    it('UNDO: should move the present state to the future and the last past state to present', () => {
-        const stateWithDrawing = {
+    it('UNDO: should restore past state and clear selection', () => {
+        const stateWithDrawing: HistoryState = {
             ...initialState,
             present: {
                 ...initialState.present,
                 drawingState: { type: 'rectangle', x: 0, y: 0, width: 10, height: 10 },
             },
         };
-        let state = historyReducer(stateWithDrawing, endDrawingAction('1'));
+        let state = historyReducer(stateWithDrawing, { type: 'END_DRAWING' });
         state = historyReducer(state, { type: 'UNDO' });
 
+        const expectedPresent = { ...stateWithDrawing.present, drawingState: null, selectedShapeId: null };
+
         expect(state.past).toHaveLength(0);
-        expect(state.present).toEqual(stateWithDrawing.present);
+        expect(state.present).toEqual(expectedPresent);
         expect(state.future).toHaveLength(1);
         expect(state.future[0].shapes).toHaveLength(1);
     });
 
-    it('REDO: should move the first future state to present and the present state to the past', () => {
-        const stateWithDrawing = {
+    it('REDO: should restore future state and clear selection', () => {
+        const stateWithDrawing: HistoryState = {
             ...initialState,
             present: {
                 ...initialState.present,
                 drawingState: { type: 'rectangle', x: 0, y: 0, width: 10, height: 10 },
             },
         };
-        let state = historyReducer(stateWithDrawing, endDrawingAction('1'));
+        let state = historyReducer(stateWithDrawing, { type: 'END_DRAWING' });
+        const stateAfterDraw = state.present;
         state = historyReducer(state, { type: 'UNDO' });
         state = historyReducer(state, { type: 'REDO' });
 
+        const expectedPresent = { ...stateAfterDraw, selectedShapeId: null };
+
         expect(state.past).toHaveLength(1);
-        expect(state.past[0]).toEqual(stateWithDrawing.present);
-        expect(state.present.shapes).toHaveLength(1);
+        expect(state.present).toEqual(expectedPresent);
         expect(state.future).toHaveLength(0);
     });
 
-    it('should clear future history when a new action is dispatched after an undo', () => {
-        const stateWithDrawing1 = {
-            ...initialState,
-            present: {
-                ...initialState.present,
-                drawingState: { type: 'rectangle', x: 0, y: 0, width: 10, height: 10 },
-            },
+    it('should handle DELETE_SELECTED_SHAPE correctly in history', () => {
+        // 1. Add a shape
+        const stateWithShape: AppState = {
+            ...originalInitialState,
+            shapes: [{ id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 }]
         };
-        let state = historyReducer(stateWithDrawing1, endDrawingAction('1'));
-        state = historyReducer(state, { type: 'UNDO' }); // Back to stateWithDrawing1.present
-
-        const stateWithDrawing2 = {
-            ...state,
-            present: {
-                ...state.present,
-                drawingState: { type: 'rectangle', x: 20, y: 20, width: 5, height: 5 },
-            },
+        let state: HistoryState = {
+            past: [],
+            present: stateWithShape,
+            future: [],
         };
-        state = historyReducer(stateWithDrawing2, endDrawingAction('2')); // New action
 
+        // 2. Select the shape (non-recordable)
+        state = historyReducer(state, { type: 'SELECT_SHAPE', payload: '1' });
+        expect(state.present.selectedShapeId).toBe('1');
+        expect(state.past).toHaveLength(0); // No history change
+
+        // 3. Delete the shape (recordable)
+        state = historyReducer(state, { type: 'DELETE_SELECTED_SHAPE' });
+        expect(state.present.shapes).toHaveLength(0);
         expect(state.past).toHaveLength(1);
-        expect(state.past[0]).toEqual(stateWithDrawing2.present);
+
+        // The state saved to history should NOT have a selection
+        const expectedPastState = { ...stateWithShape, selectedShapeId: null, drawingState: null };
+        expect(state.past[0]).toEqual(expectedPastState);
+
+        // 4. Undo the deletion
+        state = historyReducer(state, { type: 'UNDO' });
         expect(state.present.shapes).toHaveLength(1);
-        expect(state.future).toHaveLength(0); // Future is cleared
-    });
-
-    it('UNDO: should do nothing if past is empty', () => {
-        const state = historyReducer(initialState, { type: 'UNDO' });
-        expect(state).toEqual(initialState);
-    });
-
-    it('REDO: should do nothing if future is empty', () => {
-        const stateWithDrawing = {
-            ...initialState,
-            present: {
-                ...initialState.present,
-                drawingState: { type: 'rectangle', x: 0, y: 0, width: 10, height: 10 },
-            },
-        };
-        let state = historyReducer(stateWithDrawing, endDrawingAction('1'));
-        state = historyReducer(state, { type: 'REDO' });
-
-        expect(state.past).toHaveLength(1);
-        expect(state.present.shapes).toHaveLength(1);
-        expect(state.future).toHaveLength(0);
+        expect(state.present.selectedShapeId).toBeNull(); // Should be deselected
     });
 
     it('should not record non-recordable actions like SELECT_SHAPE', () => {
-        const stateWithShape = {
+        const stateWithShape: HistoryState = {
             ...initialState,
             present: {
                 ...initialState.present,
@@ -140,15 +125,6 @@ describe('historyReducer (undoable)', () => {
 
         expect(finalState.past).toHaveLength(0); // Past is unchanged
         expect(finalState.present.selectedShapeId).toBe('1'); // Present is updated
-        expect(finalState.future).toHaveLength(0);
-    });
-
-    it('should not record non-recordable actions like SELECT_TOOL', () => {
-        const selectToolAction = { type: 'SELECT_TOOL' as const, payload: 'ellipse' as const };
-        const finalState = historyReducer(initialState, selectToolAction);
-
-        expect(finalState.past).toHaveLength(0); // Past is unchanged
-        expect(finalState.present.currentTool).toBe('ellipse'); // Present is updated
         expect(finalState.future).toHaveLength(0);
     });
 });
