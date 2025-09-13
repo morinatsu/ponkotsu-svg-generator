@@ -13,10 +13,10 @@ const debugStyles: React.CSSProperties = {
   color: 'white',
   padding: '10px',
   borderRadius: '5px',
-  maxHeight: '300px',
-  maxWidth: '400px',
+  maxHeight: '500px',
+  maxWidth: '600px',
   overflow: 'auto',
-  fontSize: '12px',
+  fontSize: '14px',
   fontFamily: 'monospace',
   zIndex: 1000,
 };
