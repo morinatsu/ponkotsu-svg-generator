@@ -51,10 +51,11 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, onClick }) => {
           fill={undefined} // line doesn't have a fill property
         />
       );
-    default:
+    default: {
       // Exhaustiveness check
       const _exhaustiveCheck: never = shape;
-      return null;
+      return _exhaustiveCheck;
+    }
   }
 };
 

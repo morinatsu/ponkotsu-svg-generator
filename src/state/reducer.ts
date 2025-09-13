@@ -29,7 +29,7 @@ export interface LineData {
 export type ShapeData = RectangleData | EllipseData | LineData;
 
 // A temporary type for drawing state, which might not have all properties of a full shape
-export type DrawingShape = Omit<RectangleData, 'id'> & { id?: string };
+export type DrawingShape = Omit<RectangleData, 'id' | 'type'> & { type: ShapeData['type']; id?: string };
 
 export interface AppState {
     shapes: ShapeData[];

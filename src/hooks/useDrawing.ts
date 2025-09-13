@@ -3,7 +3,7 @@ import type { Action } from '../state/reducer';
 
 export const useDrawing = (
   dispatch: React.Dispatch<Action>,
-  svgRef: React.RefObject<SVGSVGElement>
+  svgRef: React.RefObject<SVGSVGElement | null>
 ) => {
   const isDrawing = useRef(false);
   const startPoint = useRef({ x: 0, y: 0 });
