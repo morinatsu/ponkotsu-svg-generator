@@ -12,7 +12,7 @@ export interface HistoryState {
 type HistoryAction = Action | { type: 'UNDO' } | { type: 'REDO' };
 
 // Actions that should not be part of the history
-const nonRecordableActions = new Set<string>(['SELECT_SHAPE', 'START_DRAWING', 'DRAWING']);
+const nonRecordableActions = new Set<string>(['SELECT_SHAPE', 'SELECT_TOOL', 'START_DRAWING', 'DRAWING']);
 
 
 // Higher-order reducer to add undo/redo functionality
@@ -32,12 +32,8 @@ export const undoable = (reducer: typeof originalReducer) => {
                 if (past.length === 0) {
                     return state;
                 }
-                const previous = { ...past[past.length - 1] };
+                const previous = past[past.length - 1];
                 const newPast = past.slice(0, past.length - 1);
-
-                // On undo, always clear the selection and drawing state.
-                previous.selectedShapeId = null;
-                previous.drawingState = null;
 
                 return {
                     past: newPast,
@@ -49,32 +45,35 @@ export const undoable = (reducer: typeof originalReducer) => {
                 if (future.length === 0) {
                     return state;
                 }
-                const next = { ...future[0] };
+                const next = future[0];
                 const newFuture = future.slice(1);
-
-                // On redo, always clear the selection and drawing state.
-                next.selectedShapeId = null;
-                next.drawingState = null;
 
                 return {
                     past: [...past, present],
-                    present: next,
+                    present: { ...next, selectedShapeId: null },
                     future: newFuture,
                 };
             }
             default: {
                 // Delegate handling the action to the original reducer
-                const newPresent = reducer(present, action);
+                const newPresent = reducer(present, action as Action);
 
                 // If the action is non-recordable or the state hasn't changed,
                 // just update the present state without affecting history.
-                if (isEqual(present, newPresent) || nonRecordableActions.has(action.type)) {
+                if (isEqual(present, newPresent) || nonRecordableActions.has((action as Action).type)) {
                     return { ...state, present: newPresent };
                 }
 
-                // For recordable actions that change the state
+                // For recordable actions that change the state, clear drawing state from history
+                const presentForHistory = { ...present, drawingState: null };
+
+                // If deleting, also clear the selection from the history state
+                if ((action as Action).type === 'DELETE_SELECTED_SHAPE') {
+                    presentForHistory.selectedShapeId = null;
+                }
+
                 return {
-                    past: [...past, present],
+                    past: [...past, presentForHistory],
                     present: newPresent,
                     future: [], // Clear future on new action
                 };

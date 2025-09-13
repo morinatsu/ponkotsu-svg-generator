@@ -22,7 +22,7 @@ export const useDrawing = (
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as SVGElement).closest('rect')) {
+    if ((e.target as SVGElement).closest('rect, ellipse, line')) {
       return;
     }
     isDrawing.current = true;

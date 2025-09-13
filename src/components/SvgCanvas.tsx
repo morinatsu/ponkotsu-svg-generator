@@ -1,11 +1,12 @@
 import React from 'react';
-import type { ShapeData } from '../state/reducer';
+import type { ShapeData, DrawingShape } from '../state/reducer';
 import Shape from './Shape';
 
 interface SvgCanvasProps {
   shapes: ShapeData[];
-  drawingState: ShapeData | null;
+  drawingState: DrawingShape | null;
   selectedShapeId: string | null;
+  currentTool: ShapeData['type'];
   onMouseDown: (e: React.MouseEvent) => void;
   onMouseMove: (e: React.MouseEvent) => void;
   onMouseUp: (e: React.MouseEvent) => void;
@@ -14,12 +15,45 @@ interface SvgCanvasProps {
   onShapeClick: (id: string, e: React.MouseEvent) => void;
 }
 
+const DrawingPreview: React.FC<{
+  drawingState: DrawingShape;
+  currentTool: ShapeData['type'];
+}> = ({ drawingState, currentTool }) => {
+  const { x, y, width, height } = drawingState;
+  const commonProps = {
+    fill: 'none',
+    stroke: 'black',
+    strokeWidth: 1,
+    strokeDasharray: '5,5',
+  };
+
+  switch (currentTool) {
+    case 'rectangle':
+      return <rect x={x} y={y} width={width} height={height} {...commonProps} />;
+    case 'ellipse':
+      return (
+        <ellipse
+          cx={x + width / 2}
+          cy={y + height / 2}
+          rx={width / 2}
+          ry={height / 2}
+          {...commonProps}
+        />
+      );
+    case 'line':
+      return <line x1={x} y1={y} x2={x + width} y2={y + height} {...commonProps} />;
+    default:
+      return null;
+  }
+};
+
 const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
   (
     {
       shapes,
       drawingState,
       selectedShapeId,
+      currentTool,
       onMouseDown,
       onMouseMove,
       onMouseUp,
@@ -50,16 +84,7 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
           />
         ))}
         {drawingState && (
-          <rect
-            x={drawingState.x}
-            y={drawingState.y}
-            width={drawingState.width}
-            height={drawingState.height}
-            fill="none"
-            stroke="black"
-            strokeWidth={1}
-            strokeDasharray="5,5"
-          />
+          <DrawingPreview drawingState={drawingState} currentTool={currentTool} />
         )}
       </svg>
     );

@@ -1,121 +1,68 @@
-# Julesへの指示書 (v0.4 - 単体テスト導入)
+# ぽんこつSVGジェネレーター (v0.5 - 複数図形への対応)
 
-## プロジェクト名:
+## プロジェクト概要
 
-ぽんkotsu-svg-generator (v0.4 - 単体テスト導入)
+現在の長方形のみを描画できる機能に加え、**「楕円」** と **「線」**を描画できるように機能を拡張します。ユーザーがツールバーから描画したい図形を選択できるUIを設け、アプリケーションの表現力を向上させます。
 
-## プロジェクト概要:
+## 機能要件 (変更・追加点)
 
-アプリケーションの品質と保守性を向上させるため、テストフレームワーク Vitest を導入し、状態管理のコアロジックである Reducer 関数の単体テストを作成します。これにより、今後のリファクタリングや機能追加を安全に行うための基盤を築きます。
+### 1. 画面構成
+
+- **ツールバーの更新:**
+  - 既存のボタン群の近くに、描画ツールを選択するための**「長方形」「楕円」「線」**ボタンを設置してください。
+  - 現在選択されている描画ツールがどれか、視覚的にわかるようにしてください（例：選択中のボタンの背景色を変える）。
+
+### 2. コア機能
+
+- **データ構造の拡張**:
+  - `src/state/reducer.ts`の`ShapeData`型を、Discriminated Union（判別可能な合併型）に変更し、`rectangle, ellipse, line`の3種類の型を扱えるようにしてください。
+
+    - 各型は`type`プロパティ（例: `type: 'rectangle'`）で識別できるようにします。
+    - **Ellipse**: `{ id, type: 'ellipse', cx, cy, rx, ry }`
+    - **Line**: `{ id, type: 'line', x1, y1, x2, y2 }`
+  - `AppState`に、現在選択されている描画ツールを保持するための`currentTool: 'rectangle' | 'ellipse' | 'line'`のようなプロパティを追加してください。
+- **ツールの切り替え**:
+  - ユーザーがツールバーの図形ボタンをクリックすると、`AppState`の`currentTool`が切り替わるようにしてください。
+- **描画ロジックの汎用化**:
+  - マウスのドラッグ操作による描画ロジックを、`currentTool`の状態に応じて適切な図形を描画できるように変更してください。
+    - **長方形**: 従来通り。
+    - **楕円**: ドラッグで描かれる矩形に内接する楕円として描画します。
+    - **線**: ドラッグの始点から終点まで直線を引きます。
+
+### 3. レンダリング
+
+- `Shape.tsx`の更新:
+  - 現在`if (shape.type === 'rectangle')`となっている条件分岐を`switch`文に変更し、`shape.type`の値に応じて`<rect>, <ellipse>, <line>`の各SVG要素を正しくレンダリングできるようにしてください。
 
 ## 実装ステップの提案:
 
-Jules、以下のステップでテスト環境の構築とテストコードの実装を進めてください。
+Jules、以下のステップで実装を進めてください。
 
-### 1. テスト関連ライブラリのインストール
+1. Stateと型の定義変更 (src/state/reducer.ts):
 
-まず、開発用の依存ライブラリとしてVitestと、Reactコンポーネントのテストに必要なライブラリをインストールします。
+- `ShapeData`を`RectangleData, EllipseData, LineData`のUnion型として再定義します。それぞれに必要なプロパティ（cx, ry, x1など）を定義してください。
+- `AppState`に`currentTool: ShapeData['type']`プロパティを追加し、`initialState`では`'rectangle'`を初期値とします。
+- `Action`型に`{ type: 'SELECT_TOOL'; payload: ShapeData['type'] }`を追加します。
 
-```Bash
+2. Reducerのロジック拡張 (src/state/reducer.ts):
 
-pnpm add -D vitest happy-dom @testing-library/react @testing-library/jest-dom
-```
+- `SELECT_TOOL`アクションを処理する`case`を追加し、`state.currentTool`を更新するようにします。
+- `END_DRAWING`のロジックを修正し、`state.currentTool`の値を見て、適切な型の図形オブジェクト（長方形、楕円、または線）を生成し、`shapes`配列に追加するように変更してください。
 
-- vitest: 高速なテストランナーです。
-- happy-dom: Node.js環境でDOM APIをシミュレートするためのライブラリです。JSDOMよりも高速です。
-- @testing-library/react: Reactコンポーネントをテストするためのユーティリティです。
-- @testing-library/jest-dom: expect に toBeInTheDocument のようなカスタムマッチャーを追加します。
+3. ツールバーのUI実装 (Toolbar.tsx):
 
-### 2. 設定ファイルの更新
+- 長方形、楕円、線の3つのボタンを追加します。
+- `App.tsx`から`currentTool`と`onToolSelect`(ツール選択時にActionをdispatchする関数) をPropsとして受け取ります。
+- `currentTool`の値と各ボタンを比較し、選択中のボタンに`active`などのCSSクラスを付与して見た目を変えてください。
 
-ViteとTypeScriptにVitestの設定を追記します。
+4. 描画プレビューの更新 (SvgCanvas.tsx):
 
-`vite.config.ts` の *更新* :
+- 現在はドラッグ中に破線の長方形を描画していますが、ここも`currentTool`に応じて楕円や線がプレビューされるようにロジックを拡張してください。
 
-VitestがブラウザのAPI（DOMなど）を正しく扱えるように、テスト環境の設定を追加します。
+5. 図形コンポーネントの汎用化 (Shape.tsx):
 
-```コード スニペット
+- `shape.type`に基づいてレンダリングを切り替える`switch`文を実装します。各`case`で`<rect>, <ellipse>, <line>`をそれぞれのプロパティ（x, width, cx, rx, x1など）を使って正しく描画してください。
 
-/// <reference types="vitest" />
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+6. テストコードの更新:
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    globals: true,
-    environment: 'happy-dom',
-    setupFiles: './src/test/setup.ts',
-  },
-})
-```
-
-`tsconfig.app.json` *の更新* :
-
-`"include"` 配列にテストファイルが含まれるように設定を変更します。
-
-```コード スニペット
-
-{
-  // ... (compilerOptionsはそのまま)
-  "include": ["src", "src/test"]
-}
-```
-
-*テストセットアップファイルの作成:*
-
-`src/test/setup.ts` という名前で新しいファイルを作成し、以下の内容を記述してください。これにより、すべてのテストファイルで *jest-dom* のマッチャーが利用可能になります。
-
-```コード スニペット
-
-import '@testing-library/jest-dom';
-```
-
-### 3. Reducerのテスト作成
-
-アプリケーションの心臓部である `reducer` と `historyReducer` のロジックが正しく動作することを保証するテストを作成します。
-
-`src/state/reducer.test.ts` *の作成:*
-
-まず、基本的な図形操作のReducerからテストします。以下のテストケースを含めてください。
-
-- ADD_SHAPE: 新しい図形が `shapes` 配列に正しく追加されること。
-- DELETE_SELECTED_SHAPE: 選択された図形が `shapes` 配列から正しく削除され、 `selectedShapeId` が `null` になること。
-- CLEAR_CANVAS: `shapes` 配列が空になり、`selectedShapeId` が `null` になること。
-- SELECT_SHAPE: 指定した図形のIDが `selectedShapeId` に正しく設定されること。
-
-`src/state/historyReducer.test.ts` の作成:
-
-次に、Undo/Redoを管理する高階Reducerをテストします。
-
-- UNDO: 状態が一つ前に戻ること (present が past の最後の要素になる)。
-- REDO: Undoした状態をやり直せること (present が future の最初の要素になる)。
-- 履歴のクリア: UNDO した後に新しいアクションを実行すると、future (やり直し履歴) がクリアされること。
-- 履歴の境界: past が空のときに UNDO しても状態が変わらないこと。future が空のときに REDO しても状態が変わらないこと。
-
-### 4. テストの実行
-
-`package.json` にテスト実行用のスクリプトを追加してください。
-
-`package.json` *の更新:*
-
-```コード スニペット
-
-"scripts": {
-  // ... (既存のスクリプト)
-  "test": "vitest",
-  "test:ui": "vitest --ui"
-},
-```
-
-以下のコマンドでテストを実行できます。
-
-```Bash
-
-# CUIでテストを実行
-pnpm run test
-
-# ブラウザUIでテストを実行
-pnpm run test:ui
-```
+- `src/state/reducer.test.ts`と`src/state/historyReducer.test.ts`を開き、新しい図形の追加やツールの選択に関するテストケースを追加・修正してください。
