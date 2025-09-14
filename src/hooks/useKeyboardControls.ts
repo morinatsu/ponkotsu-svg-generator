@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
+import { type HistoryAction } from '../state/historyReducer';
 
 // Using a more generic dispatch type to accommodate undo/redo actions
 export const useKeyboardControls = (
-  dispatch: React.Dispatch<any>,
+  dispatch: React.Dispatch<HistoryAction>,
   selectedShapeId: string | null
 ) => {
   useEffect(() => {

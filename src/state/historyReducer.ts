@@ -1,23 +1,25 @@
-import { type Action, type AppState, reducer as originalReducer, initialState as originalInitialState } from './reducer';
+import { type ShapeData, type Action, type AppState, reducer as originalReducer, initialState as originalInitialState } from './reducer';
 import isEqual from 'lodash/isEqual';
 
-// The new state structure that includes history
 export interface HistoryState {
-    past: AppState[];
-    present: AppState;
-    future: AppState[];
+    past: ShapeData[][];       // 過去の図形リストの配列
+    present: AppState;         // UIの状態も含む現在のフル状態
+    future: ShapeData[][];      // 未来の図形リストの配列
 }
 
 // Actions for undo/redo
 type HistoryAction = Action | { type: 'UNDO' } | { type: 'REDO' };
 
-// Actions that should not be part of the history
-const nonRecordableActions = new Set<string>(['SELECT_SHAPE', 'SELECT_TOOL', 'START_DRAWING', 'DRAWING']);
-
+// 履歴に記録するアクションのリストを定義
+const recordableActions = new Set<string>([
+    'END_DRAWING',
+    'DELETE_SELECTED_SHAPE',
+    'CLEAR_CANVAS',
+]);
 
 // Higher-order reducer to add undo/redo functionality
 export const undoable = (reducer: typeof originalReducer) => {
-    // The initial state of the undoable reducer
+    // 新しいInitial State
     const initialState: HistoryState = {
         past: [],
         present: originalInitialState,
@@ -32,51 +34,47 @@ export const undoable = (reducer: typeof originalReducer) => {
                 if (past.length === 0) {
                     return state;
                 }
-                const previous = past[past.length - 1];
+                const previousShapes = past[past.length - 1];
                 const newPast = past.slice(0, past.length - 1);
-
                 return {
                     past: newPast,
-                    present: previous,
-                    future: [present, ...future],
+                    present: { ...present, shapes: previousShapes, selectedShapeId: null }, // Undo時は選択を解除
+                    future: [present.shapes, ...future],
                 };
             }
             case 'REDO': {
                 if (future.length === 0) {
                     return state;
                 }
-                const next = future[0];
+                const nextShapes = future[0];
                 const newFuture = future.slice(1);
-
                 return {
-                    past: [...past, present],
-                    present: { ...next, selectedShapeId: null },
+                    past: [...past, present.shapes],
+                    present: { ...present, shapes: nextShapes, selectedShapeId: null }, // Redo時も選択を解除
                     future: newFuture,
                 };
             }
             default: {
-                // Delegate handling the action to the original reducer
+                // まず、元々のReducerで新しい状態を計算する
                 const newPresent = reducer(present, action as Action);
 
-                // If the action is non-recordable or the state hasn't changed,
-                // just update the present state without affecting history.
-                if (isEqual(present, newPresent) || nonRecordableActions.has((action as Action).type)) {
-                    return { ...state, present: newPresent };
+                // もし、実行されたアクションが記録対象のアクションで、
+                // かつ、shapes配列が実際に変更されていた場合のみ履歴を更新する
+                if (
+                    recordableActions.has((action as Action).type) &&
+                    !isEqual(present.shapes, newPresent.shapes)
+                ) {
+                    // futureをクリアして、新しい履歴を追加
+                    return {
+                        past: [...past, present.shapes],
+                        present: newPresent,
+                        future: [],
+                    };
                 }
 
-                // For recordable actions that change the state, clear drawing state from history
-                const presentForHistory = { ...present, drawingState: null };
-
-                // If deleting, also clear the selection from the history state
-                if ((action as Action).type === 'DELETE_SELECTED_SHAPE') {
-                    presentForHistory.selectedShapeId = null;
-                }
-
-                return {
-                    past: [...past, presentForHistory],
-                    present: newPresent,
-                    future: [], // Clear future on new action
-                };
+                // 記録対象外のアクション（SELECT_TOOLなど）の場合は、
+                // 履歴を変更せず、presentの状態だけを更新する
+                return { ...state, present: newPresent };
             }
         }
     };
