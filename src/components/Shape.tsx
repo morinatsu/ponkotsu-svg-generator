@@ -51,10 +51,12 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, onClick }) => {
           fill={undefined} // line doesn't have a fill property
         />
       );
-    default:
-      // Exhaustiveness check
+    default: {
+      // Exhaustiveness check for discriminating union
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _exhaustiveCheck: never = shape;
       return null;
+    }
   }
 };
 
