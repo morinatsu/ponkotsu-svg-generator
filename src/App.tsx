@@ -2,7 +2,8 @@ import { useReducer, useRef, useCallback } from 'react';
 import Toolbar from './components/Toolbar';
 import SvgCanvas from './components/SvgCanvas';
 import DebugInfo from './components/DebugInfo'; // Import DebugInfo
-import { reducer, initialState, type ShapeData } from './state/reducer';
+import TextInputModal from './components/TextInputModal'; // Import the modal
+import { reducer, initialState, type Tool, type ShapeData } from './state/reducer';
 import { undoable } from './state/historyReducer';
 import { logger } from './state/logger'; // Import logger
 import { useDrawing } from './hooks/useDrawing';
@@ -23,14 +24,14 @@ function App() {
     future: [],
   });
 
-  const { shapes, selectedShapeId, drawingState, currentTool } = state.present;
+  const { shapes, selectedShapeId, drawingState, currentTool, editingText } = state.present;
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const { handleMouseDown, handleMouseMove, handleMouseUp } = useDrawing(dispatch, svgRef);
+  const { handleMouseDown, handleMouseMove, handleMouseUp } = useDrawing(dispatch, svgRef, currentTool);
   useKeyboardControls(dispatch, selectedShapeId);
   const { handleExport } = useSvgExport(svgRef);
 
-  const handleToolSelect = (tool: ShapeData['type']) => {
+  const handleToolSelect = (tool: Tool) => {
     dispatch({ type: 'SELECT_TOOL', payload: tool });
   };
 
@@ -53,6 +54,20 @@ function App() {
   const handleShapeClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     dispatch({ type: 'SELECT_SHAPE', payload: id });
+  };
+
+  const handleShapeDoubleClick = (shape: ShapeData) => {
+    if (shape.type === 'text') {
+      dispatch({
+        type: 'START_TEXT_EDIT',
+        payload: {
+          id: shape.id,
+          x: shape.x,
+          y: shape.y,
+          content: shape.content,
+        },
+      });
+    }
   };
 
   return (
@@ -81,8 +96,21 @@ function App() {
         onMouseLeave={handleMouseUp}
         onCanvasClick={handleCanvasClick}
         onShapeClick={handleShapeClick}
+        onShapeDoubleClick={handleShapeDoubleClick}
       />
       <DebugInfo history={state} />
+
+      {editingText && (
+        <TextInputModal
+          initialContent={editingText.content}
+          onOk={(content) => {
+            dispatch({ type: 'FINISH_TEXT_EDIT', payload: { content } });
+          }}
+          onCancel={() => {
+            dispatch({ type: 'CANCEL_TEXT_EDIT' });
+          }}
+        />
+      )}
     </div>
   )
 }

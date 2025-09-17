@@ -1,9 +1,10 @@
 import { useRef } from 'react';
-import type { Action } from '../state/reducer';
+import type { Action, Tool } from '../state/reducer';
 
 export const useDrawing = (
   dispatch: React.Dispatch<Action>,
-  svgRef: React.RefObject<SVGSVGElement>
+  svgRef: React.RefObject<SVGSVGElement>,
+  currentTool: Tool,
 ) => {
   const isDrawing = useRef(false);
   const startPoint = useRef({ x: 0, y: 0 });
@@ -22,13 +23,25 @@ export const useDrawing = (
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as SVGElement).closest('rect, ellipse, line')) {
+    // Prevent drawing or text creation when clicking on an existing shape
+    if ((e.target as SVGElement).closest('g')) {
       return;
     }
-    isDrawing.current = true;
+
     const pos = getMousePosition(e);
-    startPoint.current = pos;
-    dispatch({ type: 'START_DRAWING', payload: pos });
+
+    if (currentTool === 'text') {
+      // For the text tool, dispatch an action to start editing text
+      dispatch({
+        type: 'START_TEXT_EDIT',
+        payload: { id: null, x: pos.x, y: pos.y, content: '' },
+      });
+    } else {
+      // For drawing tools, start the drawing process
+      isDrawing.current = true;
+      startPoint.current = pos;
+      dispatch({ type: 'START_DRAWING', payload: pos });
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
