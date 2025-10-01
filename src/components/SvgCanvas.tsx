@@ -13,6 +13,7 @@ interface SvgCanvasProps {
   onMouseLeave: (e: React.MouseEvent) => void;
   onCanvasClick: () => void;
   onShapeClick: (id: string, e: React.MouseEvent) => void;
+  onShapeDoubleClick: (shape: ShapeData) => void;
 }
 
 const DrawingPreview: React.FC<{
@@ -60,6 +61,7 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
       onMouseLeave,
       onCanvasClick,
       onShapeClick,
+      onShapeDoubleClick,
     },
     ref
   ) => {
@@ -81,6 +83,7 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
             shape={shape}
             isSelected={selectedShapeId === shape.id}
             onClick={(e) => onShapeClick(shape.id, e)}
+            onDoubleClick={() => onShapeDoubleClick(shape)}
           />
         ))}
         {drawingState && (

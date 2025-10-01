@@ -5,52 +5,89 @@ interface ShapeProps {
   shape: ShapeData;
   isSelected: boolean;
   onClick: (e: React.MouseEvent) => void;
+  onDoubleClick: () => void;
 }
 
-const Shape: React.FC<ShapeProps> = ({ shape, isSelected, onClick }) => {
+const Shape: React.FC<ShapeProps> = ({ shape, isSelected, onClick, onDoubleClick }) => {
   const commonProps = {
-    stroke: isSelected ? 'blue' : 'black',
     strokeWidth: 2,
-    onClick: onClick,
     style: { cursor: 'pointer' },
-    fill: 'none', // All shapes are unfilled for now
+  };
+
+  // The <g> element will handle the click for selection
+  const groupProps = {
+    onClick: onClick,
   };
 
   switch (shape.type) {
     case 'rectangle':
       return (
-        <rect
-          key={shape.id}
-          x={shape.x}
-          y={shape.y}
-          width={shape.width}
-          height={shape.height}
-          {...commonProps}
-        />
+        <g {...groupProps}>
+          <rect
+            key={shape.id}
+            x={shape.x}
+            y={shape.y}
+            width={shape.width}
+            height={shape.height}
+            stroke={isSelected ? 'blue' : 'black'}
+            fill="none"
+            {...commonProps}
+          />
+        </g>
       );
     case 'ellipse':
       return (
-        <ellipse
-          key={shape.id}
-          cx={shape.cx}
-          cy={shape.cy}
-          rx={shape.rx}
-          ry={shape.ry}
-          {...commonProps}
-        />
+        <g {...groupProps}>
+          <ellipse
+            key={shape.id}
+            cx={shape.cx}
+            cy={shape.cy}
+            rx={shape.rx}
+            ry={shape.ry}
+            stroke={isSelected ? 'blue' : 'black'}
+            fill="none"
+            {...commonProps}
+          />
+        </g>
       );
     case 'line':
       return (
-        <line
-          key={shape.id}
-          x1={shape.x1}
-          y1={shape.y1}
-          x2={shape.x2}
-          y2={shape.y2}
-          {...commonProps}
-          fill={undefined} // line doesn't have a fill property
-        />
+        <g {...groupProps}>
+          <line
+            key={shape.id}
+            x1={shape.x1}
+            y1={shape.y1}
+            x2={shape.x2}
+            y2={shape.y2}
+            stroke={isSelected ? 'blue' : 'black'}
+            {...commonProps}
+          />
+        </g>
       );
+    case 'text': {
+      const lines = shape.content.split('\n');
+      const lineHeight = shape.fontSize * 1.2;
+      return (
+        <g {...groupProps} onDoubleClick={onDoubleClick}>
+          <text
+            key={shape.id}
+            x={shape.x}
+            y={shape.y}
+            fontSize={shape.fontSize}
+            fontFamily={shape.fontFamily}
+            fill={isSelected ? 'blue' : shape.fill}
+            stroke="none"
+            style={{ cursor: 'pointer', userSelect: 'none' }}
+          >
+            {lines.map((line, index) => (
+              <tspan key={index} x={shape.x} dy={index === 0 ? 0 : lineHeight}>
+                {line}
+              </tspan>
+            ))}
+          </text>
+        </g>
+      );
+    }
     default: {
       // Exhaustiveness check for discriminating union
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
