@@ -26,16 +26,30 @@ export interface LineData {
     y2: number;
 }
 
-export type ShapeData = RectangleData | EllipseData | LineData;
+export interface TextData {
+    id: string;
+    type: 'text';
+    x: number;
+    y: number;
+    content: string;
+    fontSize: number;
+    fill: string;
+    fontFamily: string;
+}
+
+export type ShapeData = RectangleData | EllipseData | LineData | TextData;
 
 // A temporary type for drawing state, which might not have all properties of a full shape
 export type DrawingShape = Omit<RectangleData, 'id'> & { id?: string };
+
+export type Tool = ShapeData['type'];
 
 export interface AppState {
     shapes: ShapeData[];
     selectedShapeId: string | null;
     drawingState: DrawingShape | null; // Use a generic rectangle for drawing preview
-    currentTool: ShapeData['type'];
+    currentTool: Tool;
+    editingText: { id: string | null; content: string; x: number; y: number } | null;
 }
 
 export const initialState: AppState = {
@@ -43,6 +57,7 @@ export const initialState: AppState = {
     selectedShapeId: null,
     drawingState: null,
     currentTool: 'rectangle',
+    editingText: null,
 };
 
 // Actions that can be dispatched
@@ -54,7 +69,11 @@ export type Action =
     | { type: 'SELECT_SHAPE'; payload: string | null }
     | { type: 'DELETE_SELECTED_SHAPE' }
     | { type: 'CLEAR_CANVAS' }
-    | { type: 'SELECT_TOOL'; payload: ShapeData['type'] };
+    | { type: 'SELECT_TOOL'; payload: Tool }
+    // Text-related actions
+    | { type: 'START_TEXT_EDIT'; payload: { id: string | null; x: number; y: number; content: string } }
+    | { type: 'FINISH_TEXT_EDIT'; payload: { content: string } }
+    | { type: 'CANCEL_TEXT_EDIT' };
 
 // Reducer function to handle state updates
 export const reducer = (state: AppState, action: Action): AppState => {
@@ -183,6 +202,61 @@ export const reducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 shapes: [],
                 selectedShapeId: null,
+            };
+        // --- Text editing cases ---
+        case 'START_TEXT_EDIT':
+            return {
+                ...state,
+                selectedShapeId: null, // Deselect any selected shape
+                editingText: {
+                    id: action.payload.id,
+                    content: action.payload.content,
+                    x: action.payload.x,
+                    y: action.payload.y,
+                },
+            };
+        case 'FINISH_TEXT_EDIT': {
+            if (!state.editingText) return state;
+            const { id, x, y } = state.editingText;
+            const { content } = action.payload;
+
+            // If content is empty, do nothing and just cancel.
+            if (!content.trim()) {
+                return { ...state, editingText: null };
+            }
+
+            let newShapes: ShapeData[];
+            if (id) {
+                // Update existing text shape
+                newShapes = state.shapes.map(shape =>
+                    shape.id === id && shape.type === 'text'
+                        ? { ...shape, content }
+                        : shape
+                );
+            } else {
+                // Add new text shape
+                const newTextShape: TextData = {
+                    id: crypto.randomUUID(),
+                    type: 'text',
+                    x,
+                    y,
+                    content,
+                    fontSize: 16,
+                    fill: '#000000',
+                    fontFamily: 'Meiryo',
+                };
+                newShapes = [...state.shapes, newTextShape];
+            }
+            return {
+                ...state,
+                shapes: newShapes,
+                editingText: null,
+            };
+        }
+        case 'CANCEL_TEXT_EDIT':
+            return {
+                ...state,
+                editingText: null,
             };
         default:
             return state;

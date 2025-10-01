@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ShapeData } from '../state/reducer';
+import type { Tool } from '../state/reducer';
 
 interface ToolbarProps {
   onClear: () => void;
@@ -9,8 +9,8 @@ interface ToolbarProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  currentTool: ShapeData['type'];
-  onToolSelect: (tool: ShapeData['type']) => void;
+  currentTool: Tool;
+  onToolSelect: (tool: Tool) => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -24,7 +24,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   currentTool,
   onToolSelect,
 }) => {
-  const isActive = (tool: ShapeData['type']) => tool === currentTool;
+  const isActive = (tool: Tool) => tool === currentTool;
 
   return (
     <div className="controls">
@@ -46,6 +46,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
           className={isActive('line') ? 'active' : ''}
         >
           線
+        </button>
+        <button
+          onClick={() => onToolSelect('text')}
+          className={isActive('text') ? 'active' : ''}
+        >
+          テキスト
         </button>
       </div>
       <div className="tool-group">
