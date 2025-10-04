@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ShapeData, DrawingShape } from '../state/reducer';
+import type { ShapeData, DrawingShape, AppMode } from '../state/reducer';
 import Shape from './Shape';
 
 interface SvgCanvasProps {
@@ -7,6 +7,7 @@ interface SvgCanvasProps {
   drawingState: DrawingShape | null;
   selectedShapeId: string | null;
   currentTool: ShapeData['type'];
+  mode: AppMode;
   onMouseDown: (e: React.MouseEvent) => void;
   onMouseMove: (e: React.MouseEvent) => void;
   onMouseUp: (e: React.MouseEvent) => void;
@@ -14,6 +15,7 @@ interface SvgCanvasProps {
   onCanvasClick: () => void;
   onShapeClick: (id: string, e: React.MouseEvent) => void;
   onShapeDoubleClick: (shape: ShapeData) => void;
+  onShapeMouseDown: (e: React.MouseEvent, shapeId: string) => void;
 }
 
 const DrawingPreview: React.FC<{
@@ -62,15 +64,22 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
       onCanvasClick,
       onShapeClick,
       onShapeDoubleClick,
+      onShapeMouseDown,
+      mode,
     },
     ref
   ) => {
+    const canvasStyle: React.CSSProperties = {
+      border: '1px solid black',
+      cursor: mode === 'dragging' ? 'grabbing' : 'default',
+    };
+
     return (
       <svg
         ref={ref}
         width={800}
         height={600}
-        style={{ border: '1px solid black' }}
+        style={canvasStyle}
         onClick={onCanvasClick}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
@@ -84,6 +93,7 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
             isSelected={selectedShapeId === shape.id}
             onClick={(e) => onShapeClick(shape.id, e)}
             onDoubleClick={() => onShapeDoubleClick(shape)}
+            onMouseDown={(e) => onShapeMouseDown(e, shape.id)}
           />
         ))}
         {drawingState && (

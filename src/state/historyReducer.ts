@@ -67,6 +67,7 @@ const recordableActions = new Set<string>([
     'DELETE_SELECTED_SHAPE',
     'CLEAR_CANVAS',
     'FINISH_TEXT_EDIT',
+    'STOP_DRAGGING',
 ]);
 
 // Higher-order reducer to add undo/redo functionality

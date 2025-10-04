@@ -1,10 +1,11 @@
 import { useRef } from 'react';
-import type { Action, Tool } from '../state/reducer';
+import type { Action, Tool, AppMode } from '../state/reducer';
 
 export const useDrawing = (
   dispatch: React.Dispatch<Action>,
   svgRef: React.RefObject<SVGSVGElement>,
   currentTool: Tool,
+  mode: AppMode,
 ) => {
   const isDrawing = useRef(false);
   const startPoint = useRef({ x: 0, y: 0 });
@@ -28,6 +29,11 @@ export const useDrawing = (
       return;
     }
 
+    // Only allow drawing to start when in idle mode
+    if (mode !== 'idle') {
+      return;
+    }
+
     const pos = getMousePosition(e);
 
     if (currentTool === 'text') {
@@ -45,7 +51,8 @@ export const useDrawing = (
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDrawing.current) return;
+    // Only dispatch drawing actions if we are in drawing mode
+    if (!isDrawing.current || mode !== 'drawing') return;
 
     const pos = getMousePosition(e);
     dispatch({
@@ -56,8 +63,13 @@ export const useDrawing = (
 
   const handleMouseUp = () => {
     if (!isDrawing.current) return;
+
+    // Only end the drawing if we are actually in drawing mode.
+    // Otherwise, just reset the flag.
+    if (mode === 'drawing') {
+      dispatch({ type: 'END_DRAWING' });
+    }
     isDrawing.current = false;
-    dispatch({ type: 'END_DRAWING' });
   };
 
   return {
