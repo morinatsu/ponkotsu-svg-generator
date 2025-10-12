@@ -18,7 +18,10 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, onClick, onDoubleClick
   // The <g> element will handle the click for selection
   const groupProps = {
     onClick: onClick,
-    onMouseDown: onMouseDown,
+    onMouseDown: (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent the event from bubbling up to the SvgCanvas
+      onMouseDown(e);
+    },
   };
 
   switch (shape.type) {

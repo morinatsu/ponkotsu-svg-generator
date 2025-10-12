@@ -24,13 +24,13 @@ export const useDrawing = (
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Prevent drawing or text creation when clicking on an existing shape
-    if ((e.target as SVGElement).closest('g')) {
+    // Only allow drawing to start when in idle mode
+    if (mode !== 'idle') {
       return;
     }
 
-    // Only allow drawing to start when in idle mode
-    if (mode !== 'idle') {
+    // Prevent drawing or text creation when clicking on an existing shape
+    if ((e.target as SVGElement).closest('g')) {
       return;
     }
 
@@ -51,8 +51,7 @@ export const useDrawing = (
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    // Only dispatch drawing actions if we are in drawing mode
-    if (!isDrawing.current || mode !== 'drawing') return;
+    if (!isDrawing.current) return;
 
     const pos = getMousePosition(e);
     dispatch({
@@ -63,13 +62,8 @@ export const useDrawing = (
 
   const handleMouseUp = () => {
     if (!isDrawing.current) return;
-
-    // Only end the drawing if we are actually in drawing mode.
-    // Otherwise, just reset the flag.
-    if (mode === 'drawing') {
-      dispatch({ type: 'END_DRAWING' });
-    }
     isDrawing.current = false;
+    dispatch({ type: 'END_DRAWING' });
   };
 
   return {

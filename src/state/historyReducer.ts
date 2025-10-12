@@ -117,7 +117,17 @@ export const undoable = (reducer: typeof originalReducer) => {
                     recordableActions.has((action as Action).type) &&
                     !isEqual(present.shapes, newPresent.shapes)
                 ) {
-                    // futureをクリアして、新しい履歴を追加
+                    // STOP_DRAGGINGの場合は、ドラッグ前の状態を履歴に保存する
+                    // STOP_DRAGGINGの場合は、ドラッグ前の状態を履歴に保存する
+                    if ((action as Action).type === 'STOP_DRAGGING' && present.shapesBeforeDrag) {
+                        return {
+                            past: [...past, present.shapesBeforeDrag], // Use the state before dragging
+                            present: newPresent,
+                            future: [],
+                        };
+                    }
+
+                    // 通常の記録対象アクション
                     return {
                         past: [...past, present.shapes],
                         present: newPresent,

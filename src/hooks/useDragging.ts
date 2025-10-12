@@ -25,8 +25,6 @@ export const useDragging = (
     // Only allow dragging when in idle mode
     if (mode !== 'idle' || !svgRef.current) return;
 
-    e.stopPropagation();
-
     const shape = shapes.find(s => s.id === shapeId);
     if (!shape) return;
 

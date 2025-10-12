@@ -59,6 +59,7 @@ export interface AppState {
         offsetX: number;
         offsetY: number;
     } | null;
+    shapesBeforeDrag: ShapeData[] | null;
 }
 
 export const initialState: AppState = {
@@ -69,6 +70,7 @@ export const initialState: AppState = {
     editingText: null,
     mode: 'idle',
     draggingState: null,
+    shapesBeforeDrag: null,
 };
 
 // Actions that can be dispatched
@@ -291,6 +293,7 @@ export const reducer = (state: AppState, action: Action): AppState => {
                     offsetX: action.payload.offsetX,
                     offsetY: action.payload.offsetY,
                 },
+                shapesBeforeDrag: state.shapes, // Save the state before dragging
             };
         case 'DRAG_SHAPE': {
             if (!state.draggingState) return state;
@@ -332,6 +335,7 @@ export const reducer = (state: AppState, action: Action): AppState => {
                 mode: 'idle',
                 selectedShapeId: state.draggingState.shapeId, // Keep the shape selected
                 draggingState: null,
+                shapesBeforeDrag: null, // Clean up the temporary state
             };
         }
         default:
