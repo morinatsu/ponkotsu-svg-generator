@@ -80,7 +80,7 @@ export type Action =
     | { type: 'DRAWING'; payload: { x: number; y: number; startX: number; startY: number } }
     | { type: 'END_DRAWING' }
     // Dragging actions
-    | { type: 'START_DRAGGING'; payload: { shapeId: string; startX: number; startY: number; offsetX: number; offsetY: number } }
+    | { type: 'START_DRAGGING'; payload: { shapeId: string; mouseX: number; mouseY: number } }
     | { type: 'DRAG_SHAPE'; payload: { x: number; y: number } }
     | { type: 'STOP_DRAGGING' }
     // Shape actions
@@ -280,7 +280,26 @@ export const reducer = (state: AppState, action: Action): AppState => {
                 editingText: null,
             };
         // --- Dragging cases ---
-        case 'START_DRAGGING':
+        case 'START_DRAGGING': {
+            const shape = state.shapes.find(s => s.id === action.payload.shapeId);
+            if (!shape) return state;
+
+            let offsetX = 0;
+            let offsetY = 0;
+
+            // 図形の種類によって座標の基準が違うため、オフセットの計算方法を分岐
+            if (shape.type === 'rectangle' || shape.type === 'text') {
+                offsetX = action.payload.mouseX - shape.x;
+                offsetY = action.payload.mouseY - shape.y;
+            } else if (shape.type === 'ellipse') {
+                offsetX = action.payload.mouseX - shape.cx;
+                offsetY = action.payload.mouseY - shape.cy;
+            } else if (shape.type === 'line') {
+                //線の場合は特殊なため、一旦移動開始点のみ記録
+                offsetX = action.payload.mouseX;
+                offsetY = action.payload.mouseY;
+            }
+
             return {
                 ...state,
                 mode: 'dragging',
@@ -288,13 +307,14 @@ export const reducer = (state: AppState, action: Action): AppState => {
                 selectedShapeId: action.payload.shapeId, // Select the shape being dragged
                 draggingState: {
                     shapeId: action.payload.shapeId,
-                    startX: action.payload.startX,
-                    startY: action.payload.startY,
-                    offsetX: action.payload.offsetX,
-                    offsetY: action.payload.offsetY,
+                    startX: action.payload.mouseX,
+                    startY: action.payload.mouseY,
+                    offsetX,
+                    offsetY,
                 },
                 shapesBeforeDrag: state.shapes, // Save the state before dragging
             };
+        }
         case 'DRAG_SHAPE': {
             if (!state.draggingState) return state;
 
@@ -316,16 +336,27 @@ export const reducer = (state: AppState, action: Action): AppState => {
                         case 'ellipse':
                             return { ...shape, cx: newX, cy: newY };
                         case 'line': {
-                            const dx = newX - shape.x1;
-                            const dy = newY - shape.y1;
-                            return { ...shape, x1: newX, y1: newY, x2: shape.x2 + dx, y2: shape.y2 + dy };
+                            const dx = x - state.draggingState.startX;
+                            const dy = y - state.draggingState.startY;
+                            const originalShape = state.shapesBeforeDrag?.find(s => s.id === shapeId);
+                            if (originalShape && originalShape.type === 'line') {
+                                return {
+                                    ...shape,
+                                    x1: originalShape.x1 + dx,
+                                    y1: originalShape.y1 + dy,
+                                    x2: originalShape.x2 + dx,
+                                    y2: originalShape.y2 + dy,
+                                };
+                            }
+                            return shape; // fallback
                         }
                         case 'text':
                             return { ...shape, x: newX, y: newY };
                         default:
                             return shape;
                     }
-                })
+                }),
+                shapesBeforeDrag: state.shapesBeforeDrag, // Preserve this during drag
             };
         }
         case 'STOP_DRAGGING': {

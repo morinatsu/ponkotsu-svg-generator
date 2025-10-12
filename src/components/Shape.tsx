@@ -12,7 +12,7 @@ interface ShapeProps {
 const Shape: React.FC<ShapeProps> = ({ shape, isSelected, onClick, onDoubleClick, onMouseDown }) => {
   const commonProps = {
     strokeWidth: 2,
-    style: { cursor: 'grab' },
+    style: { cursor: 'grab', pointerEvents: 'all' as const },
   };
 
   // The <g> element will handle the click for selection
