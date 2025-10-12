@@ -91,7 +91,15 @@ export const undoable = (reducer: typeof originalReducer) => {
                 const newPast = past.slice(0, past.length - 1);
                 return {
                     past: newPast,
-                    present: { ...present, shapes: previousShapes, selectedShapeId: null }, // Undo時は選択を解除
+                    present: {
+                        ...present,
+                        shapes: previousShapes,
+                        selectedShapeId: null, // Undo時は選択を解除
+                        // 操作中（描画、ドラッグ）の状態もリセットする
+                        mode: 'idle',
+                        drawingState: null,
+                        draggingState: null,
+                    },
                     future: [present.shapes, ...future],
                 };
             }
@@ -103,7 +111,15 @@ export const undoable = (reducer: typeof originalReducer) => {
                 const newFuture = future.slice(1);
                 return {
                     past: [...past, present.shapes],
-                    present: { ...present, shapes: nextShapes, selectedShapeId: null }, // Redo時も選択を解除
+                    present: {
+                        ...present,
+                        shapes: nextShapes,
+                        selectedShapeId: null, // Redo時も選択を解除
+                        // 操作中（描画、ドラッグ）の状態もリセットする
+                        mode: 'idle',
+                        drawingState: null,
+                        draggingState: null,
+                    },
                     future: newFuture,
                 };
             }
