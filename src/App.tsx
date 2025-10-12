@@ -29,7 +29,7 @@ function App() {
   const svgRef = useRef<SVGSVGElement>(null);
 
   const { handleMouseDown, handleMouseMove, handleMouseUp } = useDrawing(dispatch, svgRef, currentTool, mode);
-  const { handleMouseDown: handleShapeMouseDown } = useDragging(state.present, dispatch, svgRef);
+  const { handleMouseDownOnShape } = useDragging(dispatch, mode, svgRef);
   useKeyboardControls(dispatch, selectedShapeId);
   const { handleExport } = useSvgExport(svgRef);
 
@@ -99,7 +99,7 @@ function App() {
         onCanvasClick={handleCanvasClick}
         onShapeClick={handleShapeClick}
         onShapeDoubleClick={handleShapeDoubleClick}
-        onShapeMouseDown={handleShapeMouseDown}
+        onShapeMouseDown={(e, shapeId) => handleMouseDownOnShape(shapeId, e)}
         mode={mode}
       />
       <DebugInfo history={state} />
