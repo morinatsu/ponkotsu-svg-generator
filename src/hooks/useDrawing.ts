@@ -1,10 +1,11 @@
 import { useRef } from 'react';
-import type { Action, Tool } from '../state/reducer';
+import type { Action, Tool, AppMode } from '../state/reducer';
 
 export const useDrawing = (
   dispatch: React.Dispatch<Action>,
   svgRef: React.RefObject<SVGSVGElement>,
   currentTool: Tool,
+  mode: AppMode,
 ) => {
   const isDrawing = useRef(false);
   const startPoint = useRef({ x: 0, y: 0 });
@@ -23,6 +24,11 @@ export const useDrawing = (
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Only allow drawing to start when in idle mode
+    if (mode !== 'idle') {
+      return;
+    }
+
     // Prevent drawing or text creation when clicking on an existing shape
     if ((e.target as SVGElement).closest('g')) {
       return;

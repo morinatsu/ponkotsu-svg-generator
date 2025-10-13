@@ -7,6 +7,7 @@ import { reducer, initialState, type Tool, type ShapeData } from './state/reduce
 import { undoable } from './state/historyReducer';
 import { logger } from './state/logger'; // Import logger
 import { useDrawing } from './hooks/useDrawing';
+import { useDragging } from './hooks/useDragging';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useSvgExport } from './hooks/useSvgExport';
 import './App.css';
@@ -24,10 +25,11 @@ function App() {
     future: [],
   });
 
-  const { shapes, selectedShapeId, drawingState, currentTool, editingText } = state.present;
+  const { shapes, selectedShapeId, drawingState, currentTool, editingText, mode } = state.present;
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const { handleMouseDown, handleMouseMove, handleMouseUp } = useDrawing(dispatch, svgRef, currentTool);
+  const { handleMouseDown, handleMouseMove, handleMouseUp } = useDrawing(dispatch, svgRef, currentTool, mode);
+  const { handleMouseDownOnShape } = useDragging(dispatch, mode, svgRef);
   useKeyboardControls(dispatch, selectedShapeId);
   const { handleExport } = useSvgExport(svgRef);
 
@@ -97,6 +99,8 @@ function App() {
         onCanvasClick={handleCanvasClick}
         onShapeClick={handleShapeClick}
         onShapeDoubleClick={handleShapeDoubleClick}
+        onShapeMouseDown={(e, shapeId) => handleMouseDownOnShape(shapeId, e)}
+        mode={mode}
       />
       <DebugInfo history={state} />
 
