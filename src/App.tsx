@@ -28,10 +28,18 @@ function App() {
   const { shapes, selectedShapeId, drawingState, currentTool, editingText, mode } = state.present;
   const svgRef = useRef<SVGSVGElement>(null);
 
+  const wasDragged = useRef(false);
+
   const { handleMouseDown, handleMouseMove, handleMouseUp } = useDrawing(dispatch, svgRef, currentTool, mode);
-  const { handleMouseDownOnShape } = useDragging(dispatch, mode, svgRef);
+  const { handleMouseDownOnShape: originalHandleMouseDownOnShape } = useDragging(dispatch, mode, svgRef, wasDragged);
   useKeyboardControls(dispatch, selectedShapeId);
   const { handleExport } = useSvgExport(svgRef);
+
+  // mousedown時にドラッグフラグをリセットするラッパー
+  const handleMouseDownOnShape = (shapeId: string, e: React.MouseEvent) => {
+    wasDragged.current = false;
+    originalHandleMouseDownOnShape(shapeId, e);
+  };
 
   const handleToolSelect = (tool: Tool) => {
     dispatch({ type: 'SELECT_TOOL', payload: tool });
@@ -55,6 +63,10 @@ function App() {
 
   const handleShapeClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    // ドラッグ操作の直後であれば、選択イベントを無視する
+    if (wasDragged.current) {
+      return;
+    }
     dispatch({ type: 'SELECT_SHAPE', payload: id });
   };
 

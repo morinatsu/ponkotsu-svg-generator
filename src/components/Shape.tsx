@@ -4,15 +4,17 @@ import type { ShapeData } from '../state/reducer';
 interface ShapeProps {
   shape: ShapeData;
   isSelected: boolean;
+  isDragging: boolean; // ドラッグ中かどうかを示すフラグ
   onClick: (e: React.MouseEvent) => void;
   onDoubleClick: () => void;
   onMouseDown: (e: React.MouseEvent) => void;
 }
 
-const Shape: React.FC<ShapeProps> = ({ shape, isSelected, onClick, onDoubleClick, onMouseDown }) => {
+const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, onDoubleClick, onMouseDown }) => {
   const commonProps = {
     strokeWidth: 2,
-    style: { cursor: 'grab', pointerEvents: 'all' as const },
+    // ドラッグ中は他の図形がイベントを拾わないようにする
+    style: { cursor: 'grab', pointerEvents: isDragging ? 'none' : 'all' as const },
   };
 
   // The <g> element will handle the click for selection

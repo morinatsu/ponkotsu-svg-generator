@@ -364,7 +364,7 @@ export const reducer = (state: AppState, action: Action): AppState => {
             return {
                 ...state,
                 mode: 'idle',
-                selectedShapeId: state.draggingState.shapeId, // Keep the shape selected
+                selectedShapeId: null, // ドラッグ後は選択を解除
                 draggingState: null,
                 shapesBeforeDrag: null, // Clean up the temporary state
             };
