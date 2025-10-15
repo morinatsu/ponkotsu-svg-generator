@@ -43,6 +43,7 @@ export type ShapeData = RectangleData | EllipseData | LineData | TextData;
 export type DrawingShape = Omit<RectangleData, 'id'> & { id?: string };
 
 export type Tool = ShapeData['type'];
+export type AppMode = 'idle' | 'drawing' | 'dragging';
 
 export interface AppState {
     shapes: ShapeData[];
@@ -50,6 +51,15 @@ export interface AppState {
     drawingState: DrawingShape | null; // Use a generic rectangle for drawing preview
     currentTool: Tool;
     editingText: { id: string | null; content: string; x: number; y: number } | null;
+    mode: AppMode;
+    draggingState: {
+        shapeId: string;
+        startX: number;
+        startY: number;
+        offsetX: number;
+        offsetY: number;
+    } | null;
+    shapesBeforeDrag: ShapeData[] | null;
 }
 
 export const initialState: AppState = {
@@ -58,13 +68,22 @@ export const initialState: AppState = {
     drawingState: null,
     currentTool: 'rectangle',
     editingText: null,
+    mode: 'idle',
+    draggingState: null,
+    shapesBeforeDrag: null,
 };
 
 // Actions that can be dispatched
 export type Action =
+    // Drawing actions
     | { type: 'START_DRAWING'; payload: { x: number; y: number } }
     | { type: 'DRAWING'; payload: { x: number; y: number; startX: number; startY: number } }
     | { type: 'END_DRAWING' }
+    // Dragging actions
+    | { type: 'START_DRAGGING'; payload: { shapeId: string; mouseX: number; mouseY: number } }
+    | { type: 'DRAG_SHAPE'; payload: { x: number; y: number } }
+    | { type: 'STOP_DRAGGING' }
+    // Shape actions
     | { type: 'ADD_SHAPE'; payload: ShapeData }
     | { type: 'SELECT_SHAPE'; payload: string | null }
     | { type: 'DELETE_SELECTED_SHAPE' }
@@ -86,6 +105,7 @@ export const reducer = (state: AppState, action: Action): AppState => {
         case 'START_DRAWING':
             return {
                 ...state,
+                mode: 'drawing',
                 selectedShapeId: null, // Deselect any selected shape
                 drawingState: {
                     type: state.currentTool,
@@ -133,13 +153,13 @@ export const reducer = (state: AppState, action: Action): AppState => {
         }
         case 'END_DRAWING': {
             if (!state.drawingState) {
-                return { ...state, drawingState: null };
+                return { ...state, drawingState: null, mode: 'idle' };
             }
             const { x, y, width, height } = state.drawingState;
 
             // Do not create a shape if the dimensions are too small
             if (width === 0 && height === 0) {
-                return { ...state, drawingState: null };
+                return { ...state, drawingState: null, mode: 'idle' };
             }
 
             let newShape: ShapeData;
@@ -171,13 +191,14 @@ export const reducer = (state: AppState, action: Action): AppState => {
                     break;
                 default:
                     // Should not happen
-                    return { ...state, drawingState: null };
+                    return { ...state, drawingState: null, mode: 'idle' };
             }
 
             return {
                 ...state,
                 shapes: [...state.shapes, newShape],
                 drawingState: null,
+                mode: 'idle',
             };
         }
         case 'ADD_SHAPE':
@@ -258,6 +279,96 @@ export const reducer = (state: AppState, action: Action): AppState => {
                 ...state,
                 editingText: null,
             };
+        // --- Dragging cases ---
+        case 'START_DRAGGING': {
+            const shape = state.shapes.find(s => s.id === action.payload.shapeId);
+            if (!shape) return state;
+
+            let offsetX = 0;
+            let offsetY = 0;
+
+            // 図形の種類によって座標の基準が違うため、オフセットの計算方法を分岐
+            if (shape.type === 'rectangle' || shape.type === 'text') {
+                offsetX = action.payload.mouseX - shape.x;
+                offsetY = action.payload.mouseY - shape.y;
+            } else if (shape.type === 'ellipse') {
+                offsetX = action.payload.mouseX - shape.cx;
+                offsetY = action.payload.mouseY - shape.cy;
+            } else if (shape.type === 'line') {
+                //線の場合は特殊なため、一旦移動開始点のみ記録
+                offsetX = action.payload.mouseX;
+                offsetY = action.payload.mouseY;
+            }
+
+            return {
+                ...state,
+                mode: 'dragging',
+                drawingState: null, // Cancel any drawing in progress
+                selectedShapeId: action.payload.shapeId, // Select the shape being dragged
+                draggingState: {
+                    shapeId: action.payload.shapeId,
+                    startX: action.payload.mouseX,
+                    startY: action.payload.mouseY,
+                    offsetX,
+                    offsetY,
+                },
+                shapesBeforeDrag: state.shapes, // Save the state before dragging
+            };
+        }
+        case 'DRAG_SHAPE': {
+            if (!state.draggingState) return state;
+
+            const { shapeId, offsetX, offsetY } = state.draggingState;
+            const { x, y } = action.payload;
+            const newX = x - offsetX;
+            const newY = y - offsetY;
+
+            return {
+                ...state,
+                shapes: state.shapes.map(shape => {
+                    if (shape.id !== shapeId) {
+                        return shape;
+                    }
+                    // Move shape based on its type
+                    switch (shape.type) {
+                        case 'rectangle':
+                            return { ...shape, x: newX, y: newY };
+                        case 'ellipse':
+                            return { ...shape, cx: newX, cy: newY };
+                        case 'line': {
+                            const dx = x - state.draggingState.startX;
+                            const dy = y - state.draggingState.startY;
+                            const originalShape = state.shapesBeforeDrag?.find(s => s.id === shapeId);
+                            if (originalShape && originalShape.type === 'line') {
+                                return {
+                                    ...shape,
+                                    x1: originalShape.x1 + dx,
+                                    y1: originalShape.y1 + dy,
+                                    x2: originalShape.x2 + dx,
+                                    y2: originalShape.y2 + dy,
+                                };
+                            }
+                            return shape; // fallback
+                        }
+                        case 'text':
+                            return { ...shape, x: newX, y: newY };
+                        default:
+                            return shape;
+                    }
+                }),
+                shapesBeforeDrag: state.shapesBeforeDrag, // Preserve this during drag
+            };
+        }
+        case 'STOP_DRAGGING': {
+            if (!state.draggingState) return state;
+            return {
+                ...state,
+                mode: 'idle',
+                selectedShapeId: null, // ドラッグ後は選択を解除
+                draggingState: null,
+                shapesBeforeDrag: null, // Clean up the temporary state
+            };
+        }
         default:
             return state;
     }

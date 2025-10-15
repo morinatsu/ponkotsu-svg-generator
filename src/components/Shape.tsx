@@ -4,19 +4,26 @@ import type { ShapeData } from '../state/reducer';
 interface ShapeProps {
   shape: ShapeData;
   isSelected: boolean;
+  isDragging: boolean; // ドラッグ中かどうかを示すフラグ
   onClick: (e: React.MouseEvent) => void;
   onDoubleClick: () => void;
+  onMouseDown: (e: React.MouseEvent) => void;
 }
 
-const Shape: React.FC<ShapeProps> = ({ shape, isSelected, onClick, onDoubleClick }) => {
+const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, onDoubleClick, onMouseDown }) => {
   const commonProps = {
     strokeWidth: 2,
-    style: { cursor: 'pointer' },
+    // ドラッグ中は他の図形がイベントを拾わないようにする
+    style: { cursor: 'grab', pointerEvents: isDragging ? 'none' : 'all' as const },
   };
 
   // The <g> element will handle the click for selection
   const groupProps = {
     onClick: onClick,
+    onMouseDown: (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent the event from bubbling up to the SvgCanvas
+      onMouseDown(e);
+    },
   };
 
   switch (shape.type) {
@@ -77,7 +84,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, onClick, onDoubleClick
             fontFamily={shape.fontFamily}
             fill={isSelected ? 'blue' : shape.fill}
             stroke="none"
-            style={{ cursor: 'pointer', userSelect: 'none' }}
+            style={{ cursor: 'grab', userSelect: 'none' }}
           >
             {lines.map((line, index) => (
               <tspan key={index} x={shape.x} dy={index === 0 ? 0 : lineHeight}>

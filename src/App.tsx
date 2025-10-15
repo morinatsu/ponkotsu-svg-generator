@@ -7,6 +7,7 @@ import { reducer, initialState, type Tool, type ShapeData } from './state/reduce
 import { undoable } from './state/historyReducer';
 import { logger } from './state/logger'; // Import logger
 import { useDrawing } from './hooks/useDrawing';
+import { useDragging } from './hooks/useDragging';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useSvgExport } from './hooks/useSvgExport';
 import './App.css';
@@ -24,12 +25,21 @@ function App() {
     future: [],
   });
 
-  const { shapes, selectedShapeId, drawingState, currentTool, editingText } = state.present;
+  const { shapes, selectedShapeId, drawingState, currentTool, editingText, mode } = state.present;
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const { handleMouseDown, handleMouseMove, handleMouseUp } = useDrawing(dispatch, svgRef, currentTool);
+  const wasDragged = useRef(false);
+
+  const { handleMouseDown, handleMouseMove, handleMouseUp } = useDrawing(dispatch, svgRef, currentTool, mode);
+  const { handleMouseDownOnShape: originalHandleMouseDownOnShape } = useDragging(dispatch, mode, svgRef, wasDragged);
   useKeyboardControls(dispatch, selectedShapeId);
   const { handleExport } = useSvgExport(svgRef);
+
+  // mousedown時にドラッグフラグをリセットするラッパー
+  const handleMouseDownOnShape = (shapeId: string, e: React.MouseEvent) => {
+    wasDragged.current = false;
+    originalHandleMouseDownOnShape(shapeId, e);
+  };
 
   const handleToolSelect = (tool: Tool) => {
     dispatch({ type: 'SELECT_TOOL', payload: tool });
@@ -53,6 +63,10 @@ function App() {
 
   const handleShapeClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    // ドラッグ操作の直後であれば、選択イベントを無視する
+    if (wasDragged.current) {
+      return;
+    }
     dispatch({ type: 'SELECT_SHAPE', payload: id });
   };
 
@@ -97,6 +111,8 @@ function App() {
         onCanvasClick={handleCanvasClick}
         onShapeClick={handleShapeClick}
         onShapeDoubleClick={handleShapeDoubleClick}
+        onShapeMouseDown={(e, shapeId) => handleMouseDownOnShape(shapeId, e)}
+        mode={mode}
       />
       <DebugInfo history={state} />
 

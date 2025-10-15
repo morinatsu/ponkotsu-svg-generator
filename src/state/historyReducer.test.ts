@@ -143,4 +143,62 @@ describe('historyReducer (undoable)', () => {
         expect(state.present.currentTool).toBe('ellipse'); // Present is updated
         expect(state.future).toHaveLength(0);
     });
+    it('UNDO: should only undo the last drag operation, not the shape creation', () => {
+        // 1. Add a shape. This creates the first history entry.
+        const stateWithDrawing: HistoryState = {
+            ...initialState,
+            present: {
+                ...initialState.present,
+                // Draw a rectangle from (10,10) to (60,60)
+                drawingState: { type: 'rectangle', x: 10, y: 10, width: 50, height: 50 },
+            },
+        };
+        let state = historyReducer(stateWithDrawing, { type: 'END_DRAWING' });
+
+        expect(state.past).toHaveLength(1); // History: [initial_empty_state]
+        expect(state.present.shapes).toHaveLength(1);
+        const shapeId = state.present.shapes[0].id;
+        expect(state.present.shapes[0].x).toBe(10);
+
+        // 2. Drag the shape
+        // 2a. Start dragging. We simulate clicking at (15,15) on the shape.
+        // The shape's top-left is at (10,10), so the offset is (5,5).
+        state = historyReducer(state, {
+            type: 'START_DRAGGING',
+            payload: { shapeId, mouseX: 15, mouseY: 15 },
+        });
+        // 2b. Drag to a new mouse position (105, 105).
+        // With an offset of (5,5), the new shape top-left should be (100,100).
+        state = historyReducer(state, { type: 'DRAG_SHAPE', payload: { x: 105, y: 105 } });
+        const shapesBeforeDrag = state.present.shapesBeforeDrag; // Get the state before drag started
+
+        // 2c. Stop dragging. This should create the second history entry.
+        state = historyReducer(state, { type: 'STOP_DRAGGING' });
+
+        expect(state.past).toHaveLength(2); // History: [initial_empty, pre-drag_state]
+        // The state before the drag started should be in the past.
+        expect(state.past[1]).toEqual(shapesBeforeDrag);
+
+        // Check if the shape has moved
+        const movedShape = state.present.shapes[0] as Extract<ShapeData, { type: 'rectangle' }>;
+        expect(movedShape.x).toBe(100);
+
+        // 3. Perform UNDO
+        const finalState = historyReducer(state, { type: 'UNDO' });
+
+        // 4. Assert the outcome
+        // The shape should still exist but be back at its original position.
+        expect(finalState.present.shapes).toHaveLength(1);
+        expect(finalState.present.shapes[0].x).toBe(10); // Back to original x
+        expect(finalState.present.shapes[0].y).toBe(10); // Back to original y
+
+        // The history should now contain only the initial state (before shape creation)
+        expect(finalState.past).toHaveLength(1);
+        expect(finalState.past[0]).toEqual([]);
+
+        // The future should contain the state from before the undo (the dragged position)
+        expect(finalState.future).toHaveLength(1);
+        const futureShape = finalState.future[0][0] as Extract<ShapeData, { type: 'rectangle' }>;
+        expect(futureShape.x).toBe(100);
+    });
 });

@@ -67,6 +67,7 @@ const recordableActions = new Set<string>([
     'DELETE_SELECTED_SHAPE',
     'CLEAR_CANVAS',
     'FINISH_TEXT_EDIT',
+    'STOP_DRAGGING',
 ]);
 
 // Higher-order reducer to add undo/redo functionality
@@ -90,7 +91,15 @@ export const undoable = (reducer: typeof originalReducer) => {
                 const newPast = past.slice(0, past.length - 1);
                 return {
                     past: newPast,
-                    present: { ...present, shapes: previousShapes, selectedShapeId: null }, // Undo時は選択を解除
+                    present: {
+                        ...present,
+                        shapes: previousShapes,
+                        selectedShapeId: null, // Undo時は選択を解除
+                        // 操作中（描画、ドラッグ）の状態もリセットする
+                        mode: 'idle',
+                        drawingState: null,
+                        draggingState: null,
+                    },
                     future: [present.shapes, ...future],
                 };
             }
@@ -102,7 +111,15 @@ export const undoable = (reducer: typeof originalReducer) => {
                 const newFuture = future.slice(1);
                 return {
                     past: [...past, present.shapes],
-                    present: { ...present, shapes: nextShapes, selectedShapeId: null }, // Redo時も選択を解除
+                    present: {
+                        ...present,
+                        shapes: nextShapes,
+                        selectedShapeId: null, // Redo時も選択を解除
+                        // 操作中（描画、ドラッグ）の状態もリセットする
+                        mode: 'idle',
+                        drawingState: null,
+                        draggingState: null,
+                    },
                     future: newFuture,
                 };
             }
@@ -110,13 +127,23 @@ export const undoable = (reducer: typeof originalReducer) => {
                 // まず、元々のReducerで新しい状態を計算する
                 const newPresent = reducer(present, action as Action);
 
-                // もし、実行されたアクションが記録対象のアクションで、
-                // かつ、shapes配列が実際に変更されていた場合のみ履歴を更新する
-                if (
+                // STOP_DRAGGINGは特別扱い。shapesが変更されていなくても履歴に記録する
+                if ((action as Action).type === 'STOP_DRAGGING' && present.shapesBeforeDrag) {
+                    // ドラッグ前の状態('shapesBeforeDrag')が、現在の最後の履歴と同じでなければ記録する
+                    // (全く移動しなかった場合は履歴に追加しない)
+                    if (!isEqual(past[past.length - 1], present.shapesBeforeDrag)) {
+                        return {
+                            past: [...past, present.shapesBeforeDrag],
+                            present: newPresent,
+                            future: [],
+                        };
+                    }
+                }
+                // 他の記録対象アクションは、shapes配列が実際に変更された場合のみ履歴を更新する
+                else if (
                     recordableActions.has((action as Action).type) &&
                     !isEqual(present.shapes, newPresent.shapes)
                 ) {
-                    // futureをクリアして、新しい履歴を追加
                     return {
                         past: [...past, present.shapes],
                         present: newPresent,
