@@ -4,11 +4,13 @@ import type { Action, AppState } from '../state/reducer';
 export const useDragging = (
   dispatch: React.Dispatch<Action>,
   mode: AppState['mode'],
-  svgRef: React.RefObject<SVGSVGElement>
+  svgRef: React.RefObject<SVGSVGElement>,
+  wasDragged: React.MutableRefObject<boolean>
 ) => {
 
   // マウスの移動を処理する関数
   const handleMouseMove = useCallback((e: MouseEvent) => {
+    wasDragged.current = true; // マウスが動いたらドラッグ操作とみなす
     // マウス座標を取得するロジックはuseDrawing.tsからコピーする
     if (svgRef.current) {
       const CTM = svgRef.current.getScreenCTM();
@@ -18,7 +20,7 @@ export const useDragging = (
         dispatch({ type: 'DRAG_SHAPE', payload: { x: mouseX, y: mouseY } });
       }
     }
-  }, [dispatch, svgRef]);
+  }, [dispatch, svgRef, wasDragged]);
 
   // ドラッグ終了を処理する関数
   const handleMouseUp = useCallback(() => {

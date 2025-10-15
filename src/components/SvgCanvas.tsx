@@ -91,6 +91,8 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
             key={shape.id}
             shape={shape}
             isSelected={selectedShapeId === shape.id}
+            // ドラッグモード中に、ドラッグ対象ではない図形はイベントを無視する
+            isDragging={mode === 'dragging' && selectedShapeId !== shape.id}
             onClick={(e) => onShapeClick(shape.id, e)}
             onDoubleClick={() => onShapeDoubleClick(shape)}
             onMouseDown={(e) => onShapeMouseDown(e, shape.id)}
