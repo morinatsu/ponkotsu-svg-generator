@@ -54,6 +54,7 @@ pnpm run test
 
 コードの品質と一貫性を保つため、以下のガイドラインにしたがってください。
 
+- コメントの言語: コード内のコメントは、原則として英語で記述してください。 (In principle, comments in the code should be written in English.)
 - ESLintとPrettierの利用: コードの静的解析には ESLint、フォーマットには Prettier を使用します。設定はプロジェクトで統一されており、コミット前に必ず実行してください。
 - 自動化の推奨: `husky` と `lint-staged` を利用して、コミット時に自動でフォーマットとLintが実行されるように設定しています。これにより、一貫性のないコードがリポジトリに含まれるのを防ぎます。
 - READMEの更新: 機能追加や仕様変更があった場合は、README.md も忘れずに更新してください。
