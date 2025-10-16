@@ -30,6 +30,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
     case 'rectangle':
       return (
         <g {...groupProps}>
+          {/* Visible shape, not clickable */}
           <rect
             key={shape.id}
             x={shape.x}
@@ -38,13 +39,25 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
             height={shape.height}
             stroke={isSelected ? 'blue' : 'black'}
             fill="none"
-            {...commonProps}
+            strokeWidth={commonProps.strokeWidth}
+            style={{ pointerEvents: 'none' }}
+          />
+          {/* Hitbox for easier selection */}
+          <rect
+            x={shape.x}
+            y={shape.y}
+            width={shape.width}
+            height={shape.height}
+            strokeWidth={10}
+            stroke="transparent"
+            fill="none"
           />
         </g>
       );
     case 'ellipse':
       return (
         <g {...groupProps}>
+          {/* Visible shape, not clickable */}
           <ellipse
             key={shape.id}
             cx={shape.cx}
@@ -53,7 +66,18 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
             ry={shape.ry}
             stroke={isSelected ? 'blue' : 'black'}
             fill="none"
-            {...commonProps}
+            strokeWidth={commonProps.strokeWidth}
+            style={{ pointerEvents: 'none' }}
+          />
+          {/* Hitbox for easier selection */}
+          <ellipse
+            cx={shape.cx}
+            cy={shape.cy}
+            rx={shape.rx}
+            ry={shape.ry}
+            strokeWidth={10}
+            stroke="transparent"
+            fill="none"
           />
         </g>
       );
