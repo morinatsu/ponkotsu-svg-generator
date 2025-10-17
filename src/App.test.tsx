@@ -28,25 +28,18 @@ vi.mock('./components/TextInputModal', () => ({
 }));
 
 // Mock custom hooks
-vi.mock('./hooks/useDrawing');
-vi.mock('./hooks/useDragging');
+vi.mock('./hooks/useInteractionManager');
 vi.mock('./hooks/useKeyboardControls');
 vi.mock('./hooks/useSvgExport');
 
 // Import hooks AFTER mocking
-import { useDrawing } from './hooks/useDrawing';
-import { useDragging } from './hooks/useDragging';
+import { useInteractionManager } from './hooks/useInteractionManager';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useSvgExport } from './hooks/useSvgExport';
 
 describe('App', () => {
-  const mockUseDrawingHandlers = {
+  const mockUseInteractionManagerHandlers = {
     handleMouseDown: vi.fn(),
-    handleMouseMove: vi.fn(),
-    handleMouseUp: vi.fn(),
-  };
-  const mockUseDraggingHandlers = {
-    handleMouseDownOnShape: vi.fn(),
   };
   const mockUseSvgExportHandlers = {
     handleExport: vi.fn(),
@@ -56,8 +49,7 @@ describe('App', () => {
     vi.clearAllMocks();
 
     // Setup mock implementations for each test
-    vi.mocked(useDrawing).mockReturnValue(mockUseDrawingHandlers);
-    vi.mocked(useDragging).mockReturnValue(mockUseDraggingHandlers);
+    vi.mocked(useInteractionManager).mockReturnValue(mockUseInteractionManagerHandlers);
     vi.mocked(useKeyboardControls).mockImplementation(vi.fn());
     vi.mocked(useSvgExport).mockReturnValue(mockUseSvgExportHandlers);
   });
@@ -95,18 +87,12 @@ describe('App', () => {
     expect(useKeyboardControls).toHaveBeenCalledWith(expect.any(Function), null);
   });
 
-  it('calls canvas event handlers from useDrawing', () => {
+  it('calls canvas mousedown event handler from useInteractionManager', () => {
     render(<App />);
     const canvas = screen.getByTestId('svg-canvas');
 
     fireEvent.mouseDown(canvas);
-    expect(mockUseDrawingHandlers.handleMouseDown).toHaveBeenCalled();
-
-    fireEvent.mouseMove(canvas);
-    expect(mockUseDrawingHandlers.handleMouseMove).toHaveBeenCalled();
-
-    fireEvent.mouseUp(canvas);
-    expect(mockUseDrawingHandlers.handleMouseUp).toHaveBeenCalled();
+    expect(mockUseInteractionManagerHandlers.handleMouseDown).toHaveBeenCalled();
   });
 
   it('calls handleExport from useSvgExport when export button is clicked', () => {
