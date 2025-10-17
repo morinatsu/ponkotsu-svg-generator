@@ -6,8 +6,7 @@ import TextInputModal from './components/TextInputModal'; // Import the modal
 import { reducer, initialState, type Tool, type ShapeData } from './state/reducer';
 import { undoable } from './state/historyReducer';
 import { logger } from './state/logger'; // Import logger
-import { useDrawing } from './hooks/useDrawing';
-import { useDragging } from './hooks/useDragging';
+import { useInteractionManager } from './hooks/useInteractionManager';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useSvgExport } from './hooks/useSvgExport';
 import './App.css';
@@ -25,21 +24,16 @@ function App() {
     future: [],
   });
 
-  const { shapes, selectedShapeId, drawingState, currentTool, editingText, mode } = state.present;
+  const { shapes, selectedShapeId, drawingState, currentTool, editingText } = state.present;
   const svgRef = useRef<SVGSVGElement>(null);
 
+  // This ref is used to prevent click events from firing after a drag operation.
   const wasDragged = useRef(false);
 
-  const { handleMouseDown, handleMouseMove, handleMouseUp } = useDrawing(dispatch, svgRef, currentTool, mode);
-  const { handleMouseDownOnShape: originalHandleMouseDownOnShape } = useDragging(dispatch, mode, svgRef, wasDragged);
+  // The new, unified interaction manager hook.
+  const { handleMouseDown } = useInteractionManager(dispatch, state.present, svgRef, wasDragged);
   useKeyboardControls(dispatch, selectedShapeId);
   const { handleExport } = useSvgExport(svgRef);
-
-  // mousedown時にドラッグフラグをリセットするラッパー
-  const handleMouseDownOnShape = (shapeId: string, e: React.MouseEvent) => {
-    wasDragged.current = false;
-    originalHandleMouseDownOnShape(shapeId, e);
-  };
 
   const handleToolSelect = (tool: Tool) => {
     dispatch({ type: 'SELECT_TOOL', payload: tool });
@@ -105,14 +99,9 @@ function App() {
         selectedShapeId={selectedShapeId}
         currentTool={currentTool}
         onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
         onCanvasClick={handleCanvasClick}
         onShapeClick={handleShapeClick}
         onShapeDoubleClick={handleShapeDoubleClick}
-        onShapeMouseDown={(e, shapeId) => handleMouseDownOnShape(shapeId, e)}
-        mode={mode}
       />
       <DebugInfo history={state} />
 

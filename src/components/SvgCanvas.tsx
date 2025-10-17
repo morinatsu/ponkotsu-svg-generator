@@ -7,15 +7,10 @@ interface SvgCanvasProps {
   drawingState: DrawingShape | null;
   selectedShapeId: string | null;
   currentTool: ShapeData['type'];
-  mode: AppMode;
   onMouseDown: (e: React.MouseEvent) => void;
-  onMouseMove: (e: React.MouseEvent) => void;
-  onMouseUp: (e: React.MouseEvent) => void;
-  onMouseLeave: (e: React.MouseEvent) => void;
   onCanvasClick: () => void;
   onShapeClick: (id: string, e: React.MouseEvent) => void;
   onShapeDoubleClick: (shape: ShapeData) => void;
-  onShapeMouseDown: (e: React.MouseEvent, shapeId: string) => void;
 }
 
 const DrawingPreview: React.FC<{
@@ -58,20 +53,15 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
       selectedShapeId,
       currentTool,
       onMouseDown,
-      onMouseMove,
-      onMouseUp,
-      onMouseLeave,
       onCanvasClick,
       onShapeClick,
       onShapeDoubleClick,
-      onShapeMouseDown,
-      mode,
     },
     ref
   ) => {
     const canvasStyle: React.CSSProperties = {
       border: '1px solid black',
-      cursor: mode === 'dragging' ? 'grabbing' : 'default',
+      // The cursor is now managed by CSS based on the body's data attribute
     };
 
     return (
@@ -82,20 +72,17 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
         style={canvasStyle}
         onClick={onCanvasClick}
         onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseLeave}
       >
         {shapes.map((shape) => (
           <Shape
             key={shape.id}
             shape={shape}
             isSelected={selectedShapeId === shape.id}
-            // ドラッグモード中に、ドラッグ対象ではない図形はイベントを無視する
-            isDragging={mode === 'dragging' && selectedShapeId !== shape.id}
+            // When another shape is being dragged, prevent interaction.
+            isDragging={!!selectedShapeId && selectedShapeId !== shape.id}
             onClick={(e) => onShapeClick(shape.id, e)}
             onDoubleClick={() => onShapeDoubleClick(shape)}
-            onMouseDown={(e) => onShapeMouseDown(e, shape.id)}
+            // The onMouseDown is now handled by the main canvas handler
           />
         ))}
         {drawingState && (

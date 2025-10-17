@@ -4,32 +4,29 @@ import type { ShapeData } from '../state/reducer';
 interface ShapeProps {
   shape: ShapeData;
   isSelected: boolean;
-  isDragging: boolean; // ドラッグ中かどうかを示すフラグ
+  isDragging: boolean; // Flag to indicate if another shape is being dragged
   onClick: (e: React.MouseEvent) => void;
   onDoubleClick: () => void;
-  onMouseDown: (e: React.MouseEvent) => void;
 }
 
-const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, onDoubleClick, onMouseDown }) => {
+const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, onDoubleClick }) => {
   const commonProps = {
     strokeWidth: 2,
-    // ドラッグ中は他の図形がイベントを拾わないようにする
+    // When another shape is being dragged, disable pointer events on this one.
     style: { cursor: 'grab', pointerEvents: isDragging ? 'none' : 'all' as const },
   };
 
-  // The <g> element will handle the click for selection
-  const groupProps = {
+  // Event handlers and data-attributes are attached directly to the hitbox element
+  // or the visible element if no hitbox exists (e.g., for lines and text).
+  const hitBoxProps = {
     onClick: onClick,
-    onMouseDown: (e: React.MouseEvent) => {
-      e.stopPropagation(); // Prevent the event from bubbling up to the SvgCanvas
-      onMouseDown(e);
-    },
+    'data-shape-id': shape.id,
   };
 
   switch (shape.type) {
     case 'rectangle':
       return (
-        <g {...groupProps}>
+        <g>
           {/* Visible shape, not clickable */}
           <rect
             key={shape.id}
@@ -42,8 +39,9 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
             strokeWidth={commonProps.strokeWidth}
             style={{ pointerEvents: 'none' }}
           />
-          {/* Hitbox for easier selection */}
+          {/* Hitbox for easier selection and interaction */}
           <rect
+            {...hitBoxProps}
             x={shape.x}
             y={shape.y}
             width={shape.width}
@@ -51,12 +49,13 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
             strokeWidth={10}
             stroke="transparent"
             fill="none"
+            style={{ cursor: 'grab' }}
           />
         </g>
       );
     case 'ellipse':
       return (
-        <g {...groupProps}>
+        <g>
           {/* Visible shape, not clickable */}
           <ellipse
             key={shape.id}
@@ -69,8 +68,9 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
             strokeWidth={commonProps.strokeWidth}
             style={{ pointerEvents: 'none' }}
           />
-          {/* Hitbox for easier selection */}
+          {/* Hitbox for easier selection and interaction */}
           <ellipse
+            {...hitBoxProps}
             cx={shape.cx}
             cy={shape.cy}
             rx={shape.rx}
@@ -78,12 +78,13 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
             strokeWidth={10}
             stroke="transparent"
             fill="none"
+            style={{ cursor: 'grab' }}
           />
         </g>
       );
     case 'line':
       return (
-        <g {...groupProps}>
+        <g {...hitBoxProps}>
           <line
             key={shape.id}
             x1={shape.x1}
@@ -99,7 +100,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
       const lines = shape.content.split('\n');
       const lineHeight = shape.fontSize * 1.2;
       return (
-        <g {...groupProps} onDoubleClick={onDoubleClick}>
+        <g {...hitBoxProps} onDoubleClick={onDoubleClick}>
           <text
             key={shape.id}
             x={shape.x}
