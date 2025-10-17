@@ -1,0 +1,95 @@
+import { renderHook, act } from '@testing-library/react';
+import { useSvgExport } from './useSvgExport';
+import { vi, beforeEach } from 'vitest';
+
+describe('useSvgExport', () => {
+  // Mock DOM elements and methods
+  const mockSvgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  const mockSelectedElement = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  mockSelectedElement.setAttribute('stroke', 'blue');
+  mockSvgElement.appendChild(mockSelectedElement);
+
+  const mockSvgRef = {
+    current: mockSvgElement,
+  };
+
+  const mockLink = {
+    href: '',
+    download: '',
+    click: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
+    vi.spyOn(document.body, 'appendChild').mockImplementation(() => {});
+    vi.spyOn(document.body, 'removeChild').mockImplementation(() => {});
+
+    // Polyfill URL.createObjectURL and revokeObjectURL for jsdom
+    if (!URL.createObjectURL) {
+      URL.createObjectURL = vi.fn();
+    }
+    if (!URL.revokeObjectURL) {
+      URL.revokeObjectURL = vi.fn();
+    }
+
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:http://test.com/mock-url');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+  });
+
+  it('should not do anything if svgRef is not set', () => {
+    const { result } = renderHook(() => useSvgExport({ current: null }));
+    act(() => {
+      result.current.handleExport();
+    });
+    expect(document.createElement).not.toHaveBeenCalled();
+  });
+
+  it('should perform all export steps correctly', () => {
+    const { result } = renderHook(() => useSvgExport(mockSvgRef));
+
+    act(() => {
+      result.current.handleExport();
+    });
+
+    // 1. Clone and modify SVG
+    // Note: Testing the internals of cloning and modification is complex.
+    // We trust that the logic inside handleExport works and focus on the side effects.
+
+    // 2. Create Blob and URL
+    expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    const blob = (URL.createObjectURL as vi.Mock).mock.calls[0][0] as Blob;
+    expect(blob.type).toBe('image/svg+xml');
+
+    // 3. Create and configure link
+    expect(document.createElement).toHaveBeenCalledWith('a');
+    expect(mockLink.href).toBe('blob:http://test.com/mock-url');
+    expect(mockLink.download).toBe('ponkotsu.svg');
+
+    // 4. Simulate download
+    expect(document.body.appendChild).toHaveBeenCalledWith(mockLink);
+    expect(mockLink.click).toHaveBeenCalled();
+    expect(document.body.removeChild).toHaveBeenCalledWith(mockLink);
+
+    // 5. Clean up URL
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://test.com/mock-url');
+  });
+
+  it('should reset selection styles on the cloned SVG for export', async () => {
+    const { result } = renderHook(() => useSvgExport(mockSvgRef));
+    
+    act(() => {
+      result.current.handleExport();
+    });
+
+    const blob = (URL.createObjectURL as vi.Mock).mock.calls[0][0] as Blob;
+    const svgText = await blob.text();
+
+    // Check that the exported SVG does not contain the selection style
+    expect(svgText).not.toContain('stroke="blue"');
+    expect(svgText).toContain('stroke="black"');
+    
+    // Check that the original SVG still has the selection style
+    expect(mockSvgRef.current.innerHTML).toContain('stroke="blue"');
+  });
+});
