@@ -161,25 +161,23 @@ describe('historyReducer (undoable)', () => {
         expect(state.present.shapes[0].x).toBe(10);
 
         // 2. Drag the shape
+        // 2. Drag the shape
         // 2a. Start dragging. We simulate clicking at (15,15) on the shape.
-        // The shape's top-left is at (10,10), so the offset is (5,5).
-        state = historyReducer(state, {
-            type: 'START_DRAGGING',
-            payload: { shapeId, mouseX: 15, mouseY: 15 },
-        });
-        // 2b. Drag to a new mouse position (105, 105).
-        // With an offset of (5,5), the new shape top-left should be (100,100).
-        state = historyReducer(state, { type: 'DRAG_SHAPE', payload: { x: 105, y: 105 } });
-        const shapesBeforeDrag = state.present.shapesBeforeDrag; // Get the state before drag started
+        const startDragAction = { type: 'START_DRAGGING' as const, payload: { shapeId, mouseX: 15, mouseY: 15 } };
+        state = historyReducer(state, startDragAction);
+        const shapesBeforeDrag = state.present.shapes; // The state before drag is what's current.
 
-        // 2c. Stop dragging. This should create the second history entry.
-        state = historyReducer(state, { type: 'STOP_DRAGGING' });
+        // 2b. Stop dragging. The drag operation moved the mouse from (15,15) to (105,105), so dx=90, dy=90.
+        // This action should create the second history entry.
+        const stopDragAction = { type: 'STOP_DRAGGING' as const, payload: { dx: 90, dy: 90 } };
+        state = historyReducer(state, stopDragAction);
+
 
         expect(state.past).toHaveLength(2); // History: [initial_empty, pre-drag_state]
         // The state before the drag started should be in the past.
         expect(state.past[1]).toEqual(shapesBeforeDrag);
 
-        // Check if the shape has moved
+        // Check if the shape has moved. Original was at x=10, so new is 10+90=100.
         const movedShape = state.present.shapes[0] as Extract<ShapeData, { type: 'rectangle' }>;
         expect(movedShape.x).toBe(100);
 

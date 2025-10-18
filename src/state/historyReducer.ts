@@ -127,13 +127,12 @@ export const undoable = (reducer: typeof originalReducer) => {
                 // まず、元々のReducerで新しい状態を計算する
                 const newPresent = reducer(present, action as Action);
 
-                // STOP_DRAGGINGは特別扱い。shapesが変更されていなくても履歴に記録する
-                if ((action as Action).type === 'STOP_DRAGGING' && present.shapesBeforeDrag) {
-                    // ドラッグ前の状態('shapesBeforeDrag')が、現在の最後の履歴と同じでなければ記録する
-                    // (全く移動しなかった場合は履歴に追加しない)
-                    if (!isEqual(past[past.length - 1], present.shapesBeforeDrag)) {
+                // STOP_DRAGGINGは特別扱い。移動があった場合のみ履歴に記録する
+                if (action.type === 'STOP_DRAGGING') {
+                    const { dx, dy } = action.payload;
+                    if (dx !== 0 || dy !== 0) {
                         return {
-                            past: [...past, present.shapesBeforeDrag],
+                            past: [...past, present.shapes], // ドラッグ前のshapesを記録
                             present: newPresent,
                             future: [],
                         };
@@ -141,7 +140,7 @@ export const undoable = (reducer: typeof originalReducer) => {
                 }
                 // 他の記録対象アクションは、shapes配列が実際に変更された場合のみ履歴を更新する
                 else if (
-                    recordableActions.has((action as Action).type) &&
+                    recordableActions.has(action.type) &&
                     !isEqual(present.shapes, newPresent.shapes)
                 ) {
                     return {
