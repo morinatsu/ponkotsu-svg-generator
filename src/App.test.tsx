@@ -7,7 +7,7 @@ import { initialState } from './state/reducer';
 
 // Mock child components
 vi.mock('./components/Toolbar', () => ({
-  default: ({ onClear, onExport, onUndo, onRedo, onToolSelect, ...rest }) => (
+  default: ({ onClear = vi.fn(), onExport = vi.fn(), onUndo = vi.fn(), onRedo = vi.fn(), onToolSelect = vi.fn(), ...rest }) => (
     <div data-testid="toolbar" data-props={JSON.stringify(rest)}>
       <button data-testid="clear-button" onClick={onClear}>Clear</button>
       <button data-testid="export-button" onClick={onExport}>Export</button>

@@ -4,30 +4,32 @@ import type { ShapeData } from '../state/reducer';
 interface ShapeProps {
   shape: ShapeData;
   isSelected: boolean;
-  isDragging: boolean; // Flag to indicate if another shape is being dragged
+  isDragging: boolean;
   onClick: (e: React.MouseEvent) => void;
   onDoubleClick: () => void;
 }
 
 const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, onDoubleClick }) => {
-  const commonProps = {
+  // Common props for all shapes
+  const commonProps: { strokeWidth: number; style: React.CSSProperties } = {
     strokeWidth: 2,
-    // When another shape is being dragged, disable pointer events on this one.
-    style: { cursor: 'grab', pointerEvents: isDragging ? 'none' : 'all' as const },
+    style: { cursor: 'grab', pointerEvents: isDragging ? 'none' : 'all' },
   };
 
-  // Event handlers and data-attributes are attached directly to the hitbox element
-  // or the visible element if no hitbox exists (e.g., for lines and text).
-  const hitBoxProps = {
+  // Group props: Attach event handlers and data-shape-id to the parent <g> element.
+  // This ensures that drag transformations and event handling target the same element.
+  const groupProps = {
     onClick: onClick,
+    onDoubleClick: onDoubleClick,
     'data-shape-id': shape.id,
+    style: { cursor: 'grab' },
   };
 
   switch (shape.type) {
     case 'rectangle':
       return (
-        <g>
-          {/* Visible shape, not clickable */}
+        <g {...groupProps}>
+          {/* The visible shape element. Pointer events are disabled to allow the hitbox to capture them. */}
           <rect
             key={shape.id}
             x={shape.x}
@@ -39,9 +41,8 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
             strokeWidth={commonProps.strokeWidth}
             style={{ pointerEvents: 'none' }}
           />
-          {/* Hitbox for easier selection and interaction */}
+          {/* An invisible, larger hitbox for easier clicking and interaction. */}
           <rect
-            {...hitBoxProps}
             x={shape.x}
             y={shape.y}
             width={shape.width}
@@ -49,14 +50,13 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
             strokeWidth={10}
             stroke="transparent"
             fill="none"
-            style={{ cursor: 'grab' }}
           />
         </g>
       );
     case 'ellipse':
       return (
-        <g>
-          {/* Visible shape, not clickable */}
+        <g {...groupProps}>
+          {/* The visible shape element. */}
           <ellipse
             key={shape.id}
             cx={shape.cx}
@@ -68,9 +68,8 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
             strokeWidth={commonProps.strokeWidth}
             style={{ pointerEvents: 'none' }}
           />
-          {/* Hitbox for easier selection and interaction */}
+          {/* An invisible, larger hitbox. */}
           <ellipse
-            {...hitBoxProps}
             cx={shape.cx}
             cy={shape.cy}
             rx={shape.rx}
@@ -78,13 +77,12 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
             strokeWidth={10}
             stroke="transparent"
             fill="none"
-            style={{ cursor: 'grab' }}
           />
         </g>
       );
     case 'line':
       return (
-        <g {...hitBoxProps}>
+        <g {...groupProps}>
           <line
             key={shape.id}
             x1={shape.x1}
@@ -100,7 +98,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
       const lines = shape.content.split('\n');
       const lineHeight = shape.fontSize * 1.2;
       return (
-        <g {...hitBoxProps} onDoubleClick={onDoubleClick}>
+        <g {...groupProps}>
           <text
             key={shape.id}
             x={shape.x}
@@ -121,7 +119,12 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
       );
     }
     default: {
-      // Exhaustiveness check for discriminating union
+      // Exhaustiveness check for the discriminating union.
+      // This ensures all shape types are handled.
+      // This is an exhaustiveness check for the discriminating union.
+      // It ensures that all shape types are handled in the switch statement.
+      // If a new shape type is added, TypeScript will throw an error here
+      // unless a corresponding case is added.
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _exhaustiveCheck: never = shape;
       return null;

@@ -9,7 +9,7 @@ import type { Action, AppState } from '../state/reducer';
 export const useInteractionManager = (
   dispatch: React.Dispatch<Action>,
   state: AppState,
-  svgRef: React.RefObject<SVGSVGElement>,
+  svgRef: React.RefObject<SVGSVGElement | null>,
   wasDragged: React.MutableRefObject<boolean>
 ) => {
   const { mode, currentTool, drawingState, draggingState } = state;
@@ -71,6 +71,26 @@ export const useInteractionManager = (
   }, [dispatch, getMousePosition, mode, currentTool, wasDragged]);
 
   /**
+   * Handles the mouse up event, which is attached to the window during
+   * drawing or dragging operations to signify the end of the interaction.
+   */
+  const handleMouseUp = useCallback(() => {
+    if (mode === 'drawing') {
+      dispatch({ type: 'END_DRAWING' });
+    } else if (mode === 'dragging' && draggingState) {
+      const elementToDrag = svgRef.current?.querySelector<SVGGraphicsElement>(`[data-shape-id="${draggingState.shapeId}"]`);
+      if (elementToDrag) {
+        elementToDrag.style.transform = '';
+      }
+
+      dispatch({
+        type: 'STOP_DRAGGING',
+        payload: dragTranslationRef.current,
+      });
+    }
+  }, [mode, draggingState, svgRef, dispatch]);
+
+  /**
    * Handles the mouse move event, which is attached to the window during
    * drawing or dragging operations.
    */
@@ -105,27 +125,7 @@ export const useInteractionManager = (
         elementToDrag.style.transform = `translate(${dx}px, ${dy}px)`;
       }
     }
-  }, [getMousePosition, mode, wasDragged, drawingState, draggingState, svgRef, handleMouseUp]);
-
-  /**
-   * Handles the mouse up event, which is attached to the window during
-   * drawing or dragging operations to signify the end of the interaction.
-   */
-  const handleMouseUp = useCallback(() => {
-    if (mode === 'drawing') {
-      dispatch({ type: 'END_DRAWING' });
-    } else if (mode === 'dragging' && draggingState) {
-      const elementToDrag = svgRef.current?.querySelector<SVGGraphicsElement>(`[data-shape-id="${draggingState.shapeId}"]`);
-      if (elementToDrag) {
-        elementToDrag.style.transform = '';
-      }
-
-      dispatch({
-        type: 'STOP_DRAGGING',
-        payload: dragTranslationRef.current,
-      });
-    }
-  }, [dispatch, mode, draggingState, svgRef]);
+  }, [getMousePosition, mode, wasDragged, drawingState, draggingState, svgRef, handleMouseUp, dispatch]);
 
   /**
    * This effect is the core of the interaction management.
