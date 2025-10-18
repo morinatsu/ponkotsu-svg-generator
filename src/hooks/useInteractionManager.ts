@@ -41,6 +41,8 @@ export const useInteractionManager = (
 
     // Reset the drag flag at the beginning of any potential interaction.
     wasDragged.current = false;
+    // Reset the drag translation ref to prevent ghosting from previous drags.
+    dragTranslationRef.current = { dx: 0, dy: 0 };
 
     const targetElement = e.target as SVGElement;
     // Check if the clicked element or its parent group has a shape ID.
