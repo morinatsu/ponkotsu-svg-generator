@@ -1,6 +1,6 @@
-import { RefObject } from 'react';
+import { type RefObject } from 'react';
 
-export const useSvgExport = (svgRef: RefObject<SVGSVGElement>) => {
+export const useSvgExport = (svgRef: RefObject<SVGSVGElement | null>) => {
   const handleExport = () => {
     if (svgRef.current) {
       const svgNode = svgRef.current.cloneNode(true) as SVGSVGElement;

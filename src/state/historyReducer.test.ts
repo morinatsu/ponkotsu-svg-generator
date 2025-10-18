@@ -3,7 +3,7 @@ import { undoable, type HistoryState, type HistoryAction } from './historyReduce
 import { reducer as originalReducer, initialState as originalInitialState, type ShapeData } from './reducer';
 
 describe('historyReducer (undoable)', () => {
-    let historyReducer: (state: HistoryState | undefined, action: HistoryAction | { type: 'INIT' }) => HistoryState;
+    let historyReducer: (state: HistoryState | undefined, action: HistoryAction) => HistoryState;
     let initialState: HistoryState;
     const dummyShape: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 };
 
@@ -17,7 +17,8 @@ describe('historyReducer (undoable)', () => {
     });
 
     it('should return the initial state', () => {
-        const state = historyReducer(undefined, { type: 'INIT' });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const state = historyReducer(undefined, { type: 'INIT' } as any);
         expect(state).toEqual(initialState);
     });
 
@@ -136,7 +137,7 @@ describe('historyReducer (undoable)', () => {
 
     it('should not record non-recordable action: SELECT_TOOL', () => {
         let state: HistoryState = { ...initialState };
-        const selectToolAction = { type: 'SELECT_TOOL' as const, payload: 'ellipse' };
+        const selectToolAction = { type: 'SELECT_TOOL' as const, payload: 'ellipse' as const };
         state = historyReducer(state, selectToolAction);
 
         expect(state.past).toHaveLength(0); // Past is unchanged
@@ -158,9 +159,11 @@ describe('historyReducer (undoable)', () => {
         expect(state.past).toHaveLength(1); // History: [initial_empty_state]
         expect(state.present.shapes).toHaveLength(1);
         const shapeId = state.present.shapes[0].id;
-        expect(state.present.shapes[0].x).toBe(10);
 
-        // 2. Drag the shape
+        const addedShape = state.present.shapes[0];
+        if (addedShape.type !== 'rectangle') throw new Error('Test setup failed');
+        expect(addedShape.x).toBe(10);
+
         // 2. Drag the shape
         // 2a. Start dragging. We simulate clicking at (15,15) on the shape.
         const startDragAction = { type: 'START_DRAGGING' as const, payload: { shapeId, mouseX: 15, mouseY: 15 } };
@@ -187,8 +190,10 @@ describe('historyReducer (undoable)', () => {
         // 4. Assert the outcome
         // The shape should still exist but be back at its original position.
         expect(finalState.present.shapes).toHaveLength(1);
-        expect(finalState.present.shapes[0].x).toBe(10); // Back to original x
-        expect(finalState.present.shapes[0].y).toBe(10); // Back to original y
+        const undidShape = finalState.present.shapes[0];
+        if (undidShape.type !== 'rectangle') throw new Error('Test setup failed');
+        expect(undidShape.x).toBe(10); // Back to original x
+        expect(undidShape.y).toBe(10); // Back to original y
 
         // The history should now contain only the initial state (before shape creation)
         expect(finalState.past).toHaveLength(1);

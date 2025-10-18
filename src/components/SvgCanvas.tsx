@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ShapeData, DrawingShape, AppMode } from '../state/reducer';
+import type { ShapeData, DrawingShape } from '../state/reducer';
 import Shape from './Shape';
 
 interface SvgCanvasProps {

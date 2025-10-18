@@ -1,8 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { useKeyboardControls } from './useKeyboardControls';
 import { vi } from 'vitest';
-import type { HistoryAction } from '../state/historyReducer';
-
 const createMockKeyboardEvent = (
   key: string,
   ctrlKey = false,
