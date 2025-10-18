@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { Action, AppState } from '../state/reducer';
 
 /**
@@ -12,7 +12,8 @@ export const useInteractionManager = (
   svgRef: React.RefObject<SVGSVGElement>,
   wasDragged: React.MutableRefObject<boolean>
 ) => {
-  const { mode, currentTool, drawingState } = state;
+  const { mode, currentTool, drawingState, draggingState } = state;
+  const dragTranslationRef = useRef({ dx: 0, dy: 0 });
 
   /**
    * Calculates the mouse position within the SVG canvas, accounting for zoom and pan.
@@ -94,11 +95,17 @@ export const useInteractionManager = (
           payload: { x: pos.x, y: pos.y, startX: drawingState.x, startY: drawingState.y },
         });
       }
-    } else if (mode === 'dragging') {
-      // Dispatch an action to update the position of the shape being dragged.
-      dispatch({ type: 'DRAG_SHAPE', payload: { x: pos.x, y: pos.y } });
+    } else if (mode === 'dragging' && draggingState) {
+      const dx = pos.x - draggingState.startX;
+      const dy = pos.y - draggingState.startY;
+      dragTranslationRef.current = { dx, dy };
+
+      const elementToDrag = svgRef.current?.querySelector<SVGGraphicsElement>(`[data-shape-id="${draggingState.shapeId}"]`);
+      if (elementToDrag) {
+        elementToDrag.style.transform = `translate(${dx}px, ${dy}px)`;
+      }
     }
-  }, [dispatch, getMousePosition, mode, wasDragged, drawingState]);
+  }, [getMousePosition, mode, wasDragged, drawingState, draggingState, svgRef, handleMouseUp]);
 
   /**
    * Handles the mouse up event, which is attached to the window during
@@ -107,10 +114,18 @@ export const useInteractionManager = (
   const handleMouseUp = useCallback(() => {
     if (mode === 'drawing') {
       dispatch({ type: 'END_DRAWING' });
-    } else if (mode === 'dragging') {
-      dispatch({ type: 'STOP_DRAGGING' });
+    } else if (mode === 'dragging' && draggingState) {
+      const elementToDrag = svgRef.current?.querySelector<SVGGraphicsElement>(`[data-shape-id="${draggingState.shapeId}"]`);
+      if (elementToDrag) {
+        elementToDrag.style.transform = '';
+      }
+
+      dispatch({
+        type: 'STOP_DRAGGING',
+        payload: dragTranslationRef.current,
+      });
     }
-  }, [dispatch, mode]);
+  }, [dispatch, mode, draggingState, svgRef]);
 
   /**
    * This effect is the core of the interaction management.

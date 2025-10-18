@@ -81,8 +81,7 @@ export type Action =
     | { type: 'END_DRAWING' }
     // Dragging actions
     | { type: 'START_DRAGGING'; payload: { shapeId: string; mouseX: number; mouseY: number } }
-    | { type: 'DRAG_SHAPE'; payload: { x: number; y: number } }
-    | { type: 'STOP_DRAGGING' }
+    | { type: 'STOP_DRAGGING'; payload: { dx: number; dy: number } }
     // Shape actions
     | { type: 'ADD_SHAPE'; payload: ShapeData }
     | { type: 'SELECT_SHAPE'; payload: string | null }
@@ -284,22 +283,6 @@ export const reducer = (state: AppState, action: Action): AppState => {
             const shape = state.shapes.find(s => s.id === action.payload.shapeId);
             if (!shape) return state;
 
-            let offsetX = 0;
-            let offsetY = 0;
-
-            // 図形の種類によって座標の基準が違うため、オフセットの計算方法を分岐
-            if (shape.type === 'rectangle' || shape.type === 'text') {
-                offsetX = action.payload.mouseX - shape.x;
-                offsetY = action.payload.mouseY - shape.y;
-            } else if (shape.type === 'ellipse') {
-                offsetX = action.payload.mouseX - shape.cx;
-                offsetY = action.payload.mouseY - shape.cy;
-            } else if (shape.type === 'line') {
-                //線の場合は特殊なため、一旦移動開始点のみ記録
-                offsetX = action.payload.mouseX;
-                offsetY = action.payload.mouseY;
-            }
-
             return {
                 ...state,
                 mode: 'dragging',
@@ -309,64 +292,61 @@ export const reducer = (state: AppState, action: Action): AppState => {
                     shapeId: action.payload.shapeId,
                     startX: action.payload.mouseX,
                     startY: action.payload.mouseY,
-                    offsetX,
-                    offsetY,
+                    // The offsetX/Y logic is no longer needed as we calculate the final position
+                    // in STOP_DRAGGING based on the total delta (dx, dy).
+                    offsetX: 0,
+                    offsetY: 0,
                 },
-                shapesBeforeDrag: state.shapes, // Save the state before dragging
-            };
-        }
-        case 'DRAG_SHAPE': {
-            if (!state.draggingState) return state;
-
-            const { shapeId, offsetX, offsetY } = state.draggingState;
-            const { x, y } = action.payload;
-            const newX = x - offsetX;
-            const newY = y - offsetY;
-
-            return {
-                ...state,
-                shapes: state.shapes.map(shape => {
-                    if (shape.id !== shapeId) {
-                        return shape;
-                    }
-                    // Move shape based on its type
-                    switch (shape.type) {
-                        case 'rectangle':
-                            return { ...shape, x: newX, y: newY };
-                        case 'ellipse':
-                            return { ...shape, cx: newX, cy: newY };
-                        case 'line': {
-                            const dx = x - state.draggingState.startX;
-                            const dy = y - state.draggingState.startY;
-                            const originalShape = state.shapesBeforeDrag?.find(s => s.id === shapeId);
-                            if (originalShape && originalShape.type === 'line') {
-                                return {
-                                    ...shape,
-                                    x1: originalShape.x1 + dx,
-                                    y1: originalShape.y1 + dy,
-                                    x2: originalShape.x2 + dx,
-                                    y2: originalShape.y2 + dy,
-                                };
-                            }
-                            return shape; // fallback
-                        }
-                        case 'text':
-                            return { ...shape, x: newX, y: newY };
-                        default:
-                            return shape;
-                    }
-                }),
-                shapesBeforeDrag: state.shapesBeforeDrag, // Preserve this during drag
+                // shapesBeforeDrag is no longer needed because we apply a delta to the original position.
+                shapesBeforeDrag: null,
             };
         }
         case 'STOP_DRAGGING': {
             if (!state.draggingState) return state;
+
+            const { dx, dy } = action.payload;
+            const { shapeId } = state.draggingState;
+
+            // If there was no actual drag, just reset the state
+            if (dx === 0 && dy === 0) {
+                return {
+                    ...state,
+                    mode: 'idle',
+                    draggingState: null,
+                };
+            }
+
+            const newShapes = state.shapes.map(shape => {
+                if (shape.id !== shapeId) {
+                    return shape;
+                }
+
+                // Apply the final translation to the shape's coordinates
+                switch (shape.type) {
+                    case 'rectangle':
+                    case 'text':
+                        return { ...shape, x: shape.x + dx, y: shape.y + dy };
+                    case 'ellipse':
+                        return { ...shape, cx: shape.cx + dx, cy: shape.cy + dy };
+                    case 'line':
+                        return {
+                            ...shape,
+                            x1: shape.x1 + dx,
+                            y1: shape.y1 + dy,
+                            x2: shape.x2 + dx,
+                            y2: shape.y2 + dy,
+                        };
+                    default:
+                        return shape;
+                }
+            });
+
             return {
                 ...state,
                 mode: 'idle',
-                selectedShapeId: null, // ドラッグ後は選択を解除
+                selectedShapeId: null, // Deselect after dragging
                 draggingState: null,
-                shapesBeforeDrag: null, // Clean up the temporary state
+                shapes: newShapes,
             };
         }
         default:
