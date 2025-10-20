@@ -39,8 +39,16 @@ export interface TextData {
 
 export type ShapeData = RectangleData | EllipseData | LineData | TextData;
 
-// A temporary type for drawing state, which might not have all properties of a full shape
-export type DrawingShape = Omit<RectangleData, 'id'> & { id?: string };
+// A temporary type for drawing state.
+// It holds the attributes for the shape being drawn, which might be incomplete.
+export type DrawingShape = {
+    type: Tool;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    id?: string;
+};
 
 export type Tool = ShapeData['type'];
 export type AppMode = 'idle' | 'drawing' | 'dragging';

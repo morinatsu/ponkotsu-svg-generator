@@ -4,103 +4,116 @@ import type { ShapeData } from '../state/reducer';
 interface ShapeProps {
   shape: ShapeData;
   isSelected: boolean;
-  isDragging: boolean; // Flag to indicate if another shape is being dragged
+  isDragging: boolean; // True if ANOTHER shape is being dragged
   onClick: (e: React.MouseEvent) => void;
   onDoubleClick: () => void;
 }
 
 const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, onDoubleClick }) => {
-  const commonProps = {
-    strokeWidth: 2,
-    // When another shape is being dragged, disable pointer events on this one.
-    style: { cursor: 'grab', pointerEvents: isDragging ? 'none' : 'all' as const },
+  // Event handlers and ID are attached to the parent group.
+  const groupProps = {
+    onClick: onClick,
+    onDoubleClick: onDoubleClick,
+    'data-shape-id': shape.id,
+    style: { cursor: 'grab' },
   };
 
-  // Event handlers and data-attributes are attached directly to the hitbox element
-  // or the visible element if no hitbox exists (e.g., for lines and text).
-  const hitBoxProps = {
-    onClick: onClick,
-    'data-shape-id': shape.id,
+  // Style for the hitbox element. It should be disabled if another element is being dragged.
+  const hitboxStyle: React.CSSProperties = {
+    pointerEvents: isDragging ? 'none' : 'all',
+    fill: 'transparent',
+    stroke: 'transparent',
   };
+
+  // The visible shape should never capture pointer events.
+  const visibleShapeStyle: React.CSSProperties = { pointerEvents: 'none' };
 
   switch (shape.type) {
     case 'rectangle':
       return (
-        <g>
-          {/* Visible shape, not clickable */}
+        <g {...groupProps}>
           <rect
-            key={shape.id}
+            key={`${shape.id}-visible`}
             x={shape.x}
             y={shape.y}
             width={shape.width}
             height={shape.height}
             stroke={isSelected ? 'blue' : 'black'}
             fill="none"
-            strokeWidth={commonProps.strokeWidth}
-            style={{ pointerEvents: 'none' }}
+            strokeWidth={2}
+            style={visibleShapeStyle}
           />
-          {/* Hitbox for easier selection and interaction */}
           <rect
-            {...hitBoxProps}
+            key={`${shape.id}-hitbox`}
             x={shape.x}
             y={shape.y}
             width={shape.width}
             height={shape.height}
             strokeWidth={10}
-            stroke="transparent"
-            fill="none"
-            style={{ cursor: 'grab' }}
+            style={hitboxStyle}
           />
         </g>
       );
     case 'ellipse':
       return (
-        <g>
-          {/* Visible shape, not clickable */}
+        <g {...groupProps}>
           <ellipse
-            key={shape.id}
+            key={`${shape.id}-visible`}
             cx={shape.cx}
             cy={shape.cy}
             rx={shape.rx}
             ry={shape.ry}
             stroke={isSelected ? 'blue' : 'black'}
             fill="none"
-            strokeWidth={commonProps.strokeWidth}
-            style={{ pointerEvents: 'none' }}
+            strokeWidth={2}
+            style={visibleShapeStyle}
           />
-          {/* Hitbox for easier selection and interaction */}
           <ellipse
-            {...hitBoxProps}
+            key={`${shape.id}-hitbox`}
             cx={shape.cx}
             cy={shape.cy}
             rx={shape.rx}
             ry={shape.ry}
             strokeWidth={10}
-            stroke="transparent"
-            fill="none"
-            style={{ cursor: 'grab' }}
+            style={hitboxStyle}
           />
         </g>
       );
     case 'line':
       return (
-        <g {...hitBoxProps}>
-          <line
-            key={shape.id}
+        <g {...groupProps}>
+          <line // The visible line
+            key={`${shape.id}-visible`}
             x1={shape.x1}
             y1={shape.y1}
             x2={shape.x2}
             y2={shape.y2}
             stroke={isSelected ? 'blue' : 'black'}
-            {...commonProps}
+            strokeWidth={2}
+            style={visibleShapeStyle}
+          />
+          <line // The hitbox
+            key={`${shape.id}-hitbox`}
+            x1={shape.x1}
+            y1={shape.y1}
+            x2={shape.x2}
+            y2={shape.y2}
+            strokeWidth={10}
+            style={hitboxStyle}
           />
         </g>
       );
     case 'text': {
       const lines = shape.content.split('\n');
       const lineHeight = shape.fontSize * 1.2;
+      // Text is its own hitbox.
+      const textStyle: React.CSSProperties = {
+        cursor: 'grab',
+        userSelect: 'none',
+        pointerEvents: isDragging ? 'none' : 'all',
+      };
       return (
-        <g {...hitBoxProps} onDoubleClick={onDoubleClick}>
+        <g {...groupProps}>
           <text
             key={shape.id}
             x={shape.x}
@@ -109,7 +122,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
             fontFamily={shape.fontFamily}
             fill={isSelected ? 'blue' : shape.fill}
             stroke="none"
-            style={{ cursor: 'grab', userSelect: 'none' }}
+            style={textStyle}
           >
             {lines.map((line, index) => (
               <tspan key={index} x={shape.x} dy={index === 0 ? 0 : lineHeight}>
@@ -121,8 +134,6 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
       );
     }
     default: {
-      // Exhaustiveness check for discriminating union
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _exhaustiveCheck: never = shape;
       return null;
     }
