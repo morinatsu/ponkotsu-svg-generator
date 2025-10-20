@@ -1,22 +1,10 @@
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import App from './App';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { initialState } from './state/reducer';
 
 // Mock child components
-vi.mock('./components/Toolbar', () => ({
-  default: ({ onClear = vi.fn(), onExport = vi.fn(), onUndo = vi.fn(), onRedo = vi.fn(), onToolSelect = vi.fn(), ...rest }) => (
-    <div data-testid="toolbar" data-props={JSON.stringify(rest)}>
-      <button data-testid="clear-button" onClick={onClear}>Clear</button>
-      <button data-testid="export-button" onClick={onExport}>Export</button>
-      <button data-testid="undo-button" onClick={onUndo}>Undo</button>
-      <button data-testid="redo-button" onClick={onRedo}>Redo</button>
-      <button data-testid="rect-tool-button" onClick={() => onToolSelect('rectangle')}>Rect</button>
-    </div>
-  ),
-}));
 vi.mock('./components/SvgCanvas', () => ({
   default: React.forwardRef((props, ref) => <div data-testid="svg-canvas" {...props} ref={ref as React.Ref<HTMLDivElement>}></div>),
 }));
@@ -37,7 +25,43 @@ import { useInteractionManager } from './hooks/useInteractionManager';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useSvgExport } from './hooks/useSvgExport';
 
-describe('App', () => {
+describe('App', async () => {
+  let App;
+
+  beforeAll(async () => {
+    vi.doMock('./components/Toolbar', async () => {
+      const React = await vi.importActual('react');
+      const { AppContext } = await vi.importActual('./state/AppContext');
+
+      const MockedToolbar = ({ onExport, canUndo, canRedo }) => {
+        const context = React.useContext(AppContext);
+        if (!context) return <div data-testid="toolbar">Loading...</div>;
+        const { state, dispatch } = context;
+        const { currentTool, shapes } = state;
+        return (
+          <div data-testid="toolbar" data-props={JSON.stringify({ canUndo, canRedo })}>
+            <button data-testid="clear-button" onClick={() => dispatch({ type: 'CLEAR_CANVAS' })}>Clear</button>
+            <button data-testid="export-button" onClick={onExport}>Export</button>
+            <button data-testid="undo-button" onClick={() => dispatch({ type: 'UNDO' })}>Undo</button>
+            <button data-testid="redo-button" onClick={() => dispatch({ type: 'REDO' })}>Redo</button>
+            <button
+              data-testid="rect-tool-button"
+              onClick={() => dispatch({ type: 'SELECT_TOOL', payload: 'rectangle' })}
+              className={currentTool === 'rectangle' ? 'active' : ''}
+            >
+              Rect
+            </button>
+            <span>Shapes: {shapes.length}</span>
+          </div>
+        );
+      };
+      return { default: MockedToolbar };
+    });
+
+    const appModule = await import('./App');
+    App = appModule.default;
+  });
+
   const mockUseInteractionManagerHandlers = {
     handleMouseDown: vi.fn(),
   };
@@ -47,8 +71,6 @@ describe('App', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Setup mock implementations for each test
     vi.mocked(useInteractionManager).mockReturnValue(mockUseInteractionManagerHandlers);
     vi.mocked(useKeyboardControls).mockImplementation(vi.fn());
     vi.mocked(useSvgExport).mockReturnValue(mockUseSvgExportHandlers);
@@ -71,15 +93,17 @@ describe('App', () => {
     expect(screen.queryByTestId('text-input-modal')).not.toBeInTheDocument();
   });
 
-  it('passes correct initial props to Toolbar', () => {
+  it('passes correct initial state to Toolbar', () => {
     render(<App />);
     const toolbar = screen.getByTestId('toolbar');
     const props = JSON.parse(toolbar.getAttribute('data-props') || '{}');
 
-    expect(props.shapesCount).toBe(initialState.shapes.length);
     expect(props.canUndo).toBe(false);
     expect(props.canRedo).toBe(false);
-    expect(props.currentTool).toBe(initialState.currentTool);
+
+    expect(screen.getByText(`Shapes: ${initialState.shapes.length}`)).toBeInTheDocument();
+    const rectToolButton = screen.getByTestId('rect-tool-button');
+    expect(rectToolButton).toHaveClass('active');
   });
 
   it('calls useKeyboardControls with the correct selectedShapeId', () => {
@@ -90,7 +114,6 @@ describe('App', () => {
   it('calls canvas mousedown event handler from useInteractionManager', () => {
     render(<App />);
     const canvas = screen.getByTestId('svg-canvas');
-
     fireEvent.mouseDown(canvas);
     expect(mockUseInteractionManagerHandlers.handleMouseDown).toHaveBeenCalled();
   });

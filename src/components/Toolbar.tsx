@@ -1,68 +1,71 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import type { Tool } from '../state/reducer';
+import { AppContext } from '../state/AppContext';
 
 interface ToolbarProps {
-  onClear: () => void;
   onExport: () => void;
-  shapesCount: number;
-  onUndo: () => void;
-  onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  currentTool: Tool;
-  onToolSelect: (tool: Tool) => void;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({
-  onClear,
-  onExport,
-  shapesCount,
-  onUndo,
-  onRedo,
-  canUndo,
-  canRedo,
-  currentTool,
-  onToolSelect,
-}) => {
+const Toolbar: React.FC<ToolbarProps> = ({ onExport, canUndo, canRedo }) => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('Toolbar must be used within an AppContextProvider');
+  }
+  const { state, dispatch } = context;
+  const { currentTool, shapes } = state;
+
   const isActive = (tool: Tool) => tool === currentTool;
+
+  const handleToolSelect = (tool: Tool) => {
+    dispatch({ type: 'SELECT_TOOL', payload: tool });
+  };
+
+  const handleClear = () => {
+    dispatch({ type: 'CLEAR_CANVAS' });
+  };
 
   return (
     <div className="controls">
       <div className="tool-group">
         <button
-          onClick={() => onToolSelect('rectangle')}
+          onClick={() => handleToolSelect('rectangle')}
           className={isActive('rectangle') ? 'active' : ''}
         >
           長方形
         </button>
         <button
-          onClick={() => onToolSelect('ellipse')}
+          onClick={() => handleToolSelect('ellipse')}
           className={isActive('ellipse') ? 'active' : ''}
         >
           楕円
         </button>
         <button
-          onClick={() => onToolSelect('line')}
+          onClick={() => handleToolSelect('line')}
           className={isActive('line') ? 'active' : ''}
         >
           線
         </button>
         <button
-          onClick={() => onToolSelect('text')}
+          onClick={() => handleToolSelect('text')}
           className={isActive('text') ? 'active' : ''}
         >
           テキスト
         </button>
       </div>
       <div className="tool-group">
-        <button onClick={onUndo} disabled={!canUndo}>Undo</button>
-        <button onClick={onRedo} disabled={!canRedo}>Redo</button>
+        <button onClick={() => dispatch({ type: 'UNDO' })} disabled={!canUndo}>Undo</button>
+        <button onClick={() => dispatch({ type: 'REDO' })} disabled={!canRedo}>Redo</button>
       </div>
       <div className="tool-group">
-        <button onClick={onExport} disabled={shapesCount === 0}>エクスポート</button>
+        <button onClick={onExport} disabled={shapes.length === 0}>エクスポート</button>
       </div>
       <div className="tool-group">
-        <button onClick={onClear}>クリア</button>
+        <button onClick={handleClear}>クリア</button>
+      </div>
+      <div className="tool-group">
+        <span>Shapes: {shapes.length}</span>
       </div>
     </div>
   );

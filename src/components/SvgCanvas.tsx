@@ -1,22 +1,23 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import type { ShapeData, DrawingShape } from '../state/reducer';
+import { AppContext } from '../state/AppContext';
 import Shape from './Shape';
 
 interface SvgCanvasProps {
-  shapes: ShapeData[];
-  drawingState: DrawingShape | null;
-  selectedShapeId: string | null;
-  currentTool: ShapeData['type'];
   onMouseDown: (e: React.MouseEvent) => void;
   onCanvasClick: () => void;
-  onShapeClick: (id: string, e: React.MouseEvent) => void;
-  onShapeDoubleClick: (shape: ShapeData) => void;
 }
 
-const DrawingPreview: React.FC<{
-  drawingState: DrawingShape;
-  currentTool: ShapeData['type'];
-}> = ({ drawingState, currentTool }) => {
+const DrawingPreview: React.FC = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('DrawingPreview must be used within an AppContextProvider');
+  }
+  const { state } = context;
+  const { drawingState, currentTool } = state;
+
+  if (!drawingState) return null;
+
   const { x, y, width, height } = drawingState;
   const commonProps = {
     fill: 'none',
@@ -48,17 +49,18 @@ const DrawingPreview: React.FC<{
 const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
   (
     {
-      shapes,
-      drawingState,
-      selectedShapeId,
-      currentTool,
       onMouseDown,
       onCanvasClick,
-      onShapeClick,
-      onShapeDoubleClick,
     },
     ref
   ) => {
+    const context = useContext(AppContext);
+    if (!context) {
+      throw new Error('SvgCanvas must be used within an AppContextProvider');
+    }
+    const { state } = context;
+    const { shapes, selectedShapeId } = state;
+
     const canvasStyle: React.CSSProperties = {
       border: '1px solid black',
       // The cursor is now managed by CSS based on the body's data attribute
@@ -80,14 +82,9 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
             isSelected={selectedShapeId === shape.id}
             // When another shape is being dragged, prevent interaction.
             isDragging={!!selectedShapeId && selectedShapeId !== shape.id}
-            onClick={(e) => onShapeClick(shape.id, e)}
-            onDoubleClick={() => onShapeDoubleClick(shape)}
-            // The onMouseDown is now handled by the main canvas handler
           />
         ))}
-        {drawingState && (
-          <DrawingPreview drawingState={drawingState} currentTool={currentTool} />
-        )}
+        <DrawingPreview />
       </svg>
     );
   }
