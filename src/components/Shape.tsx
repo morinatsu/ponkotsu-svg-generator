@@ -1,19 +1,43 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import type { ShapeData } from '../state/reducer';
+import { AppContext } from '../state/AppContext';
 
 interface ShapeProps {
   shape: ShapeData;
   isSelected: boolean;
   isDragging: boolean; // True if ANOTHER shape is being dragged
-  onClick: (e: React.MouseEvent) => void;
-  onDoubleClick: () => void;
 }
 
-const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, onDoubleClick }) => {
+const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('Shape must be used within an AppContextProvider');
+  }
+  const { dispatch, wasDragged } = context;
+
   // Event handlers and ID are attached to the parent group.
   const groupProps = {
-    onClick: onClick,
-    onDoubleClick: onDoubleClick,
+    onClick: (e: React.MouseEvent) => {
+      e.stopPropagation();
+      // ドラッグ操作の直後であれば、選択イベントを無視する
+      if (wasDragged.current) {
+        return;
+      }
+      dispatch({ type: 'SELECT_SHAPE', payload: shape.id });
+    },
+    onDoubleClick: () => {
+      if (shape.type === 'text') {
+        dispatch({
+          type: 'START_TEXT_EDIT',
+          payload: {
+            id: shape.id,
+            x: shape.x,
+            y: shape.y,
+            content: shape.content,
+          },
+        });
+      }
+    },
     'data-shape-id': shape.id,
     style: { cursor: 'grab' },
   };
@@ -21,7 +45,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, onClick, o
   // Style for the hitbox element. It should be disabled if another element is being dragged.
   const hitboxStyle: React.CSSProperties = {
     pointerEvents: isDragging ? 'none' : 'all',
-    fill: 'transparent',
+    fill: 'none', // 'none' is crucial for only capturing clicks on the stroke
     stroke: 'transparent',
   };
 

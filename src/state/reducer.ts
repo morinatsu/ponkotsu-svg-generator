@@ -1,3 +1,7 @@
+import { drawingReducer } from './reducers/drawingReducer';
+import { draggingReducer } from './reducers/draggingReducer';
+import { shapeReducer } from './reducers/shapeReducer';
+
 // The state is defined based on the state of App.tsx.
 export interface RectangleData {
     id: string;
@@ -101,262 +105,31 @@ export type Action =
     | { type: 'FINISH_TEXT_EDIT'; payload: { content: string } }
     | { type: 'CANCEL_TEXT_EDIT' };
 
-// Reducer function to handle state updates
+// Root reducer that combines all sub-reducers.
 export const reducer = (state: AppState, action: Action): AppState => {
     switch (action.type) {
-        case 'SELECT_TOOL':
-            return {
-                ...state,
-                currentTool: action.payload,
-            };
+        // Drawing actions
         case 'START_DRAWING':
-            return {
-                ...state,
-                mode: 'drawing',
-                selectedShapeId: null, // Deselect any selected shape
-                drawingState: {
-                    type: state.currentTool,
-                    x: action.payload.x,
-                    y: action.payload.y,
-                    width: 0,
-                    height: 0,
-                },
-            };
-        case 'DRAWING': {
-            if (!state.drawingState) {
-                return state;
-            }
-            const { x, y, startX, startY } = action.payload;
+        case 'DRAWING':
+        case 'END_DRAWING':
+            return drawingReducer(state, action);
 
-            // For lines, the start and end points are direct.
-            if (state.currentTool === 'line') {
-                return {
-                    ...state,
-                    drawingState: {
-                        ...state.drawingState,
-                        x: startX,
-                        y: startY,
-                        width: x - startX, // Use width/height to store end coordinates
-                        height: y - startY,
-                    },
-                };
-            }
+        // Dragging actions
+        case 'START_DRAGGING':
+        case 'STOP_DRAGGING':
+            return draggingReducer(state, action);
 
-            // For rectangles and ellipses, calculate top-left and dimensions.
-            const newX = Math.min(x, startX);
-            const newY = Math.min(y, startY);
-            const newWidth = Math.abs(x - startX);
-            const newHeight = Math.abs(y - startY);
-            return {
-                ...state,
-                drawingState: {
-                    ...state.drawingState,
-                    x: newX,
-                    y: newY,
-                    width: newWidth,
-                    height: newHeight,
-                },
-            };
-        }
-        case 'END_DRAWING': {
-            if (!state.drawingState) {
-                return { ...state, drawingState: null, mode: 'idle' };
-            }
-            const { x, y, width, height } = state.drawingState;
-
-            // Do not create a shape if the dimensions are too small
-            if (width === 0 && height === 0) {
-                return { ...state, drawingState: null, mode: 'idle' };
-            }
-
-            let newShape: ShapeData;
-            const id = crypto.randomUUID();
-
-            switch (state.currentTool) {
-                case 'rectangle':
-                    newShape = { id, type: 'rectangle', x, y, width, height };
-                    break;
-                case 'ellipse':
-                    newShape = {
-                        id,
-                        type: 'ellipse',
-                        cx: x + width / 2,
-                        cy: y + height / 2,
-                        rx: width / 2,
-                        ry: height / 2,
-                    };
-                    break;
-                case 'line':
-                    newShape = {
-                        id,
-                        type: 'line',
-                        x1: x,
-                        y1: y,
-                        x2: x + width, // End coordinates are stored in width/height during drawing
-                        y2: y + height,
-                    };
-                    break;
-                default:
-                    // Should not happen
-                    return { ...state, drawingState: null, mode: 'idle' };
-            }
-
-            return {
-                ...state,
-                shapes: [...state.shapes, newShape],
-                drawingState: null,
-                mode: 'idle',
-            };
-        }
+        // Shape and tool actions
+        case 'SELECT_TOOL':
         case 'ADD_SHAPE':
-            return {
-                ...state,
-                shapes: [...state.shapes, action.payload],
-            };
         case 'SELECT_SHAPE':
-            return {
-                ...state,
-                selectedShapeId: action.payload,
-            };
         case 'DELETE_SELECTED_SHAPE':
-            if (!state.selectedShapeId) return state;
-            return {
-                ...state,
-                shapes: state.shapes.filter(shape => shape.id !== state.selectedShapeId),
-                selectedShapeId: null,
-            };
         case 'CLEAR_CANVAS':
-            return {
-                ...state,
-                shapes: [],
-                selectedShapeId: null,
-            };
-        // --- Text editing cases ---
         case 'START_TEXT_EDIT':
-            return {
-                ...state,
-                selectedShapeId: null, // Deselect any selected shape
-                editingText: {
-                    id: action.payload.id,
-                    content: action.payload.content,
-                    x: action.payload.x,
-                    y: action.payload.y,
-                },
-            };
-        case 'FINISH_TEXT_EDIT': {
-            if (!state.editingText) return state;
-            const { id, x, y } = state.editingText;
-            const { content } = action.payload;
-
-            // If content is empty, do nothing and just cancel.
-            if (!content.trim()) {
-                return { ...state, editingText: null };
-            }
-
-            let newShapes: ShapeData[];
-            if (id) {
-                // Update existing text shape
-                newShapes = state.shapes.map(shape =>
-                    shape.id === id && shape.type === 'text'
-                        ? { ...shape, content }
-                        : shape
-                );
-            } else {
-                // Add new text shape
-                const newTextShape: TextData = {
-                    id: crypto.randomUUID(),
-                    type: 'text',
-                    x,
-                    y,
-                    content,
-                    fontSize: 16,
-                    fill: '#000000',
-                    fontFamily: 'Meiryo',
-                };
-                newShapes = [...state.shapes, newTextShape];
-            }
-            return {
-                ...state,
-                shapes: newShapes,
-                editingText: null,
-            };
-        }
+        case 'FINISH_TEXT_EDIT':
         case 'CANCEL_TEXT_EDIT':
-            return {
-                ...state,
-                editingText: null,
-            };
-        // --- Dragging cases ---
-        case 'START_DRAGGING': {
-            const shape = state.shapes.find(s => s.id === action.payload.shapeId);
-            if (!shape) return state;
+            return shapeReducer(state, action);
 
-            return {
-                ...state,
-                mode: 'dragging',
-                drawingState: null, // Cancel any drawing in progress
-                selectedShapeId: action.payload.shapeId, // Select the shape being dragged
-                draggingState: {
-                    shapeId: action.payload.shapeId,
-                    startX: action.payload.mouseX,
-                    startY: action.payload.mouseY,
-                    // The offsetX/Y logic is no longer needed as we calculate the final position
-                    // in STOP_DRAGGING based on the total delta (dx, dy).
-                    offsetX: 0,
-                    offsetY: 0,
-                },
-                // shapesBeforeDrag is no longer needed because we apply a delta to the original position.
-                shapesBeforeDrag: null,
-            };
-        }
-        case 'STOP_DRAGGING': {
-            if (!state.draggingState) return state;
-
-            const { dx, dy } = action.payload;
-            const { shapeId } = state.draggingState;
-
-            // If there was no actual drag, just reset the state
-            if (dx === 0 && dy === 0) {
-                return {
-                    ...state,
-                    mode: 'idle',
-                    draggingState: null,
-                };
-            }
-
-            const newShapes = state.shapes.map(shape => {
-                if (shape.id !== shapeId) {
-                    return shape;
-                }
-
-                // Apply the final translation to the shape's coordinates
-                switch (shape.type) {
-                    case 'rectangle':
-                    case 'text':
-                        return { ...shape, x: shape.x + dx, y: shape.y + dy };
-                    case 'ellipse':
-                        return { ...shape, cx: shape.cx + dx, cy: shape.cy + dy };
-                    case 'line':
-                        return {
-                            ...shape,
-                            x1: shape.x1 + dx,
-                            y1: shape.y1 + dy,
-                            x2: shape.x2 + dx,
-                            y2: shape.y2 + dy,
-                        };
-                    default:
-                        return shape;
-                }
-            });
-
-            return {
-                ...state,
-                mode: 'idle',
-                selectedShapeId: null, // Deselect after dragging
-                draggingState: null,
-                shapes: newShapes,
-            };
-        }
         default:
             return state;
     }
