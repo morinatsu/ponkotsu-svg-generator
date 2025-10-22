@@ -97,14 +97,15 @@ export const useInteractionManager = (
    * drawing or dragging operations.
    */
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (mode === 'idle' || !e.buttons) {
-        // Failsafe: If mouseup is missed, reset mode.
-        if (mode !== 'idle') {
-            handleMouseUp();
-        }
-        return;
-    }
+    // If we're not in an active mode, there's nothing to do.
+    if (mode === 'idle') return;
 
+    // A more reliable check for a missed mouseup event.
+    // If the primary mouse button is no longer pressed, end the interaction.
+    if (e.buttons !== 1) {
+      handleMouseUp();
+      return;
+    }
 
     const pos = getMousePosition(e);
     wasDragged.current = true; // Any mouse move during an interaction constitutes a drag.

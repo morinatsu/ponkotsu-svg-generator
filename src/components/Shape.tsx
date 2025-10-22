@@ -45,7 +45,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
   // Style for the hitbox element. It should be disabled if another element is being dragged.
   const hitboxStyle: React.CSSProperties = {
     pointerEvents: isDragging ? 'none' : 'all',
-    fill: 'transparent',
+    fill: 'none', // 'none' is crucial for only capturing clicks on the stroke
     stroke: 'transparent',
   };
 
