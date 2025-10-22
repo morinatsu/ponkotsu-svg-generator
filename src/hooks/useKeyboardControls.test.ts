@@ -5,7 +5,7 @@ const createMockKeyboardEvent = (
   key: string,
   ctrlKey = false,
   metaKey = false,
-  shiftKey = false
+  shiftKey = false,
 ) => {
   const event = new KeyboardEvent('keydown', {
     key,
@@ -49,27 +49,30 @@ describe('useKeyboardControls', () => {
       { key: 'y', ctrlKey: false, metaKey: true, type: 'REDO' },
       { key: 'z', ctrlKey: true, metaKey: false, shiftKey: true, type: 'REDO' },
       { key: 'z', ctrlKey: false, metaKey: true, shiftKey: true, type: 'REDO' },
-    ])('should dispatch $type for $key with modifiers', ({ key, ctrlKey, metaKey, shiftKey, type }) => {
-      renderKeyboardControlsHook(null);
-      const event = createMockKeyboardEvent(key, ctrlKey, metaKey, shiftKey);
-      window.dispatchEvent(event);
+    ])(
+      'should dispatch $type for $key with modifiers',
+      ({ key, ctrlKey, metaKey, shiftKey, type }) => {
+        renderKeyboardControlsHook(null);
+        const event = createMockKeyboardEvent(key, ctrlKey, metaKey, shiftKey);
+        window.dispatchEvent(event);
 
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(dispatch).toHaveBeenCalledWith({ type });
-    });
+        expect(event.preventDefault).toHaveBeenCalled();
+        expect(dispatch).toHaveBeenCalledWith({ type });
+      },
+    );
   });
 
   describe('Delete action', () => {
-    it.each([
-        {key: 'Delete'},
-        {key: 'Backspace'}
-    ])('should dispatch DELETE_SELECTED_SHAPE when a shape is selected and $key is pressed', ({key}) => {
-      renderKeyboardControlsHook('shape-1');
-      const event = createMockKeyboardEvent(key);
-      window.dispatchEvent(event);
+    it.each([{ key: 'Delete' }, { key: 'Backspace' }])(
+      'should dispatch DELETE_SELECTED_SHAPE when a shape is selected and $key is pressed',
+      ({ key }) => {
+        renderKeyboardControlsHook('shape-1');
+        const event = createMockKeyboardEvent(key);
+        window.dispatchEvent(event);
 
-      expect(dispatch).toHaveBeenCalledWith({ type: 'DELETE_SELECTED_SHAPE' });
-    });
+        expect(dispatch).toHaveBeenCalledWith({ type: 'DELETE_SELECTED_SHAPE' });
+      },
+    );
 
     it('should not dispatch DELETE_SELECTED_SHAPE when no shape is selected', () => {
       renderKeyboardControlsHook(null);

@@ -1,12 +1,14 @@
-
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { initialState } from './state/reducer';
 
 // Mock child components
+
 vi.mock('./components/SvgCanvas', () => ({
-  default: React.forwardRef((props, ref) => <div data-testid="svg-canvas" {...props} ref={ref as React.Ref<HTMLDivElement>}></div>),
+  default: React.forwardRef((props, ref) => (
+    <div data-testid="svg-canvas" {...props} ref={ref as React.Ref<HTMLDivElement>}></div>
+  )),
 }));
 vi.mock('./components/DebugInfo', () => ({
   default: () => <div data-testid="debug-info" />,

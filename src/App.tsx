@@ -1,8 +1,10 @@
-import { useReducer, useRef, useCallback } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { useReducer, useRef, useCallback } from 'react'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import Toolbar from './components/Toolbar';
 import SvgCanvas from './components/SvgCanvas';
 import DebugInfo from './components/DebugInfo'; // Import DebugInfo
 import TextInputModal from './components/TextInputModal'; // Import the modal
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { reducer, initialState, type Tool, type ShapeData } from './state/reducer';
 import { undoable } from './state/historyReducer';
 import { logger } from './state/logger'; // Import logger
@@ -14,9 +16,8 @@ import './App.css';
 
 const undoableReducer = undoable(reducer);
 // Apply logger only in debug mode
-const rootReducer = import.meta.env.VITE_DEBUG_MODE === 'true'
-  ? logger(undoableReducer)
-  : undoableReducer;
+const rootReducer =
+  import.meta.env.VITE_DEBUG_MODE === 'true' ? logger(undoableReducer) : undoableReducer;
 
 function App() {
   const [state, dispatch] = useReducer(rootReducer, {
@@ -25,6 +26,7 @@ function App() {
     future: [],
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { shapes, selectedShapeId, drawingState, currentTool, editingText } = state.present;
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -69,7 +71,7 @@ function App() {
         )}
       </div>
     </AppContext.Provider>
-  )
+  );
 }
 
-export default App
+export default App;

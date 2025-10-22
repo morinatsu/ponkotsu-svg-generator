@@ -9,7 +9,7 @@ export const useSvgExport = (svgRef: RefObject<SVGSVGElement | null>) => {
 
       // Reset selection styles for export
       const selectedElements = svgNode.querySelectorAll('[stroke="blue"]');
-      selectedElements.forEach(element => {
+      selectedElements.forEach((element) => {
         element.setAttribute('stroke', 'black');
       });
 

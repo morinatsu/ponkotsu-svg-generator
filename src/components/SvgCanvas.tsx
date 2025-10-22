@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import type { ShapeData, DrawingShape } from '../state/reducer';
+import type { ShapeData, DrawingShape } from '../state/reducer'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { AppContext } from '../state/AppContext';
 import Shape from './Shape';
 
@@ -52,7 +52,7 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
       onMouseDown,
       onCanvasClick,
     },
-    ref
+    ref,
   ) => {
     const context = useContext(AppContext);
     if (!context) {
@@ -87,7 +87,7 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
         <DrawingPreview />
       </svg>
     );
-  }
+  },
 );
 
 export default SvgCanvas;

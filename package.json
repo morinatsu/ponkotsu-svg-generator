@@ -7,11 +7,14 @@
     "dev": "vite",
     "dev:debug": "vite --mode debug",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . --fix",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "license-check": "license-checker --production --failOn '*GPL*'"
+    "license-check": "license-checker --production --failOn '*GPL*'",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@svgdotjs/svg.js": "^3.2.4",
@@ -29,15 +32,28 @@
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
     "happy-dom": "^18.0.1",
+    "husky": "^9.1.7",
     "jsdom": "^27.0.0",
     "license-checker": "^25.0.1",
+    "lint-staged": "^16.2.5",
+    "prettier": "^3.6.2",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2",
     "vitest": "^3.2.4"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,css}": [
+      "prettier --write"
+    ]
   }
 }
