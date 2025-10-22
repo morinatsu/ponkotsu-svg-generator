@@ -37,8 +37,12 @@ const TextInputModal: React.FC<TextInputModalProps> = ({ initialContent, onOk, o
           autoFocus
         />
         <div style={styles.buttons}>
-          <button onClick={onCancel} style={styles.button}>キャンセル</button>
-          <button onClick={handleOk} style={{ ...styles.button, ...styles.okButton }}>OK</button>
+          <button onClick={onCancel} style={styles.button}>
+            キャンセル
+          </button>
+          <button onClick={handleOk} style={{ ...styles.button, ...styles.okButton }}>
+            OK
+          </button>
         </div>
       </div>
     </div>

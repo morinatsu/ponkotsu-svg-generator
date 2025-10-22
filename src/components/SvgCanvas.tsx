@@ -57,7 +57,7 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
       onShapeClick,
       onShapeDoubleClick,
     },
-    ref
+    ref,
   ) => {
     const canvasStyle: React.CSSProperties = {
       border: '1px solid black',
@@ -85,12 +85,10 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
             // The onMouseDown is now handled by the main canvas handler
           />
         ))}
-        {drawingState && (
-          <DrawingPreview drawingState={drawingState} currentTool={currentTool} />
-        )}
+        {drawingState && <DrawingPreview drawingState={drawingState} currentTool={currentTool} />}
       </svg>
     );
-  }
+  },
 );
 
 export default SvgCanvas;

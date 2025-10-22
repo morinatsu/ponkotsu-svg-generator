@@ -41,25 +41,25 @@ const Toolbar: React.FC<ToolbarProps> = ({
         >
           楕円
         </button>
-        <button
-          onClick={() => onToolSelect('line')}
-          className={isActive('line') ? 'active' : ''}
-        >
+        <button onClick={() => onToolSelect('line')} className={isActive('line') ? 'active' : ''}>
           線
         </button>
-        <button
-          onClick={() => onToolSelect('text')}
-          className={isActive('text') ? 'active' : ''}
-        >
+        <button onClick={() => onToolSelect('text')} className={isActive('text') ? 'active' : ''}>
           テキスト
         </button>
       </div>
       <div className="tool-group">
-        <button onClick={onUndo} disabled={!canUndo}>Undo</button>
-        <button onClick={onRedo} disabled={!canRedo}>Redo</button>
+        <button onClick={onUndo} disabled={!canUndo}>
+          Undo
+        </button>
+        <button onClick={onRedo} disabled={!canRedo}>
+          Redo
+        </button>
       </div>
       <div className="tool-group">
-        <button onClick={onExport} disabled={shapesCount === 0}>エクスポート</button>
+        <button onClick={onExport} disabled={shapesCount === 0}>
+          エクスポート
+        </button>
       </div>
       <div className="tool-group">
         <button onClick={onClear}>クリア</button>

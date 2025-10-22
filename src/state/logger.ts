@@ -7,7 +7,9 @@
 // Define a generic Reducer type that can accept any state and action shape.
 type GenericReducer<S, A> = (state: S, action: A) => S;
 
-export const logger = <S, A extends { type: string }>(reducer: GenericReducer<S, A>): GenericReducer<S, A> => {
+export const logger = <S, A extends { type: string }>(
+  reducer: GenericReducer<S, A>,
+): GenericReducer<S, A> => {
   return (state: S, action: A): S => {
     console.group(`Action: ${action.type}`);
     console.log('%cPrevious State:', 'color: #9E9E9E; font-weight: 700;', state);

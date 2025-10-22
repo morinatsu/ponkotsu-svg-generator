@@ -13,9 +13,8 @@ import './App.css';
 
 const undoableReducer = undoable(reducer);
 // Apply logger only in debug mode
-const rootReducer = import.meta.env.VITE_DEBUG_MODE === 'true'
-  ? logger(undoableReducer)
-  : undoableReducer;
+const rootReducer =
+  import.meta.env.VITE_DEBUG_MODE === 'true' ? logger(undoableReducer) : undoableReducer;
 
 function App() {
   const [state, dispatch] = useReducer(rootReducer, {
@@ -117,7 +116,7 @@ function App() {
         />
       )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

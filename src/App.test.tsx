@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -7,18 +6,37 @@ import { initialState } from './state/reducer';
 
 // Mock child components
 vi.mock('./components/Toolbar', () => ({
-  default: ({ onClear = vi.fn(), onExport = vi.fn(), onUndo = vi.fn(), onRedo = vi.fn(), onToolSelect = vi.fn(), ...rest }) => (
+  default: ({
+    onClear = vi.fn(),
+    onExport = vi.fn(),
+    onUndo = vi.fn(),
+    onRedo = vi.fn(),
+    onToolSelect = vi.fn(),
+    ...rest
+  }) => (
     <div data-testid="toolbar" data-props={JSON.stringify(rest)}>
-      <button data-testid="clear-button" onClick={onClear}>Clear</button>
-      <button data-testid="export-button" onClick={onExport}>Export</button>
-      <button data-testid="undo-button" onClick={onUndo}>Undo</button>
-      <button data-testid="redo-button" onClick={onRedo}>Redo</button>
-      <button data-testid="rect-tool-button" onClick={() => onToolSelect('rectangle')}>Rect</button>
+      <button data-testid="clear-button" onClick={onClear}>
+        Clear
+      </button>
+      <button data-testid="export-button" onClick={onExport}>
+        Export
+      </button>
+      <button data-testid="undo-button" onClick={onUndo}>
+        Undo
+      </button>
+      <button data-testid="redo-button" onClick={onRedo}>
+        Redo
+      </button>
+      <button data-testid="rect-tool-button" onClick={() => onToolSelect('rectangle')}>
+        Rect
+      </button>
     </div>
   ),
 }));
 vi.mock('./components/SvgCanvas', () => ({
-  default: React.forwardRef((props, ref) => <div data-testid="svg-canvas" {...props} ref={ref as React.Ref<HTMLDivElement>}></div>),
+  default: React.forwardRef((props, ref) => (
+    <div data-testid="svg-canvas" {...props} ref={ref as React.Ref<HTMLDivElement>}></div>
+  )),
 }));
 vi.mock('./components/DebugInfo', () => ({
   default: () => <div data-testid="debug-info" />,
