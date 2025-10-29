@@ -32,7 +32,8 @@ describe('App', async () => {
 
   beforeAll(async () => {
     vi.doMock('./components/Toolbar', async () => {
-      const appContextModule = await vi.importActual<typeof import('./state/AppContext')>('./state/AppContext');
+      const appContextModule =
+        await vi.importActual<typeof import('./state/AppContext')>('./state/AppContext');
       const AppContext = appContextModule.AppContext;
 
       interface MockedToolbarProps {
@@ -48,10 +49,18 @@ describe('App', async () => {
         const { currentTool, shapes } = state;
         return (
           <div data-testid="toolbar" data-props={JSON.stringify({ canUndo, canRedo })}>
-            <button data-testid="clear-button" onClick={() => dispatch({ type: 'CLEAR_CANVAS' })}>Clear</button>
-            <button data-testid="export-button" onClick={onExport}>Export</button>
-            <button data-testid="undo-button" onClick={() => dispatch({ type: 'UNDO' })}>Undo</button>
-            <button data-testid="redo-button" onClick={() => dispatch({ type: 'REDO' })}>Redo</button>
+            <button data-testid="clear-button" onClick={() => dispatch({ type: 'CLEAR_CANVAS' })}>
+              Clear
+            </button>
+            <button data-testid="export-button" onClick={onExport}>
+              Export
+            </button>
+            <button data-testid="undo-button" onClick={() => dispatch({ type: 'UNDO' })}>
+              Undo
+            </button>
+            <button data-testid="redo-button" onClick={() => dispatch({ type: 'REDO' })}>
+              Redo
+            </button>
             <button
               data-testid="rect-tool-button"
               onClick={() => dispatch({ type: 'SELECT_TOOL', payload: 'rectangle' })}
