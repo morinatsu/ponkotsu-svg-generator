@@ -28,14 +28,20 @@ import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useSvgExport } from './hooks/useSvgExport';
 
 describe('App', async () => {
-  let App;
+  let App: React.ComponentType;
 
   beforeAll(async () => {
     vi.doMock('./components/Toolbar', async () => {
-      const React = await vi.importActual('react');
-      const { AppContext } = await vi.importActual('./state/AppContext');
+      const appContextModule = await vi.importActual<typeof import('./state/AppContext')>('./state/AppContext');
+      const AppContext = appContextModule.AppContext;
 
-      const MockedToolbar = ({ onExport, canUndo, canRedo }) => {
+      interface MockedToolbarProps {
+        onExport: () => void;
+        canUndo: boolean;
+        canRedo: boolean;
+      }
+
+      const MockedToolbar = ({ onExport, canUndo, canRedo }: MockedToolbarProps) => {
         const context = React.useContext(AppContext);
         if (!context) return <div data-testid="toolbar">Loading...</div>;
         const { state, dispatch } = context;

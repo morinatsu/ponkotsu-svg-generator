@@ -158,6 +158,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
       );
     }
     default: {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _exhaustiveCheck: never = shape;
       return null;
     }
