@@ -1,0 +1,11 @@
+# Set default behavior for all files to handle line endings automatically.
+# This will ensure that files checked out on Windows have CRLF line endings,
+# while files checked out on Linux/macOS have LF line endings.
+# The version in the Git repository itself will use LF.
+* text=auto eol=lf
+
+# Explicitly declare text files to always have LF line endings in the repo.
+*.{js,jsx,ts,tsx,json,md,html,css,scss,yml,yaml} text eol=lf
+
+# Declare files that should be treated as binary and not have their line endings changed.
+*.{png,jpg,jpeg,gif,ico,svg,woff,woff2} binary
