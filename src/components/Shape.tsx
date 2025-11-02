@@ -42,11 +42,17 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
     style: { cursor: 'grab' },
   };
 
-  // Style for the hitbox element. It should be disabled if another element is being dragged.
-  const hitboxStyle: React.CSSProperties = {
-    pointerEvents: isDragging ? 'none' : 'all',
-    fill: 'none', // 'none' is crucial for only capturing clicks on the stroke
-    stroke: 'transparent',
+  // Props for the hitbox element, which is responsible for capturing all pointer events.
+  // It should be disabled if another shape is being dragged.
+  const hitboxProps = {
+    'data-shape-id': shape.id,
+    onClick: groupProps.onClick,
+    style: {
+      pointerEvents: isDragging ? ('none' as const) : ('all' as const),
+      fill: 'none', // 'none' is crucial for only capturing clicks on the stroke
+      stroke: 'transparent',
+      cursor: 'grab',
+    },
   };
 
   // The visible shape should never capture pointer events.
@@ -55,7 +61,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
   switch (shape.type) {
     case 'rectangle':
       return (
-        <g {...groupProps}>
+        <g>
           <rect
             key={`${shape.id}-visible`}
             x={shape.x}
@@ -74,13 +80,13 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
             width={shape.width}
             height={shape.height}
             strokeWidth={10}
-            style={hitboxStyle}
+            {...hitboxProps}
           />
         </g>
       );
     case 'ellipse':
       return (
-        <g {...groupProps}>
+        <g>
           <ellipse
             key={`${shape.id}-visible`}
             cx={shape.cx}
@@ -99,13 +105,13 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
             rx={shape.rx}
             ry={shape.ry}
             strokeWidth={10}
-            style={hitboxStyle}
+            {...hitboxProps}
           />
         </g>
       );
     case 'line':
       return (
-        <g {...groupProps}>
+        <g>
           <line // The visible line
             key={`${shape.id}-visible`}
             x1={shape.x1}
@@ -123,7 +129,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
             x2={shape.x2}
             y2={shape.y2}
             strokeWidth={10}
-            style={hitboxStyle}
+            {...hitboxProps}
           />
         </g>
       );
