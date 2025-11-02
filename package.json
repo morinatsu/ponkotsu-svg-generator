@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint . --fix",
     "preview": "vite preview",
-    "test": "vitest",
+    "test": "vitest run",
     "test:ui": "vitest --ui",
     "license-check": "license-checker --production --failOn '*GPL*'",
     "format": "prettier --write .",
