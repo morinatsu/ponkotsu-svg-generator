@@ -87,20 +87,16 @@ export const useInteractionManager = (
   const handleMouseUp = useCallback(() => {
     if (mode === 'drawing') {
       dispatch({ type: 'END_DRAWING' });
-    } else if (mode === 'dragging' && draggingState) {
-      const elementToDrag = svgRef.current?.querySelector<SVGGraphicsElement>(
-        `[data-shape-id="${draggingState.shapeId}"]`,
-      );
-      if (elementToDrag) {
-        elementToDrag.style.transform = '';
-      }
-
+    } else if (mode === 'dragging') {
+      // The reducer has been handling the position updates.
+      // We just need to signal the end of the drag.
+      // The payload with the final delta is still useful for the history reducer.
       dispatch({
         type: 'STOP_DRAGGING',
         payload: dragTranslationRef.current,
       });
     }
-  }, [mode, draggingState, svgRef, dispatch]);
+  }, [mode, dispatch]);
 
   /**
    * Handles the mouse move event, which is attached to the window during
@@ -132,26 +128,14 @@ export const useInteractionManager = (
       } else if (mode === 'dragging' && draggingState) {
         const dx = pos.x - draggingState.startX;
         const dy = pos.y - draggingState.startY;
+        // The ref is still needed to calculate the final delta for STOP_DRAGGING.
         dragTranslationRef.current = { dx, dy };
 
-        const elementToDrag = svgRef.current?.querySelector<SVGGraphicsElement>(
-          `[data-shape-id="${draggingState.shapeId}"]`,
-        );
-        if (elementToDrag) {
-          elementToDrag.style.transform = `translate(${dx}px, ${dy}px)`;
-        }
+        // Dispatch an action to update the shape's position in the state.
+        dispatch({ type: 'DRAGGING', payload: { mouseX: pos.x, mouseY: pos.y } });
       }
     },
-    [
-      getMousePosition,
-      mode,
-      wasDragged,
-      drawingState,
-      draggingState,
-      svgRef,
-      handleMouseUp,
-      dispatch,
-    ],
+    [getMousePosition, mode, wasDragged, drawingState, draggingState, handleMouseUp, dispatch],
   );
 
   /**
