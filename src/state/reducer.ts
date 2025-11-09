@@ -94,6 +94,7 @@ export type Action =
   // Dragging actions
   | { type: 'START_DRAGGING'; payload: { shapeId: string; mouseX: number; mouseY: number } }
   | { type: 'STOP_DRAGGING'; payload: { dx: number; dy: number } }
+  | { type: 'DRAGGING'; payload: { mouseX: number; mouseY: number } }
   // Shape actions
   | { type: 'ADD_SHAPE'; payload: ShapeData }
   | { type: 'SELECT_SHAPE'; payload: string | null }
@@ -110,30 +111,31 @@ export type Action =
 
 // Root reducer that combines all sub-reducers.
 export const reducer = (state: AppState, action: Action): AppState => {
-    switch (action.type) {
-        // Drawing actions
-        case 'START_DRAWING':
-        case 'DRAWING':
-        case 'END_DRAWING':
-            return drawingReducer(state, action);
+  switch (action.type) {
+    // Drawing actions
+    case 'START_DRAWING':
+    case 'DRAWING':
+    case 'END_DRAWING':
+      return drawingReducer(state, action);
 
-        // Dragging actions
-        case 'START_DRAGGING':
-        case 'STOP_DRAGGING':
-            return draggingReducer(state, action);
+    // Dragging actions
+    case 'START_DRAGGING':
+    case 'STOP_DRAGGING':
+    case 'DRAGGING':
+      return draggingReducer(state, action);
 
-        // Shape and tool actions
-        case 'SELECT_TOOL':
-        case 'ADD_SHAPE':
-        case 'SELECT_SHAPE':
-        case 'DELETE_SELECTED_SHAPE':
-        case 'CLEAR_CANVAS':
-        case 'START_TEXT_EDIT':
-        case 'FINISH_TEXT_EDIT':
-        case 'CANCEL_TEXT_EDIT':
-            return shapeReducer(state, action);
+    // Shape and tool actions
+    case 'SELECT_TOOL':
+    case 'ADD_SHAPE':
+    case 'SELECT_SHAPE':
+    case 'DELETE_SELECTED_SHAPE':
+    case 'CLEAR_CANVAS':
+    case 'START_TEXT_EDIT':
+    case 'FINISH_TEXT_EDIT':
+    case 'CANCEL_TEXT_EDIT':
+      return shapeReducer(state, action);
 
-        default:
-            return state;
-    }
+    default:
+      return state;
+  }
 };
