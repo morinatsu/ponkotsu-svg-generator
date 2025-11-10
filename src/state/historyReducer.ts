@@ -56,7 +56,7 @@ import {
   reducer as originalReducer,
   initialState as originalInitialState,
 } from './reducer';
-import isEqual from 'lodash/isEqual';
+import isEqual from 'lodash/isEqual.js';
 
 export interface HistoryState {
   past: ShapeData[][]; // 過去の図形リストの配列

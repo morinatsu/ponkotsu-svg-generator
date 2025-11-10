@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:ui": "vitest --ui",
+    "test:e2e": "playwright test",
     "license-check": "license-checker --production --failOn '*GPL*'",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
+    "@playwright/test": "^1.56.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@types/lodash": "^4.17.20",
