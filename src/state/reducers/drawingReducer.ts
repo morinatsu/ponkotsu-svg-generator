@@ -22,33 +22,17 @@ export const drawingReducer = (state: AppState, action: Action): AppState => {
       }
       const { x, y, startX, startY } = action.payload;
 
-      // For lines, the start and end points are direct.
-      if (state.currentTool === 'line') {
-        return {
-          ...state,
-          drawingState: {
-            ...state.drawingState,
-            x: startX,
-            y: startY,
-            width: x - startX, // Use width/height to store end coordinates
-            height: y - startY,
-          },
-        };
-      }
-
-      // For rectangles and ellipses, calculate top-left and dimensions.
-      const newX = Math.min(x, startX);
-      const newY = Math.min(y, startY);
-      const newWidth = Math.abs(x - startX);
-      const newHeight = Math.abs(y - startY);
+      // For all shapes, we store the start point and the raw offset (delta).
+      // This allows for drawing in any direction. The final coordinates will be normalized
+      // in the END_DRAWING action when the shape is created.
       return {
         ...state,
         drawingState: {
           ...state.drawingState,
-          x: newX,
-          y: newY,
-          width: newWidth,
-          height: newHeight,
+          x: startX,
+          y: startY,
+          width: x - startX,
+          height: y - startY,
         },
       };
     }
@@ -67,21 +51,42 @@ export const drawingReducer = (state: AppState, action: Action): AppState => {
       let newShape: ShapeData;
       const id = crypto.randomUUID();
 
+      // Normalize the shape before adding it to the state.
+      // This ensures that all shapes are stored with a top-left origin
+      // and positive width/height, simplifying rendering and transformations.
       switch (state.currentTool) {
-        case 'rectangle':
-          newShape = { id, type: 'rectangle', x, y, width, height };
+        case 'rectangle': {
+          const finalX = width < 0 ? x + width : x;
+          const finalY = height < 0 ? y + height : y;
+          const finalWidth = Math.abs(width);
+          const finalHeight = Math.abs(height);
+          newShape = {
+            id,
+            type: 'rectangle',
+            x: finalX,
+            y: finalY,
+            width: finalWidth,
+            height: finalHeight,
+          };
           break;
-        case 'ellipse':
+        }
+        case 'ellipse': {
+          const finalCx = x + width / 2;
+          const finalCy = y + height / 2;
+          const finalRx = Math.abs(width / 2);
+          const finalRy = Math.abs(height / 2);
           newShape = {
             id,
             type: 'ellipse',
-            cx: x + width / 2,
-            cy: y + height / 2,
-            rx: width / 2,
-            ry: height / 2,
+            cx: finalCx,
+            cy: finalCy,
+            rx: finalRx,
+            ry: finalRy,
           };
           break;
+        }
         case 'line':
+          // Lines don't need normalization in the same way.
           newShape = {
             id,
             type: 'line',

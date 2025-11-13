@@ -27,19 +27,27 @@ const DrawingPreview: React.FC = () => {
   };
 
   switch (currentTool) {
-    case 'rectangle':
-      return <rect x={x} y={y} width={width} height={height} {...commonProps} />;
-    case 'ellipse':
+    case 'rectangle': {
+      // Handle negative width/height for previewing rectangles drawn in any direction.
+      const rectX = width < 0 ? x + width : x;
+      const rectY = height < 0 ? y + height : y;
+      const rectWidth = Math.abs(width);
+      const rectHeight = Math.abs(height);
       return (
-        <ellipse
-          cx={x + width / 2}
-          cy={y + height / 2}
-          rx={width / 2}
-          ry={height / 2}
-          {...commonProps}
-        />
+        <rect x={rectX} y={rectY} width={rectWidth} height={rectHeight} {...commonProps} />
       );
+    }
+    case 'ellipse': {
+      // Handle negative radius for previewing ellipses drawn in any direction.
+      const rx = Math.abs(width / 2);
+      const ry = Math.abs(height / 2);
+      // The center point calculation (cx, cy) remains correct even with negative width/height.
+      const cx = x + width / 2;
+      const cy = y + height / 2;
+      return <ellipse cx={cx} cy={cy} rx={rx} ry={ry} {...commonProps} />;
+    }
     case 'line':
+      // Line drawing is direct and doesn't need normalization for preview.
       return <line x1={x} y1={y} x2={x + width} y2={y + height} {...commonProps} />;
     default:
       return null;
