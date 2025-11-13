@@ -49,7 +49,6 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
     onClick: groupProps.onClick,
     style: {
       pointerEvents: isDragging ? ('none' as const) : ('all' as const),
-      fill: 'none', // 'none' is crucial for only capturing clicks on the stroke
       stroke: 'transparent',
       cursor: 'grab',
     },
@@ -79,6 +78,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
             y={shape.y}
             width={shape.width}
             height={shape.height}
+            fill="none" // 'none' is crucial for only capturing clicks on the stroke
             strokeWidth={10}
             {...hitboxProps}
           />
@@ -104,6 +104,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
             cy={shape.cy}
             rx={shape.rx}
             ry={shape.ry}
+            fill="none" // 'none' is crucial for only capturing clicks on the stroke
             strokeWidth={10}
             {...hitboxProps}
           />
