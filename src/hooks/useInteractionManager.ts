@@ -122,7 +122,7 @@ export const useInteractionManager = (
         if (drawingState?.x !== undefined && drawingState?.y !== undefined) {
           dispatch({
             type: 'DRAWING',
-            payload: { x: pos.x, y: pos.y, startX: drawingState.x, startY: drawingState.y },
+            payload: { x: pos.x, y: pos.y },
           });
         }
       } else if (mode === 'dragging' && draggingState) {

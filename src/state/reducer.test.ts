@@ -36,6 +36,8 @@ describe('reducer', () => {
         y: startPoint.y,
         width: 0,
         height: 0,
+        startX: startPoint.x,
+        startY: startPoint.y,
       });
       expect(newState.selectedShapeId).toBeNull();
     });
@@ -44,7 +46,15 @@ describe('reducer', () => {
       const startState: AppState = {
         ...initialState,
         currentTool: 'rectangle',
-        drawingState: { type: 'rectangle', x: startPoint.x, y: startPoint.y, width: 0, height: 0 },
+        drawingState: {
+          type: 'rectangle',
+          x: startPoint.x,
+          y: startPoint.y,
+          width: 0,
+          height: 0,
+          startX: startPoint.x,
+          startY: startPoint.y,
+        },
       };
       const action = {
         type: 'DRAWING' as const,
@@ -57,6 +67,8 @@ describe('reducer', () => {
         y: 20,
         width: 50,
         height: 60,
+        startX: 10,
+        startY: 20,
       });
     });
 
@@ -64,7 +76,15 @@ describe('reducer', () => {
       const startState: AppState = {
         ...initialState,
         currentTool: 'line',
-        drawingState: { type: 'line', x: startPoint.x, y: startPoint.y, width: 0, height: 0 },
+        drawingState: {
+          type: 'line',
+          x: startPoint.x,
+          y: startPoint.y,
+          width: 0,
+          height: 0,
+          startX: startPoint.x,
+          startY: startPoint.y,
+        },
       };
       const action = {
         type: 'DRAWING' as const,
@@ -77,6 +97,8 @@ describe('reducer', () => {
         y: startPoint.y,
         width: endPoint.x - startPoint.x,
         height: endPoint.y - startPoint.y,
+        startX: startPoint.x,
+        startY: startPoint.y,
       });
     });
 
@@ -84,7 +106,15 @@ describe('reducer', () => {
       const drawingState: AppState = {
         ...initialState,
         currentTool: 'rectangle',
-        drawingState: { type: 'rectangle', x: 10, y: 20, width: 50, height: 60 },
+        drawingState: {
+          type: 'rectangle',
+          x: 10,
+          y: 20,
+          width: 50,
+          height: 60,
+          startX: 10,
+          startY: 20,
+        },
       };
       const action = { type: 'END_DRAWING' as const };
       const newState = reducer(drawingState, action);
@@ -105,7 +135,15 @@ describe('reducer', () => {
       const drawingState: AppState = {
         ...initialState,
         currentTool: 'ellipse',
-        drawingState: { type: 'ellipse', x: 10, y: 20, width: 50, height: 60 },
+        drawingState: {
+          type: 'ellipse',
+          x: 10,
+          y: 20,
+          width: 50,
+          height: 60,
+          startX: 10,
+          startY: 20,
+        },
       };
       const action = { type: 'END_DRAWING' as const };
       const newState = reducer(drawingState, action);
@@ -126,7 +164,7 @@ describe('reducer', () => {
       const drawingState: AppState = {
         ...initialState,
         currentTool: 'line',
-        drawingState: { type: 'line', x: 10, y: 20, width: 50, height: 60 }, // width/height store the deltas
+        drawingState: { type: 'line', x: 10, y: 20, width: 50, height: 60, startX: 10, startY: 20 }, // width/height store the deltas
       };
       const action = { type: 'END_DRAWING' as const };
       const newState = reducer(drawingState, action);
@@ -146,7 +184,15 @@ describe('reducer', () => {
     it('END_DRAWING: should not add a shape if dimensions are zero', () => {
       const drawingState: AppState = {
         ...initialState,
-        drawingState: { type: 'rectangle', x: 10, y: 20, width: 0, height: 0 },
+        drawingState: {
+          type: 'rectangle',
+          x: 10,
+          y: 20,
+          width: 0,
+          height: 0,
+          startX: 10,
+          startY: 20,
+        },
       };
       const action = { type: 'END_DRAWING' as const };
       const newState = reducer(drawingState, action);

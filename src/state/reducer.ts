@@ -51,6 +51,8 @@ export type DrawingShape = {
   y: number;
   width: number;
   height: number;
+  startX: number;
+  startY: number;
   id?: string;
 };
 
@@ -89,7 +91,7 @@ export const initialState: AppState = {
 export type Action =
   // Drawing actions
   | { type: 'START_DRAWING'; payload: { x: number; y: number } }
-  | { type: 'DRAWING'; payload: { x: number; y: number; startX: number; startY: number } }
+  | { type: 'DRAWING'; payload: { x: number; y: number } }
   | { type: 'END_DRAWING' }
   // Dragging actions
   | { type: 'START_DRAGGING'; payload: { shapeId: string; mouseX: number; mouseY: number } }

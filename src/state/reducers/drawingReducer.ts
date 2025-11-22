@@ -13,6 +13,8 @@ export const drawingReducer = (state: AppState, action: Action): AppState => {
           y: action.payload.y,
           width: 0,
           height: 0,
+          startX: action.payload.x,
+          startY: action.payload.y,
         },
       };
 
@@ -20,7 +22,8 @@ export const drawingReducer = (state: AppState, action: Action): AppState => {
       if (!state.drawingState) {
         return state;
       }
-      const { x, y, startX, startY } = action.payload;
+      const { x, y } = action.payload;
+      const { startX, startY } = state.drawingState;
 
       // For lines, the start and end points are direct.
       if (state.currentTool === 'line') {

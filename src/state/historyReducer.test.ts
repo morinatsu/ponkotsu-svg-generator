@@ -32,7 +32,15 @@ describe('historyReducer (undoable)', () => {
       ...initialState,
       present: {
         ...initialState.present,
-        drawingState: { type: 'rectangle', x: 0, y: 0, width: 10, height: 10 },
+        drawingState: {
+          type: 'rectangle',
+          x: 0,
+          y: 0,
+          width: 10,
+          height: 10,
+          startX: 0,
+          startY: 0,
+        },
       },
     };
 
@@ -155,7 +163,15 @@ describe('historyReducer (undoable)', () => {
       present: {
         ...initialState.present,
         // Draw a rectangle from (10,10) to (60,60)
-        drawingState: { type: 'rectangle', x: 10, y: 10, width: 50, height: 50 },
+        drawingState: {
+          type: 'rectangle',
+          x: 10,
+          y: 10,
+          width: 50,
+          height: 50,
+          startX: 10,
+          startY: 10,
+        },
       },
     };
     let state = historyReducer(stateWithDrawing, { type: 'END_DRAWING' });
