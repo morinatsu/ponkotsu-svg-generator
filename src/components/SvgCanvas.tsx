@@ -47,13 +47,7 @@ const DrawingPreview: React.FC = () => {
 };
 
 const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
-  (
-    {
-      onMouseDown,
-      onCanvasClick,
-    },
-    ref,
-  ) => {
+  ({ onMouseDown, onCanvasClick }, ref) => {
     const context = useContext(AppContext);
     if (!context) {
       throw new Error('SvgCanvas must be used within an AppContextProvider');
@@ -81,7 +75,11 @@ const SvgCanvas = React.forwardRef<SVGSVGElement, SvgCanvasProps>(
             shape={shape}
             isSelected={selectedShapeId === shape.id}
             // When another shape is being dragged, prevent interaction.
-            isDragging={!!selectedShapeId && selectedShapeId !== shape.id}
+            isDragging={
+              state.mode === 'dragging' && !!selectedShapeId && selectedShapeId !== shape.id
+            }
+            // When drawing a new shape, prevent interaction with existing shapes.
+            isDrawingMode={state.mode === 'drawing'}
           />
         ))}
         <DrawingPreview />

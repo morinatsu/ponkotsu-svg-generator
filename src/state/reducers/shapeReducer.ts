@@ -24,7 +24,7 @@ export const shapeReducer = (state: AppState, action: Action): AppState => {
       if (!state.selectedShapeId) return state;
       return {
         ...state,
-        shapes: state.shapes.filter(shape => shape.id !== state.selectedShapeId),
+        shapes: state.shapes.filter((shape) => shape.id !== state.selectedShapeId),
         selectedShapeId: null,
       };
 
@@ -33,6 +33,10 @@ export const shapeReducer = (state: AppState, action: Action): AppState => {
         ...state,
         shapes: [],
         selectedShapeId: null,
+        shapesBeforeDrag: null,
+        draggingState: null,
+        drawingState: null,
+        mode: 'idle',
       };
 
     // --- Text editing cases ---
@@ -61,10 +65,8 @@ export const shapeReducer = (state: AppState, action: Action): AppState => {
       let newShapes: ShapeData[];
       if (id) {
         // Update existing text shape
-        newShapes = state.shapes.map(shape =>
-          shape.id === id && shape.type === 'text'
-            ? { ...shape, content }
-            : shape
+        newShapes = state.shapes.map((shape) =>
+          shape.id === id && shape.type === 'text' ? { ...shape, content } : shape,
         );
       } else {
         // Add new text shape

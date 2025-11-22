@@ -6,9 +6,10 @@ interface ShapeProps {
   shape: ShapeData;
   isSelected: boolean;
   isDragging: boolean; // True if ANOTHER shape is being dragged
+  isDrawingMode: boolean; // True if the user is currently drawing a new shape
 }
 
-const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
+const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, isDrawingMode }) => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('Shape must be used within an AppContextProvider');
@@ -48,7 +49,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
     'data-shape-id': shape.id,
     onClick: groupProps.onClick,
     style: {
-      pointerEvents: isDragging ? ('none' as const) : ('visiblePainted' as const),
+      pointerEvents: isDragging || isDrawingMode ? ('none' as const) : ('visiblePainted' as const),
       stroke: 'transparent',
       cursor: 'grab',
     },
@@ -141,7 +142,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
       const textStyle: React.CSSProperties = {
         cursor: 'grab',
         userSelect: 'none',
-        pointerEvents: isDragging ? 'none' : 'all',
+        pointerEvents: isDragging || isDrawingMode ? 'none' : 'all',
       };
       return (
         <g {...groupProps}>

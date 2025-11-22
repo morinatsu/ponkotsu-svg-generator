@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useReducer, useRef, useCallback } from 'react'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import Toolbar from './components/Toolbar';
 import SvgCanvas from './components/SvgCanvas';
@@ -51,11 +50,7 @@ function App() {
           canUndo={state.past.length > 0}
           canRedo={state.future.length > 0}
         />
-        <SvgCanvas
-          ref={svgRef}
-          onMouseDown={handleMouseDown}
-          onCanvasClick={handleCanvasClick}
-        />
+        <SvgCanvas ref={svgRef} onMouseDown={handleMouseDown} onCanvasClick={handleCanvasClick} />
         <DebugInfo history={state} />
 
         {editingText && (

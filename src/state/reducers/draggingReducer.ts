@@ -109,6 +109,7 @@ export const draggingReducer = (state: AppState, action: Action): AppState => {
         mode: 'idle',
         selectedShapeId: null, // Deselect after dragging
         draggingState: null,
+        shapesBeforeDrag: null,
         shapes: newShapes,
       };
     }
