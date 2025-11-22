@@ -48,7 +48,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging }) => {
     'data-shape-id': shape.id,
     onClick: groupProps.onClick,
     style: {
-      pointerEvents: isDragging ? ('none' as const) : ('all' as const),
+      pointerEvents: isDragging ? ('none' as const) : ('visiblePainted' as const),
       stroke: 'transparent',
       cursor: 'grab',
     },

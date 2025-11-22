@@ -3,7 +3,7 @@ import type { AppState, Action } from '../reducer';
 export const draggingReducer = (state: AppState, action: Action): AppState => {
   switch (action.type) {
     case 'START_DRAGGING': {
-      const shape = state.shapes.find(s => s.id === action.payload.shapeId);
+      const shape = state.shapes.find((s) => s.id === action.payload.shapeId);
       if (!shape) return state;
 
       return {
@@ -20,8 +20,8 @@ export const draggingReducer = (state: AppState, action: Action): AppState => {
           offsetX: 0,
           offsetY: 0,
         },
-        // shapesBeforeDrag is no longer needed because we apply a delta to the original position.
-        shapesBeforeDrag: null,
+        // Save the state of shapes before dragging starts
+        shapesBeforeDrag: state.shapes,
       };
     }
 
@@ -33,7 +33,9 @@ export const draggingReducer = (state: AppState, action: Action): AppState => {
       const dx = mouseX - state.draggingState.startX;
       const dy = mouseY - state.draggingState.startY;
 
-      const newShapes = state.shapes.map(shape => {
+      // Use shapesBeforeDrag to calculate the new position relative to the original position
+      const sourceShapes = state.shapesBeforeDrag || state.shapes;
+      const newShapes = sourceShapes.map((shape) => {
         if (shape.id !== shapeId) {
           return shape;
         }
@@ -75,7 +77,9 @@ export const draggingReducer = (state: AppState, action: Action): AppState => {
         };
       }
 
-      const newShapes = state.shapes.map(shape => {
+      // Use shapesBeforeDrag to calculate the final position
+      const sourceShapes = state.shapesBeforeDrag || state.shapes;
+      const newShapes = sourceShapes.map((shape) => {
         if (shape.id !== shapeId) {
           return shape;
         }
