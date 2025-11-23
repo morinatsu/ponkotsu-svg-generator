@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { undoable, type HistoryState, type HistoryAction } from './historyReducer';
-import {
-  reducer as originalReducer,
-  initialState as originalInitialState,
-  type ShapeData,
-} from './reducer';
+import { reducer as originalReducer, initialState as originalInitialState } from './reducer';
+import type { ShapeData } from '../types';
 
 describe('historyReducer (undoable)', () => {
   let historyReducer: (state: HistoryState | undefined, action: HistoryAction) => HistoryState;

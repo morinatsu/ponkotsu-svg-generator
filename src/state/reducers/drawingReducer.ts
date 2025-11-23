@@ -1,4 +1,4 @@
-import type { AppState, Action, ShapeData } from '../reducer';
+import type { AppState, Action, ShapeData } from '../../types';
 
 export const drawingReducer = (state: AppState, action: Action): AppState => {
   switch (action.type) {

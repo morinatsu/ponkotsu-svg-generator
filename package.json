@@ -8,13 +8,13 @@
     "dev:debug": "vite --mode debug",
     "build": "tsc -b && vite build",
     "lint": "eslint . --fix",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "vitest run src",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
     "license-check": "license-checker --production --failOn '*GPL*'",
-    "format": "prettier --write .",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "prepare": "husky install"
   },
   "dependencies": {

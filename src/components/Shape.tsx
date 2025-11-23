@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import type { ShapeData } from '../state/reducer';
+import type { ShapeData } from '../types';
 import { AppContext } from '../state/AppContext';
 
 interface ShapeProps {

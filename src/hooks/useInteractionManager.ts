@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { Action, AppState } from '../state/reducer';
+import type { Action, AppState } from '../types';
 
 /**
  * A custom hook to manage all user interactions with the SVG canvas,

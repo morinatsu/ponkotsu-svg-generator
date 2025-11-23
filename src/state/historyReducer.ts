@@ -49,13 +49,8 @@
  * ]);
  * ```
  */
-import {
-  type ShapeData,
-  type Action,
-  type AppState,
-  reducer as originalReducer,
-  initialState as originalInitialState,
-} from './reducer';
+import { reducer as originalReducer, initialState as originalInitialState } from './reducer';
+import type { ShapeData, Action, AppState } from '../types';
 import isEqual from 'lodash/isEqual.js';
 
 export interface HistoryState {

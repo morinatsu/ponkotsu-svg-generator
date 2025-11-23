@@ -1,4 +1,4 @@
-import type { AppState, Action } from '../reducer';
+import type { AppState, Action } from '../../types';
 
 export const draggingReducer = (state: AppState, action: Action): AppState => {
   switch (action.type) {

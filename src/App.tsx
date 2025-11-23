@@ -1,71 +1,50 @@
-import { useReducer, useRef, useCallback } from 'react'; // eslint-disable-line @typescript-eslint/no-unused-vars
+import React, { useContext } from 'react';
 import Toolbar from './components/Toolbar';
 import SvgCanvas from './components/SvgCanvas';
-import DebugInfo from './components/DebugInfo'; // Import DebugInfo
-import TextInputModal from './components/TextInputModal'; // Import the modal
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { reducer, initialState, type Tool, type ShapeData } from './state/reducer';
-import { undoable } from './state/historyReducer';
-import { logger } from './state/logger'; // Import logger
-import { useInteractionManager } from './hooks/useInteractionManager';
+import DebugInfo from './components/DebugInfo';
+import TextInputModal from './components/TextInputModal';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
-import { useSvgExport } from './hooks/useSvgExport';
 import { AppContext } from './state/AppContext';
+import { AppProvider } from './state/AppProvider';
 import './App.css';
 
-const undoableReducer = undoable(reducer);
-// Apply logger only in debug mode
-const rootReducer =
-  import.meta.env.VITE_DEBUG_MODE === 'true' ? logger(undoableReducer) : undoableReducer;
+const AppContent: React.FC = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('AppContent must be used within an AppContextProvider');
+  }
+  const { state, dispatch, history } = context;
+  const { editingText, selectedShapeId } = state;
 
-function App() {
-  const [state, dispatch] = useReducer(rootReducer, {
-    past: [],
-    present: initialState,
-    future: [],
-  });
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { shapes, selectedShapeId, drawingState, currentTool, editingText } = state.present;
-  const svgRef = useRef<SVGSVGElement>(null);
-
-  // This ref is used to prevent click events from firing after a drag operation.
-  const wasDragged = useRef(false);
-
-  // The new, unified interaction manager hook.
-  const { handleMouseDown } = useInteractionManager(dispatch, state.present, svgRef, wasDragged);
   useKeyboardControls(dispatch, selectedShapeId);
-  const { handleExport } = useSvgExport(svgRef);
-
-  const handleCanvasClick = () => {
-    dispatch({ type: 'SELECT_SHAPE', payload: null });
-  };
 
   return (
-    <AppContext.Provider value={{ state: state.present, dispatch, wasDragged }}>
-      <div className="App">
-        <h1>ぽんこつSVGジェネレーター</h1>
-        <Toolbar
-          onExport={handleExport}
-          canUndo={state.past.length > 0}
-          canRedo={state.future.length > 0}
-        />
-        <SvgCanvas ref={svgRef} onMouseDown={handleMouseDown} onCanvasClick={handleCanvasClick} />
-        <DebugInfo history={state} />
+    <div className="App">
+      <h1>ぽんこつSVGジェネレーター</h1>
+      <Toolbar />
+      <SvgCanvas />
+      <DebugInfo history={history} />
 
-        {editingText && (
-          <TextInputModal
-            initialContent={editingText.content}
-            onOk={(content) => {
-              dispatch({ type: 'FINISH_TEXT_EDIT', payload: { content } });
-            }}
-            onCancel={() => {
-              dispatch({ type: 'CANCEL_TEXT_EDIT' });
-            }}
-          />
-        )}
-      </div>
-    </AppContext.Provider>
+      {editingText && (
+        <TextInputModal
+          initialContent={editingText.content}
+          onOk={(content) => {
+            dispatch({ type: 'FINISH_TEXT_EDIT', payload: { content } });
+          }}
+          onCancel={() => {
+            dispatch({ type: 'CANCEL_TEXT_EDIT' });
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   );
 }
 

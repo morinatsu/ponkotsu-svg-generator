@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { reducer, initialState, type ShapeData, type AppState } from './reducer';
+import { reducer, initialState } from './reducer';
+import type { ShapeData, AppState } from '../types';
 
 // Mock crypto.randomUUID
 vi.stubGlobal('crypto', {

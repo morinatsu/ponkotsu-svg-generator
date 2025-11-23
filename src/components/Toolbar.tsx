@@ -1,20 +1,16 @@
 import React, { useContext } from 'react';
-import type { Tool } from '../state/reducer';
+import type { Tool } from '../types';
 import { AppContext } from '../state/AppContext';
+import { useSvgExport } from '../hooks/useSvgExport';
 
-interface ToolbarProps {
-  onExport: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
-}
-
-const Toolbar: React.FC<ToolbarProps> = ({ onExport, canUndo, canRedo }) => {
+const Toolbar: React.FC = () => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('Toolbar must be used within an AppContextProvider');
   }
-  const { state, dispatch } = context;
+  const { state, dispatch, canUndo, canRedo, svgRef } = context;
   const { currentTool, shapes } = state;
+  const { handleExport } = useSvgExport(svgRef);
 
   const isActive = (tool: Tool) => tool === currentTool;
 
@@ -55,11 +51,17 @@ const Toolbar: React.FC<ToolbarProps> = ({ onExport, canUndo, canRedo }) => {
         </button>
       </div>
       <div className="tool-group">
-        <button onClick={() => dispatch({ type: 'UNDO' })} disabled={!canUndo}>Undo</button>
-        <button onClick={() => dispatch({ type: 'REDO' })} disabled={!canRedo}>Redo</button>
+        <button onClick={() => dispatch({ type: 'UNDO' })} disabled={!canUndo}>
+          Undo
+        </button>
+        <button onClick={() => dispatch({ type: 'REDO' })} disabled={!canRedo}>
+          Redo
+        </button>
       </div>
       <div className="tool-group">
-        <button onClick={onExport} disabled={shapes.length === 0}>エクスポート</button>
+        <button onClick={handleExport} disabled={shapes.length === 0}>
+          エクスポート
+        </button>
       </div>
       <div className="tool-group">
         <button onClick={handleClear}>クリア</button>
