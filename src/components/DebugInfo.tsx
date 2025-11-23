@@ -27,7 +27,7 @@ const preStyles: React.CSSProperties = {
 };
 
 const DebugInfo: React.FC<DebugInfoProps> = ({ history }) => {
-  // VITE_DEBUG_MODEが'true'でない場合は何もレンダリングしない
+  // Do not render anything if VITE_DEBUG_MODE is not 'true'
   if (import.meta.env.VITE_DEBUG_MODE !== 'true') {
     return null;
   }

@@ -1,43 +1,43 @@
 /**
- * @file Undo/Redo機能を提供するHigher-Order Reducer
+ * @file Higher-Order Reducer providing Undo/Redo functionality
  *
- * ## 設計思想
+ * ## Design Philosophy
  *
- * このUndo/Redo機構は、アプリケーションの状態のうち、ユーザーが「元に戻したい」「やり直したい」と考えるであろう
- * **永続的な変更**のみを履歴の対象とすることを目的としています。
- * 具体的には、キャンバス上の図形リスト (`shapes` 配列) への変更のみを追跡します。
- * ツールの選択や、一時的な描画中の状態など、UIの一時的な状態変更は履歴に記録しません。
+ * This Undo/Redo mechanism aims to track only **persistent changes** to the application state
+ * that the user would likely want to "undo" or "redo".
+ * Specifically, it tracks changes to the list of shapes on the canvas (`shapes` array).
+ * Temporary UI state changes, such as tool selection or the state during drawing, are not recorded in the history.
  *
- * ## HistoryStateの構造
+ * ## Structure of HistoryState
  *
- * - `past`: 過去の `shapes` の状態を保持する配列 (`ShapeData[][]`)。ユーザーがUNDOを行うと、ここの最後の状態が `present` に復元されます。
- * - `present`: 現在の完全なアプリケーションの状態 (`AppState`)。UIの状態も含みます。
- * - `future`: 未来の `shapes` の状態を保持する配列 (`ShapeData[][]`)。ユーザーがREDOを行うと、ここの最初の状態が `present` に復元されます。
+ * - `past`: An array holding past states of `shapes` (`ShapeData[][]`). When the user performs UNDO, the last state here is restored to `present`.
+ * - `present`: The current complete application state (`AppState`), including UI state.
+ * - `future`: An array holding future states of `shapes` (`ShapeData[][]`). When the user performs REDO, the first state here is restored to `present`.
  *
- * ## 動作の仕組み
+ * ## Mechanism
  *
- * 1.  `undoable` は、元の `reducer` をラップするHigher-Order Reducerです。
- * 2.  全てのアクションを一旦受け取り、その種類によって履歴を操作するか、`present` の状態を更新するだけかを判断します。
+ * 1. `undoable` is a Higher-Order Reducer that wraps the original `reducer`.
+ * 2. It receives all actions and decides whether to manipulate the history or just update the `present` state based on the action type.
  *
- * ### 履歴の記録ロジック
+ * ### History Recording Logic
  *
- * - `recordableActions` セットに登録されたアクションタイプのみが、履歴記録のトリガーとなります。
- * - アクションが記録対象であっても、`isEqual` を用いて `present.shapes` が実際に変更された場合のみ、新しい履歴が作成されます。
- * - 記録対象のアクションが実行されると、そのアクションが適用される**前**の `present.shapes` が `past` に追加され、`future` はクリアされます。
+ * - Only action types registered in the `recordableActions` set trigger history recording.
+ * - Even if an action is recordable, a new history entry is created only if `present.shapes` is actually changed (checked using `isEqual`).
+ * - When a recordable action is executed, the `present.shapes` **before** the action is applied is added to `past`, and `future` is cleared.
  *
- * ### 記録対象外のアクション
+ * ### Non-Recordable Actions
  *
- * - `recordableActions` に含まれないアクション（例: `SELECT_TOOL`）の場合、履歴 (`past`, `future`) は変更されません。
- * - 元の `reducer` によって更新された `newPresent` で `present` の状態のみが更新されます。
+ * - For actions not in `recordableActions` (e.g., `SELECT_TOOL`), the history (`past`, `future`) remains unchanged.
+ * - Only the `present` state is updated with the `newPresent` calculated by the original `reducer`.
  *
  * ### UNDO / REDO
  *
- * - `UNDO`: `past` の最後の `shapes` を取り出して `present.shapes` に設定します。元の `present.shapes` は `future` の先頭に追加されます。Undo実行後は、混乱を避けるため `selectedShapeId` は `null` になります。
- * - `REDO`: `future` の最初の `shapes` を取り出して `present.shapes` に設定します。元の `present.shapes` は `past` の末尾に追加されます。Redo実行後も同様に `selectedShapeId` は `null` になります。
+ * - `UNDO`: Retrieves the last `shapes` from `past` and sets it to `present.shapes`. The original `present.shapes` is added to the beginning of `future`. After Undo, `selectedShapeId` becomes `null` to avoid confusion.
+ * - `REDO`: Retrieves the first `shapes` from `future` and sets it to `present.shapes`. The original `present.shapes` is added to the end of `past`. Similarly, `selectedShapeId` becomes `null` after Redo.
  *
- * ## 拡張方法
+ * ## How to Extend
  *
- * 新しいアクション（例: `MOVE_SHAPE`）をUndo/Redo可能にするには、`historyReducer.ts` 内の `recordableActions` セットにそのアクションタイプを追加するだけです。
+ * To make a new action (e.g., `MOVE_SHAPE`) undoable/redoable, simply add its action type to the `recordableActions` set in `historyReducer.ts`.
  *
  * @example
  * ```
@@ -45,7 +45,7 @@
  *     'END_DRAWING',
  *     'DELETE_SELECTED_SHAPE',
  *     'CLEAR_CANVAS',
- *     'MOVE_SHAPE', // <--- 新しいアクションをここに追加
+ *     'MOVE_SHAPE', // <--- Add new action here
  * ]);
  * ```
  */
@@ -54,15 +54,15 @@ import type { ShapeData, Action, AppState } from '../types';
 import isEqual from 'lodash/isEqual.js';
 
 export interface HistoryState {
-  past: ShapeData[][]; // 過去の図形リストの配列
-  present: AppState; // UIの状態も含む現在のフル状態
-  future: ShapeData[][]; // 未来の図形リストの配列
+  past: ShapeData[][]; // Array of past shape lists
+  present: AppState; // Current full state including UI state
+  future: ShapeData[][]; // Array of future shape lists
 }
 
 // Actions for undo/redo
 export type HistoryAction = Action | { type: 'UNDO' } | { type: 'REDO' };
 
-// 履歴に記録するアクションのリストを定義
+// Define list of actions to record in history
 const recordableActions = new Set<string>([
   'END_DRAWING',
   'DELETE_SELECTED_SHAPE',
@@ -73,7 +73,7 @@ const recordableActions = new Set<string>([
 
 // Higher-order reducer to add undo/redo functionality
 export const undoable = (reducer: typeof originalReducer) => {
-  // 新しいInitial State
+  // New Initial State
   const initialState: HistoryState = {
     past: [],
     present: originalInitialState,
@@ -95,8 +95,8 @@ export const undoable = (reducer: typeof originalReducer) => {
           present: {
             ...present,
             shapes: previousShapes,
-            selectedShapeId: null, // Undo時は選択を解除
-            // 操作中（描画、ドラッグ）の状態もリセットする
+            selectedShapeId: null, // Deselect on Undo
+            // Reset operation states (drawing, dragging)
             mode: 'idle',
             drawingState: null,
             draggingState: null,
@@ -115,8 +115,8 @@ export const undoable = (reducer: typeof originalReducer) => {
           present: {
             ...present,
             shapes: nextShapes,
-            selectedShapeId: null, // Redo時も選択を解除
-            // 操作中（描画、ドラッグ）の状態もリセットする
+            selectedShapeId: null, // Deselect on Redo
+            // Reset operation states (drawing, dragging)
             mode: 'idle',
             drawingState: null,
             draggingState: null,
@@ -125,21 +125,21 @@ export const undoable = (reducer: typeof originalReducer) => {
         };
       }
       default: {
-        // まず、元々のReducerで新しい状態を計算する
+        // First, calculate the new state with the original reducer
         const newPresent = reducer(present, action as Action);
 
-        // STOP_DRAGGINGは特別扱い。移動があった場合のみ履歴に記録する
+        // STOP_DRAGGING is treated specially. Record history only if there was movement.
         if (action.type === 'STOP_DRAGGING') {
           const { dx, dy } = action.payload;
           if (dx !== 0 || dy !== 0) {
             return {
-              past: [...past, present.shapes], // ドラッグ前のshapesを記録
+              past: [...past, present.shapes], // Record shapes before drag
               present: newPresent,
               future: [],
             };
           }
         }
-        // 他の記録対象アクションは、shapes配列が実際に変更された場合のみ履歴を更新する
+        // For other recordable actions, update history only if the shapes array actually changed
         else if (
           recordableActions.has(action.type) &&
           !isEqual(present.shapes, newPresent.shapes)
@@ -151,8 +151,8 @@ export const undoable = (reducer: typeof originalReducer) => {
           };
         }
 
-        // 記録対象外のアクション（SELECT_TOOLなど）の場合は、
-        // 履歴を変更せず、presentの状態だけを更新する
+        // For non-recordable actions (e.g., SELECT_TOOL),
+        // do not change history, only update the present state
         return { ...state, present: newPresent };
       }
     }

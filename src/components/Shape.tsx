@@ -20,7 +20,7 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, isDrawingM
   const groupProps = {
     onClick: (e: React.MouseEvent) => {
       e.stopPropagation();
-      // ドラッグ操作の直後であれば、選択イベントを無視する
+      // Ignore the selection event if it immediately follows a drag operation
       if (wasDragged.current) {
         return;
       }

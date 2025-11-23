@@ -17,11 +17,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     future: [],
   });
 
-  // SVG要素への参照。エクスポート機能や座標計算に使用される。
+  // Reference to the SVG element. Used for export functionality and coordinate calculations.
   const svgRef = useRef<SVGSVGElement>(null);
-  // ドラッグ操作が行われたかどうかを追跡するフラグ。
-  // ドラッグ終了時にクリックイベントが発火して選択解除されるのを防ぐために使用。
-  // 再描画を避けるためrefで管理。
+  // Flag to track whether a drag operation occurred.
+  // Used to prevent the click event from firing and deselecting the shape after a drag ends.
+  // Managed with a ref to avoid re-renders.
   const wasDragged = useRef<boolean>(false);
 
   const value: AppContextType = {
