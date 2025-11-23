@@ -96,7 +96,7 @@ export type Action =
   // Dragging actions
   | { type: 'START_DRAGGING'; payload: { shapeId: string; mouseX: number; mouseY: number } }
   | { type: 'STOP_DRAGGING'; payload: { dx: number; dy: number } }
-  | { type: 'DRAGGING'; payload: { mouseX: number; mouseY: number } }
+
   // Shape actions
   | { type: 'ADD_SHAPE'; payload: ShapeData }
   | { type: 'SELECT_SHAPE'; payload: string | null }
@@ -123,7 +123,6 @@ export const reducer = (state: AppState, action: Action): AppState => {
     // Dragging actions
     case 'START_DRAGGING':
     case 'STOP_DRAGGING':
-    case 'DRAGGING':
       return draggingReducer(state, action);
 
     // Shape and tool actions

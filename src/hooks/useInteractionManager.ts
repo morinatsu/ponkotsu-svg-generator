@@ -87,7 +87,15 @@ export const useInteractionManager = (
   const handleMouseUp = useCallback(() => {
     if (mode === 'drawing') {
       dispatch({ type: 'END_DRAWING' });
-    } else if (mode === 'dragging') {
+    } else if (mode === 'dragging' && draggingState) {
+      // Reset the transform style on the dragged element
+      const draggedElement = document.querySelector(
+        `g[data-shape-id="${draggingState.shapeId}"]`,
+      ) as SVGElement;
+      if (draggedElement) {
+        draggedElement.style.transform = '';
+      }
+
       // The reducer has been handling the position updates.
       // We just need to signal the end of the drag.
       // The payload with the final delta is still useful for the history reducer.
@@ -96,7 +104,7 @@ export const useInteractionManager = (
         payload: dragTranslationRef.current,
       });
     }
-  }, [mode, dispatch]);
+  }, [mode, dispatch, draggingState]);
 
   /**
    * Handles the mouse move event, which is attached to the window during
@@ -131,8 +139,13 @@ export const useInteractionManager = (
         // The ref is still needed to calculate the final delta for STOP_DRAGGING.
         dragTranslationRef.current = { dx, dy };
 
-        // Dispatch an action to update the shape's position in the state.
-        dispatch({ type: 'DRAGGING', payload: { mouseX: pos.x, mouseY: pos.y } });
+        // Direct DOM manipulation for performance
+        const draggedElement = document.querySelector(
+          `g[data-shape-id="${draggingState.shapeId}"]`,
+        ) as SVGElement;
+        if (draggedElement) {
+          draggedElement.style.transform = `translate(${dx}px, ${dy}px)`;
+        }
       }
     },
     [getMousePosition, mode, wasDragged, drawingState, draggingState, handleMouseUp, dispatch],

@@ -45,23 +45,32 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, isDrawingM
 
   // Props for the hitbox element, which is responsible for capturing all pointer events.
   // It should be disabled if another shape is being dragged.
+  // Note: In the new structure, the group handles the events, so the hitbox just needs to exist to define the area.
+  // However, we need to ensure the click bubbles up to the group.
   const hitboxProps = {
-    'data-shape-id': shape.id,
-    onClick: groupProps.onClick,
+    fill: 'none', // 'none' is crucial for only capturing clicks on the stroke (or fill if we had one)
+    stroke: 'transparent',
+    strokeWidth: 10,
     style: {
+      // If we are dragging another shape or drawing, we don't want this shape to interfere.
+      // But if we set pointerEvents to none, the group won't get the event either unless the group has a fill.
+      // The group doesn't have a fill.
+      // So the children MUST capture the event and let it bubble.
       pointerEvents: isDragging || isDrawingMode ? ('none' as const) : ('visiblePainted' as const),
-      stroke: 'transparent',
       cursor: 'grab',
     },
   };
 
-  // The visible shape should never capture pointer events.
+  // The visible shape should never capture pointer events to avoid interfering with the hitbox or group logic?
+  // Actually, if the visible shape is clicked, it should also trigger the group handler.
+  // But to keep it simple and consistent with the hitbox logic, we can disable pointer events on the visible shape
+  // and rely solely on the hitbox (which covers the visible shape + margin).
   const visibleShapeStyle: React.CSSProperties = { pointerEvents: 'none' };
 
   switch (shape.type) {
     case 'rectangle':
       return (
-        <g>
+        <g {...groupProps}>
           <rect
             key={`${shape.id}-visible`}
             x={shape.x}
@@ -79,15 +88,13 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, isDrawingM
             y={shape.y}
             width={shape.width}
             height={shape.height}
-            fill="none" // 'none' is crucial for only capturing clicks on the stroke
-            strokeWidth={10}
             {...hitboxProps}
           />
         </g>
       );
     case 'ellipse':
       return (
-        <g>
+        <g {...groupProps}>
           <ellipse
             key={`${shape.id}-visible`}
             cx={shape.cx}
@@ -105,15 +112,13 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, isDrawingM
             cy={shape.cy}
             rx={shape.rx}
             ry={shape.ry}
-            fill="none" // 'none' is crucial for only capturing clicks on the stroke
-            strokeWidth={10}
             {...hitboxProps}
           />
         </g>
       );
     case 'line':
       return (
-        <g>
+        <g {...groupProps}>
           <line // The visible line
             key={`${shape.id}-visible`}
             x1={shape.x1}
@@ -130,7 +135,6 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, isDrawingM
             y1={shape.y1}
             x2={shape.x2}
             y2={shape.y2}
-            strokeWidth={10}
             {...hitboxProps}
           />
         </g>

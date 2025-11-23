@@ -25,43 +25,6 @@ export const draggingReducer = (state: AppState, action: Action): AppState => {
       };
     }
 
-    case 'DRAGGING': {
-      if (!state.draggingState) return state;
-      const { shapeId } = state.draggingState;
-      const { mouseX, mouseY } = action.payload;
-
-      const dx = mouseX - state.draggingState.startX;
-      const dy = mouseY - state.draggingState.startY;
-
-      // Use shapesBeforeDrag to calculate the new position relative to the original position
-      const sourceShapes = state.shapesBeforeDrag || state.shapes;
-      const newShapes = sourceShapes.map((shape) => {
-        if (shape.id !== shapeId) {
-          return shape;
-        }
-
-        // Apply the translation to the shape's coordinates
-        switch (shape.type) {
-          case 'rectangle':
-          case 'text':
-            return { ...shape, x: shape.x + dx, y: shape.y + dy };
-          case 'ellipse':
-            return { ...shape, cx: shape.cx + dx, cy: shape.cy + dy };
-          case 'line':
-            return {
-              ...shape,
-              x1: shape.x1 + dx,
-              y1: shape.y1 + dy,
-              x2: shape.x2 + dx,
-              y2: shape.y2 + dy,
-            };
-          default:
-            return shape;
-        }
-      });
-      return { ...state, shapes: newShapes };
-    }
-
     case 'STOP_DRAGGING': {
       if (!state.draggingState) return state;
 
