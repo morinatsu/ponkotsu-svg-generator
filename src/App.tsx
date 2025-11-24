@@ -4,6 +4,7 @@ import SvgCanvas from './components/SvgCanvas';
 import DebugInfo from './components/DebugInfo';
 import TextInputModal from './components/TextInputModal';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
+import { useDragging } from './hooks/useDragging';
 import { AppContext } from './state/AppContext';
 import { AppProvider } from './state/AppProvider';
 import './App.css';
@@ -13,16 +14,17 @@ const AppContent: React.FC = () => {
   if (!context) {
     throw new Error('AppContent must be used within an AppContextProvider');
   }
-  const { state, dispatch, history } = context;
-  const { editingText, selectedShapeId } = state;
+  const { state, dispatch, history, svgRef } = context;
+  const { editingText, selectedShapeId, mode } = state;
 
   useKeyboardControls(dispatch, selectedShapeId);
+  const { handleMouseDownOnShape } = useDragging(dispatch, mode, svgRef);
 
   return (
     <div className="App">
       <h1>ぽんこつSVGジェネレーター</h1>
       <Toolbar />
-      <SvgCanvas />
+      <SvgCanvas onShapeMouseDown={handleMouseDownOnShape} />
       <DebugInfo history={history} />
 
       {editingText && (

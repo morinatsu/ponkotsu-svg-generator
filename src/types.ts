@@ -79,7 +79,8 @@ export type Action =
   | { type: 'END_DRAWING' }
   // Dragging actions
   | { type: 'START_DRAGGING'; payload: { shapeId: string; mouseX: number; mouseY: number } }
-  | { type: 'STOP_DRAGGING'; payload: { dx: number; dy: number } }
+  | { type: 'DRAG_SHAPE'; payload: { x: number; y: number } }
+  | { type: 'STOP_DRAGGING' }
   // Shape actions
   | { type: 'ADD_SHAPE'; payload: ShapeData }
   | { type: 'SELECT_SHAPE'; payload: string | null }

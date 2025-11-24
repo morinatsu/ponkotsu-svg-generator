@@ -6,7 +6,11 @@ import { useInteractionManager } from '../hooks/useInteractionManager';
 
 import DrawingPreview from './DrawingPreview';
 
-const SvgCanvas: React.FC = () => {
+interface SvgCanvasProps {
+  onShapeMouseDown: (shapeId: string, e: React.MouseEvent) => void;
+}
+
+const SvgCanvas: React.FC<SvgCanvasProps> = ({ onShapeMouseDown }) => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('SvgCanvas must be used within an AppContextProvider');
@@ -45,6 +49,7 @@ const SvgCanvas: React.FC = () => {
           }
           // When drawing a new shape, prevent interaction with existing shapes.
           isDrawingMode={state.mode === 'drawing'}
+          onMouseDown={onShapeMouseDown}
         />
       ))}
       <DrawingPreview />

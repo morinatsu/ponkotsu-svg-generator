@@ -129,15 +129,36 @@ export const undoable = (reducer: typeof originalReducer) => {
         const newPresent = reducer(present, action as Action);
 
         // STOP_DRAGGING is treated specially. Record history only if there was movement.
+        // Since we are now updating shapes in real-time with DRAG_SHAPE,
+        // simply checking if shapes changed (via recordableActions logic below) is sufficient.
+        // However, we want to ensure we capture the state *before* the drag started as the "past" state.
+        // But wait, the "past" state should be the state *before* the *entire* drag operation.
+        // In the current implementation of undoable, we push `present.shapes` to `past` BEFORE applying the new state.
+        // For DRAG_SHAPE, we are NOT recording history.
+        // For STOP_DRAGGING, we ARE recording history.
+        // But at the moment of STOP_DRAGGING, `present.shapes` is already the *final* position (because of the last DRAG_SHAPE).
+        // So if we just use the standard logic, we will push the *final* position to `past`, which is WRONG.
+        // We want to push the *initial* position (before drag started) to `past`.
+
+        // Actually, let's look at how it was working.
+        // Before: STOP_DRAGGING had dx, dy. It calculated new position.
+        // Now: DRAG_SHAPE updates position. STOP_DRAGGING just switches mode.
+
+        // If we want Undo to revert the drag, we need the state *before* the drag started.
+        // `draggingReducer` stores `shapesBeforeDrag`.
+        // But `historyReducer` wraps `reducer`. It doesn't know about `shapesBeforeDrag` unless we access it from `present`.
+
         if (action.type === 'STOP_DRAGGING') {
-          const { dx, dy } = action.payload;
-          if (dx !== 0 || dy !== 0) {
+          const shapesBeforeDrag = present.shapesBeforeDrag;
+          if (shapesBeforeDrag && !isEqual(shapesBeforeDrag, present.shapes)) {
             return {
-              past: [...past, present.shapes], // Record shapes before drag
+              past: [...past, shapesBeforeDrag], // Push the state BEFORE drag
               present: newPresent,
               future: [],
             };
           }
+          // If no change or no shapesBeforeDrag, just return new state
+          return { ...state, present: newPresent };
         }
         // For other recordable actions, update history only if the shapes array actually changed
         else if (

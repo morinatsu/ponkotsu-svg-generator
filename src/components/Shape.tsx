@@ -7,9 +7,16 @@ interface ShapeProps {
   isSelected: boolean;
   isDragging: boolean; // True if ANOTHER shape is being dragged
   isDrawingMode: boolean; // True if the user is currently drawing a new shape
+  onMouseDown: (shapeId: string, e: React.MouseEvent) => void;
 }
 
-const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, isDrawingMode }) => {
+const Shape: React.FC<ShapeProps> = ({
+  shape,
+  isSelected,
+  isDragging,
+  isDrawingMode,
+  onMouseDown,
+}) => {
   const context = useContext(AppContext);
   if (!context) {
     throw new Error('Shape must be used within an AppContextProvider');
@@ -25,6 +32,10 @@ const Shape: React.FC<ShapeProps> = ({ shape, isSelected, isDragging, isDrawingM
         return;
       }
       dispatch({ type: 'SELECT_SHAPE', payload: shape.id });
+    },
+    onMouseDown: (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onMouseDown(shape.id, e);
     },
     onDoubleClick: () => {
       if (shape.type === 'text') {

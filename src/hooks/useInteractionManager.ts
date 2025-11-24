@@ -12,7 +12,7 @@ export const useInteractionManager = (
   svgRef: React.RefObject<SVGSVGElement | null>,
   wasDragged: React.MutableRefObject<boolean>,
 ) => {
-  const { mode, currentTool, drawingState, draggingState } = state;
+  const { mode, currentTool, drawingState } = state;
   const dragTranslationRef = useRef({ dx: 0, dy: 0 });
 
   /**
@@ -43,38 +43,25 @@ export const useInteractionManager = (
       // Ignore clicks if not in idle mode (e.g., during an ongoing drag)
       if (mode !== 'idle') return;
 
+      e.preventDefault(); // Prevent native browser drag behavior
+
       // Reset the drag flag at the beginning of any potential interaction.
       wasDragged.current = false;
       // Reset the drag translation ref to prevent ghosting from previous drags.
       dragTranslationRef.current = { dx: 0, dy: 0 };
 
-      const targetElement = e.target as SVGElement;
-      // Check if the clicked element or its parent group has a shape ID.
-      // This handles clicks on hitboxes (rect, ellipse) and text/line elements directly.
-      const shapeId =
-        targetElement.getAttribute('data-shape-id') ||
-        targetElement.closest('g[data-shape-id]')?.getAttribute('data-shape-id');
       const pos = getMousePosition(e);
 
-      if (shapeId) {
-        // --- Start Dragging an Existing Shape ---
-        e.stopPropagation(); // Prevent the canvas click handler from firing
+      // --- Start a New Drawing or Text ---
+      if (currentTool === 'text') {
+        // Dispatch an action to create a new text element
         dispatch({
-          type: 'START_DRAGGING',
-          payload: { shapeId, mouseX: pos.x, mouseY: pos.y },
+          type: 'START_TEXT_EDIT',
+          payload: { id: null, x: pos.x, y: pos.y, content: '' },
         });
       } else {
-        // --- Start a New Drawing or Text ---
-        if (currentTool === 'text') {
-          // Dispatch an action to create a new text element
-          dispatch({
-            type: 'START_TEXT_EDIT',
-            payload: { id: null, x: pos.x, y: pos.y, content: '' },
-          });
-        } else {
-          // Dispatch an action to start drawing a new shape
-          dispatch({ type: 'START_DRAWING', payload: pos });
-        }
+        // Dispatch an action to start drawing a new shape
+        dispatch({ type: 'START_DRAWING', payload: pos });
       }
     },
     [dispatch, getMousePosition, mode, currentTool, wasDragged],
@@ -87,24 +74,8 @@ export const useInteractionManager = (
   const handleMouseUp = useCallback(() => {
     if (mode === 'drawing') {
       dispatch({ type: 'END_DRAWING' });
-    } else if (mode === 'dragging' && draggingState) {
-      // Reset the transform style on the dragged element
-      const draggedElement = document.querySelector(
-        `g[data-shape-id="${draggingState.shapeId}"]`,
-      ) as SVGElement;
-      if (draggedElement) {
-        draggedElement.style.transform = '';
-      }
-
-      // The reducer has been handling the position updates.
-      // We just need to signal the end of the drag.
-      // The payload with the final delta is still useful for the history reducer.
-      dispatch({
-        type: 'STOP_DRAGGING',
-        payload: dragTranslationRef.current,
-      });
     }
-  }, [mode, dispatch, draggingState]);
+  }, [mode, dispatch]);
 
   /**
    * Handles the mouse move event, which is attached to the window during
@@ -133,22 +104,9 @@ export const useInteractionManager = (
             payload: { x: pos.x, y: pos.y },
           });
         }
-      } else if (mode === 'dragging' && draggingState) {
-        const dx = pos.x - draggingState.startX;
-        const dy = pos.y - draggingState.startY;
-        // The ref is still needed to calculate the final delta for STOP_DRAGGING.
-        dragTranslationRef.current = { dx, dy };
-
-        // Direct DOM manipulation for performance
-        const draggedElement = document.querySelector(
-          `g[data-shape-id="${draggingState.shapeId}"]`,
-        ) as SVGElement;
-        if (draggedElement) {
-          draggedElement.style.transform = `translate(${dx}px, ${dy}px)`;
-        }
       }
     },
-    [getMousePosition, mode, wasDragged, drawingState, draggingState, handleMouseUp, dispatch],
+    [getMousePosition, mode, wasDragged, drawingState, handleMouseUp, dispatch],
   );
 
   /**

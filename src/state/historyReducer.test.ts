@@ -190,16 +190,24 @@ describe('historyReducer (undoable)', () => {
     state = historyReducer(state, startDragAction);
     const shapesBeforeDrag = state.present.shapes; // The state before drag is what's current.
 
-    // 2b. Stop dragging. The drag operation moved the mouse from (15,15) to (105,105), so dx=90, dy=90.
-    // This action should create the second history entry.
-    const stopDragAction = { type: 'STOP_DRAGGING' as const, payload: { dx: 90, dy: 90 } };
+    // 2b. Drag the shape. Move mouse to (105, 105).
+    // Original shape x=10. Clicked at 15. OffsetX = 5.
+    // New mouseX = 105. New shape x = 105 - 5 = 100.
+    const dragShapeAction = {
+      type: 'DRAG_SHAPE' as const,
+      payload: { x: 105, y: 105 },
+    };
+    state = historyReducer(state, dragShapeAction);
+
+    // 2c. Stop dragging. This action should create the second history entry.
+    const stopDragAction = { type: 'STOP_DRAGGING' as const };
     state = historyReducer(state, stopDragAction);
 
     expect(state.past).toHaveLength(2); // History: [initial_empty, pre-drag_state]
     // The state before the drag started should be in the past.
     expect(state.past[1]).toEqual(shapesBeforeDrag);
 
-    // Check if the shape has moved. Original was at x=10, so new is 10+90=100.
+    // Check if the shape has moved. Original was at x=10, so new is 100.
     const movedShape = state.present.shapes[0] as Extract<ShapeData, { type: 'rectangle' }>;
     expect(movedShape.x).toBe(100);
 

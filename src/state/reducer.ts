@@ -25,6 +25,7 @@ export const reducer = (state: AppState, action: Action): AppState => {
 
     // Dragging actions
     case 'START_DRAGGING':
+    case 'DRAG_SHAPE':
     case 'STOP_DRAGGING':
       return draggingReducer(state, action);
 
