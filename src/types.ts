@@ -5,6 +5,7 @@ export interface RectangleData {
   y: number;
   width: number;
   height: number;
+  rotation: number;
 }
 
 export interface EllipseData {
@@ -14,6 +15,7 @@ export interface EllipseData {
   cy: number;
   rx: number;
   ry: number;
+  rotation: number;
 }
 
 export interface LineData {
@@ -23,6 +25,7 @@ export interface LineData {
   y1: number;
   x2: number;
   y2: number;
+  rotation: number;
 }
 
 export interface TextData {
@@ -52,7 +55,7 @@ export type DrawingShape = {
 };
 
 export type Tool = ShapeData['type'];
-export type AppMode = 'idle' | 'drawing' | 'dragging';
+export type AppMode = 'idle' | 'drawing' | 'dragging' | 'rotating';
 
 export interface AppState {
   shapes: ShapeData[];
@@ -69,6 +72,13 @@ export interface AppState {
     offsetY: number;
   } | null;
   shapesBeforeDrag: ShapeData[] | null;
+  rotatingState: {
+    shapeId: string;
+    centerX: number;
+    centerY: number;
+    startMouseAngle: number;
+    initialShapeRotation: number;
+  } | null;
 }
 
 // Actions that can be dispatched
@@ -81,6 +91,19 @@ export type Action =
   | { type: 'START_DRAGGING'; payload: { shapeId: string; mouseX: number; mouseY: number } }
   | { type: 'DRAG_SHAPE'; payload: { x: number; y: number } }
   | { type: 'STOP_DRAGGING' }
+  // Rotating actions
+  | {
+      type: 'START_ROTATING';
+      payload: {
+        shapeId: string;
+        centerX: number;
+        centerY: number;
+        startMouseAngle: number;
+        initialShapeRotation: number;
+      };
+    }
+  | { type: 'ROTATE_SHAPE'; payload: { angle: number } }
+  | { type: 'STOP_ROTATING' }
   // Shape actions
   | { type: 'ADD_SHAPE'; payload: ShapeData }
   | { type: 'SELECT_SHAPE'; payload: string | null }

@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import type { ShapeData } from '../types';
 import { AppContext } from '../state/AppContext';
+import { getShapeCenter } from '../utils/geometry';
 
 interface ShapeProps {
   shape: ShapeData;
@@ -26,15 +27,15 @@ const Shape: React.FC<ShapeProps> = ({
   // Event handlers and ID are attached to the parent group.
   const groupProps = {
     onClick: (e: React.MouseEvent) => {
-      e.stopPropagation();
-      // Ignore the selection event if it immediately follows a drag operation
       if (wasDragged.current) {
+        wasDragged.current = false;
         return;
       }
+      // Prevent the click from bubbling up to the canvas and triggering deselection.
+      e.stopPropagation();
       dispatch({ type: 'SELECT_SHAPE', payload: shape.id });
     },
     onMouseDown: (e: React.MouseEvent) => {
-      e.stopPropagation();
       onMouseDown(shape.id, e);
     },
     onDoubleClick: () => {
@@ -51,8 +52,13 @@ const Shape: React.FC<ShapeProps> = ({
       }
     },
     'data-shape-id': shape.id,
-    style: { cursor: 'grab' },
+    style: { cursor: isSelected ? 'move' : 'pointer' },
   };
+
+  if ('rotation' in shape && shape.rotation !== 0) {
+    const center = getShapeCenter(shape);
+    groupProps.transform = `rotate(${shape.rotation} ${center.x} ${center.y})`;
+  }
 
   // Props for the hitbox element, which is responsible for capturing all pointer events.
   // It should be disabled if another shape is being dragged.

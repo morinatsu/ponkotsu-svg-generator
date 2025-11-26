@@ -72,7 +72,7 @@ export const drawingReducer = (state: AppState, action: Action): AppState => {
 
       switch (state.currentTool) {
         case 'rectangle':
-          newShape = { id, type: 'rectangle', x, y, width, height };
+          newShape = { id, type: 'rectangle', x, y, width, height, rotation: 0 };
           break;
         case 'ellipse':
           newShape = {
@@ -82,6 +82,7 @@ export const drawingReducer = (state: AppState, action: Action): AppState => {
             cy: y + height / 2,
             rx: width / 2,
             ry: height / 2,
+            rotation: 0,
           };
           break;
         case 'line':
@@ -92,6 +93,7 @@ export const drawingReducer = (state: AppState, action: Action): AppState => {
             y1: y,
             x2: x + width, // End coordinates are stored in width/height during drawing
             y2: y + height,
+            rotation: 0,
           };
           break;
         default:

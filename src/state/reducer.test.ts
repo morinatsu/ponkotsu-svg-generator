@@ -128,6 +128,7 @@ describe('reducer', () => {
         y: 20,
         width: 50,
         height: 60,
+        rotation: 0,
       });
       expect(newState.drawingState).toBeNull();
     });
@@ -157,6 +158,7 @@ describe('reducer', () => {
         cy: 50, // 20 + 60/2
         rx: 25, // 50/2
         ry: 30, // 60/2
+        rotation: 0,
       });
       expect(newState.drawingState).toBeNull();
     });
@@ -178,6 +180,7 @@ describe('reducer', () => {
         y1: 20,
         x2: 60, // 10 + 50
         y2: 80, // 20 + 60
+        rotation: 0,
       });
       expect(newState.drawingState).toBeNull();
     });
@@ -209,6 +212,7 @@ describe('reducer', () => {
       y: 10,
       width: 50,
       height: 50,
+      rotation: 0,
     };
     const action = { type: 'ADD_SHAPE' as const, payload: newShape };
     const newState = reducer(initialState, action);
@@ -218,8 +222,8 @@ describe('reducer', () => {
   });
 
   it('DELETE_SELECTED_SHAPE: should delete the selected shape', () => {
-    const shape1: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 };
-    const shape2: ShapeData = { id: '2', type: 'rectangle', x: 20, y: 20, width: 60, height: 60 };
+    const shape1: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50, rotation: 0 };
+    const shape2: ShapeData = { id: '2', type: 'rectangle', x: 20, y: 20, width: 60, height: 60, rotation: 0 };
     const currentState: AppState = {
       ...initialState,
       shapes: [shape1, shape2],
@@ -234,7 +238,7 @@ describe('reducer', () => {
   });
 
   it('DELETE_SELECTED_SHAPE: should do nothing if no shape is selected', () => {
-    const shape1: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 };
+    const shape1: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50, rotation: 0 };
     const currentState: AppState = {
       ...initialState,
       shapes: [shape1],
@@ -248,7 +252,7 @@ describe('reducer', () => {
   });
 
   it('CLEAR_CANVAS: should remove all shapes and reset selection', () => {
-    const shape1: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 };
+    const shape1: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50, rotation: 0 };
     const currentState: AppState = {
       ...initialState,
       shapes: [shape1],
@@ -262,7 +266,7 @@ describe('reducer', () => {
   });
 
   it('SELECT_SHAPE: should set the selectedShapeId', () => {
-    const shape1: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 };
+    const shape1: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50, rotation: 0 };
     const currentState: AppState = {
       ...initialState,
       shapes: [shape1],
@@ -275,7 +279,7 @@ describe('reducer', () => {
   });
 
   it('SELECT_SHAPE: should deselect by passing null', () => {
-    const shape1: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 };
+    const shape1: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50, rotation: 0 };
     const currentState: AppState = {
       ...initialState,
       shapes: [shape1],

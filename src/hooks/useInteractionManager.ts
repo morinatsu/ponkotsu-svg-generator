@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { Action, AppState } from '../types';
+import { getRotationHandleAt, getShapeCenter } from '../utils/geometry';
 
 /**
- * A custom hook to manage all user interactions with the SVG canvas,
- * including drawing, dragging, and selecting shapes.
- * It centralizes mouse event handling to avoid conflicts between different interaction modes.
+ * Manages drawing and rotation interactions. Dragging is handled separately.
  */
 export const useInteractionManager = (
   dispatch: React.Dispatch<Action>,
@@ -12,12 +11,8 @@ export const useInteractionManager = (
   svgRef: React.RefObject<SVGSVGElement | null>,
   wasDragged: React.MutableRefObject<boolean>,
 ) => {
-  const { mode, currentTool, drawingState } = state;
-  const dragTranslationRef = useRef({ dx: 0, dy: 0 });
+  const { mode, currentTool, drawingState, selectedShapeId } = state;
 
-  /**
-   * Calculates the mouse position within the SVG canvas, accounting for zoom and pan.
-   */
   const getMousePosition = useCallback(
     (e: React.MouseEvent | MouseEvent): { x: number; y: number } => {
       if (svgRef.current) {
@@ -34,104 +29,142 @@ export const useInteractionManager = (
     [svgRef],
   );
 
-  /**
-   * Handles the mouse down event on the SVG canvas.
-   * This is the entry point for all interactions.
-   */
+  const handleIdleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (mode !== 'idle' || !selectedShapeId) {
+        document.body.style.cursor = 'default';
+        return;
+      }
+      const selectedShape = state.shapes.find((s) => s.id === selectedShapeId);
+      if (!selectedShape) {
+        document.body.style.cursor = 'default';
+        return;
+      }
+      const pos = getMousePosition(e);
+      // If the mouse is over a rotation handle, show the rotation cursor.
+      // Otherwise, let the shape's own CSS handle the cursor (e.g., 'move').
+      if (getRotationHandleAt(pos, selectedShape)) {
+        document.body.style.cursor = 'alias';
+      } else {
+        // Find the shape group under the cursor to determine if we should show 'move'
+        const shapeElement = (e.target as HTMLElement).closest('[data-shape-id]');
+        if (shapeElement) {
+          document.body.style.cursor = 'move';
+        } else {
+          document.body.style.cursor = 'default';
+        }
+      }
+    },
+    [mode, selectedShapeId, state.shapes, getMousePosition],
+  );
+
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      // Ignore clicks if not in idle mode (e.g., during an ongoing drag)
       if (mode !== 'idle') return;
-
-      e.preventDefault(); // Prevent native browser drag behavior
-
-      // Reset the drag flag at the beginning of any potential interaction.
       wasDragged.current = false;
-      // Reset the drag translation ref to prevent ghosting from previous drags.
-      dragTranslationRef.current = { dx: 0, dy: 0 };
 
       const pos = getMousePosition(e);
+      const selectedShape = state.shapes.find((s) => s.id === selectedShapeId);
 
+      // --- Start a Rotation ---
+      if (selectedShape && getRotationHandleAt(pos, selectedShape)) {
+        e.preventDefault();
+        const center = getShapeCenter(selectedShape);
+        const startMouseAngle = Math.atan2(pos.y - center.y, pos.x - center.x);
+        const initialShapeRotation = 'rotation' in selectedShape ? selectedShape.rotation : 0;
+        dispatch({
+          type: 'START_ROTATING',
+          payload: { shapeId: selectedShape.id, centerX: center.x, centerY: center.y, startMouseAngle, initialShapeRotation },
+        });
+        return;
+      }
+
+      const shapeId = (e.target as HTMLElement).closest('[data-shape-id]')?.getAttribute('data-shape-id');
+      // If clicking on a shape (but not a rotation handle), let the shape's own onMouseDown handle it for dragging.
+      if (shapeId) {
+        return;
+      }
+
+      e.preventDefault();
       // --- Start a New Drawing or Text ---
       if (currentTool === 'text') {
-        // Dispatch an action to create a new text element
-        dispatch({
-          type: 'START_TEXT_EDIT',
-          payload: { id: null, x: pos.x, y: pos.y, content: '' },
-        });
+        dispatch({ type: 'START_TEXT_EDIT', payload: { id: null, x: pos.x, y: pos.y, content: '' } });
       } else {
-        // Dispatch an action to start drawing a new shape
         dispatch({ type: 'START_DRAWING', payload: pos });
       }
     },
-    [dispatch, getMousePosition, mode, currentTool, wasDragged],
+    [dispatch, getMousePosition, mode, currentTool, wasDragged, state.shapes, selectedShapeId],
   );
 
-  /**
-   * Handles the mouse up event, which is attached to the window during
-   * drawing or dragging operations to signify the end of the interaction.
-   */
   const handleMouseUp = useCallback(() => {
     if (mode === 'drawing') {
       dispatch({ type: 'END_DRAWING' });
+    } else if (mode === 'rotating') {
+      dispatch({ type: 'STOP_ROTATING' });
     }
-  }, [mode, dispatch]);
 
-  /**
-   * Handles the mouse move event, which is attached to the window during
-   * drawing or dragging operations.
-   */
+    // After a drag/rotate/draw, a click event will often fire. We need to prevent
+    // that click from being handled by the shape's onClick handler.
+    // The wasDragged flag achieves this, but we need to reset it *after* the click
+    // event has had a chance to be processed. A setTimeout queues the reset
+    // to run after the current event loop finishes.
+    if (wasDragged.current) {
+      setTimeout(() => {
+        wasDragged.current = false;
+      }, 0);
+    }
+  }, [mode, dispatch, wasDragged]);
+
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      // If we're not in an active mode, there's nothing to do.
-      if (mode === 'idle') return;
-
-      // A more reliable check for a missed mouseup event.
-      // If the primary mouse button is no longer pressed, end the interaction.
       if (e.buttons !== 1) {
         handleMouseUp();
         return;
       }
+      if (mode === 'idle') return;
 
       const pos = getMousePosition(e);
-      wasDragged.current = true; // Any mouse move during an interaction constitutes a drag.
+      wasDragged.current = true;
 
-      if (mode === 'drawing') {
-        // Ensure we have the starting point from the state to calculate the shape's dimensions.
-        if (drawingState?.x !== undefined && drawingState?.y !== undefined) {
-          dispatch({
-            type: 'DRAWING',
-            payload: { x: pos.x, y: pos.y },
-          });
+      if (mode === 'drawing' && drawingState) {
+        dispatch({ type: 'DRAWING', payload: pos });
+      } else if (mode === 'rotating' && state.rotatingState) {
+        const { centerX, centerY, startMouseAngle, initialShapeRotation } = state.rotatingState;
+        const currentMouseAngle = Math.atan2(pos.y - centerY, pos.x - centerX);
+        const deltaAngleRad = currentMouseAngle - startMouseAngle;
+        const deltaAngleDeg = deltaAngleRad * (180 / Math.PI);
+        let newRotation = initialShapeRotation + deltaAngleDeg;
+
+        if (e.shiftKey) {
+          newRotation = Math.round(newRotation / 15) * 15;
         }
+        dispatch({ type: 'ROTATE_SHAPE', payload: { angle: newRotation } });
       }
     },
-    [getMousePosition, mode, wasDragged, drawingState, handleMouseUp, dispatch],
+    [getMousePosition, mode, wasDragged, drawingState, handleMouseUp, dispatch, state.rotatingState],
   );
 
-  /**
-   * This effect is the core of the interaction management.
-   * It attaches and detaches global mouse move and mouse up listeners to the window.
-   * This ensures that interactions (like dragging a shape) continue smoothly even if the
-   * cursor leaves the bounds of the SVG canvas.
-   */
   useEffect(() => {
-    // We only need these listeners when an interaction is in progress.
-    if (mode === 'drawing' || mode === 'dragging') {
+    if (mode === 'idle') {
+      // Use the SVG ref as the event target to avoid listening on the whole window
+      const svgElement = svgRef.current;
+      svgElement?.addEventListener('mousemove', handleIdleMouseMove);
+      return () => {
+        svgElement?.removeEventListener('mousemove', handleIdleMouseMove);
+      };
+    }
+
+    // These listeners are for active drawing/rotating, so they need to be global
+    if (mode === 'drawing' || mode === 'rotating') {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     }
 
-    // The cleanup function is crucial to prevent memory leaks and unintended behavior.
-    // It removes the listeners when the component unmounts or when the mode changes back to 'idle'.
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [mode, handleMouseMove, handleMouseUp]);
+  }, [mode, handleMouseMove, handleMouseUp, handleIdleMouseMove, svgRef]);
 
-  // Only the mouseDown handler needs to be returned, as it's the entry point
-  // for all interactions and is attached directly to the SVG canvas.
-  // The move and up handlers are managed internally by the useEffect.
   return { handleMouseDown };
 };
