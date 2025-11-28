@@ -123,13 +123,22 @@ export const getRotationHandleAt = (
     return null;
   }
 
-  const HANDLE_RADIUS_SQUARED = 25; // 5px radius, squared for efficiency
+  // Spec: 10px < distance < 30px
+  const MIN_DIST_SQUARED = 10 * 10;
+  const MAX_DIST_SQUARED = 30 * 30;
 
   for (const key in corners) {
+    // For lines, only allow rotation from the endpoints (nw/se in our mapping)
+    if (shape.type === 'line' && key !== 'nw' && key !== 'se') {
+      continue;
+    }
+
     const corner = corners[key as keyof ShapeCorners];
     const dx = pos.x - corner.x;
     const dy = pos.y - corner.y;
-    if (dx * dx + dy * dy < HANDLE_RADIUS_SQUARED) {
+    const distSquared = dx * dx + dy * dy;
+
+    if (distSquared > MIN_DIST_SQUARED && distSquared < MAX_DIST_SQUARED) {
       return key as keyof ShapeCorners;
     }
   }

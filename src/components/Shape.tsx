@@ -57,7 +57,8 @@ const Shape: React.FC<ShapeProps> = ({
 
   if ('rotation' in shape && shape.rotation !== 0) {
     const center = getShapeCenter(shape);
-    groupProps.transform = `rotate(${shape.rotation} ${center.x} ${center.y})`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (groupProps as any).transform = `rotate(${shape.rotation} ${center.x} ${center.y})`;
   }
 
   // Props for the hitbox element, which is responsible for capturing all pointer events.
@@ -84,10 +85,65 @@ const Shape: React.FC<ShapeProps> = ({
   // and rely solely on the hitbox (which covers the visible shape + margin).
   const visibleShapeStyle: React.CSSProperties = { pointerEvents: 'none' };
 
+  const renderRotationZones = () => {
+    if (!isSelected || !('rotation' in shape)) return null;
+
+    // We use local corners because the group itself is rotated
+    // But we need to be careful: getShapeCorners returns coordinates relative to the canvas (x, y).
+    // If we are inside a <g transform="rotate(...)">, the coordinate system is rotated around the center.
+    // However, the *positions* (x, y) of the corners in the SVG structure are still the same.
+    // The transform rotates the visual output.
+    // So drawing at (corner.x, corner.y) inside the rotated group is correct.
+
+    // We need to manually calculate corners or import getShapeCorners.
+    // Importing getShapeCorners is cleaner.
+    // Note: We need to handle the 'Line' restriction (only endpoints).
+
+    let corners: { x: number; y: number }[] = [];
+    if (shape.type === 'rectangle') {
+      corners = [
+        { x: shape.x, y: shape.y },
+        { x: shape.x + shape.width, y: shape.y },
+        { x: shape.x, y: shape.y + shape.height },
+        { x: shape.x + shape.width, y: shape.y + shape.height },
+      ];
+    } else if (shape.type === 'ellipse') {
+      corners = [
+        { x: shape.cx - shape.rx, y: shape.cy - shape.ry },
+        { x: shape.cx + shape.rx, y: shape.cy - shape.ry },
+        { x: shape.cx - shape.rx, y: shape.cy + shape.ry },
+        { x: shape.cx + shape.rx, y: shape.cy + shape.ry },
+      ];
+    } else if (shape.type === 'line') {
+      corners = [
+        { x: shape.x1, y: shape.y1 },
+        { x: shape.x2, y: shape.y2 },
+      ];
+    }
+
+    return (
+      <>
+        {corners.map((corner, i) => (
+          <circle
+            key={`rot-zone-${i}`}
+            cx={corner.x}
+            cy={corner.y}
+            r={20} // Center of the 10px-30px range
+            fill="none"
+            stroke="rgba(0, 160, 255, 0.2)" // Faint blue
+            strokeWidth={20} // Covers 10px to 30px
+            style={{ pointerEvents: 'none' }}
+          />
+        ))}
+      </>
+    );
+  };
+
   switch (shape.type) {
     case 'rectangle':
       return (
         <g {...groupProps}>
+          {renderRotationZones()}
           <rect
             key={`${shape.id}-visible`}
             x={shape.x}
@@ -112,6 +168,7 @@ const Shape: React.FC<ShapeProps> = ({
     case 'ellipse':
       return (
         <g {...groupProps}>
+          {renderRotationZones()}
           <ellipse
             key={`${shape.id}-visible`}
             cx={shape.cx}
@@ -136,6 +193,7 @@ const Shape: React.FC<ShapeProps> = ({
     case 'line':
       return (
         <g {...groupProps}>
+          {renderRotationZones()}
           <line // The visible line
             key={`${shape.id}-visible`}
             x1={shape.x1}
