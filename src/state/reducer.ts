@@ -16,6 +16,7 @@ export const initialState: AppState = {
   mode: 'idle',
   draggingState: null,
   shapesBeforeDrag: null,
+  shapesBeforeRotation: null,
   rotatingState: null,
 };
 

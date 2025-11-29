@@ -75,6 +75,7 @@ export interface AppState {
     offsetY: number;
   } | null;
   shapesBeforeDrag: ShapeData[] | null;
+  shapesBeforeRotation: ShapeData[] | null;
   rotatingState: {
     shapeId: string;
     centerX: number;

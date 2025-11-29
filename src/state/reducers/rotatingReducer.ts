@@ -8,6 +8,7 @@ export const rotatingReducer = (state: AppState, action: Action): AppState => {
       return {
         ...state,
         mode: 'rotating',
+        shapesBeforeRotation: state.shapes, // Save state before rotation
         rotatingState: {
           shapeId,
           centerX,
@@ -41,6 +42,7 @@ export const rotatingReducer = (state: AppState, action: Action): AppState => {
         ...state,
         mode: 'idle',
         rotatingState: null,
+        shapesBeforeRotation: null,
       };
     }
     default:

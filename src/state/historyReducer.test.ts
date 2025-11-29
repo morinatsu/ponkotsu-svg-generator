@@ -6,7 +6,15 @@ import type { ShapeData } from '../types';
 describe('historyReducer (undoable)', () => {
   let historyReducer: (state: HistoryState | undefined, action: HistoryAction) => HistoryState;
   let initialState: HistoryState;
-  const dummyShape: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50, rotation: 0 };
+  const dummyShape: ShapeData = {
+    id: '1',
+    type: 'rectangle',
+    x: 10,
+    y: 10,
+    width: 50,
+    height: 50,
+    rotation: 0,
+  };
 
   beforeEach(() => {
     historyReducer = undoable(originalReducer);
@@ -230,5 +238,76 @@ describe('historyReducer (undoable)', () => {
     expect(finalState.future).toHaveLength(1);
     const futureShape = finalState.future[0][0] as Extract<ShapeData, { type: 'rectangle' }>;
     expect(futureShape.x).toBe(100);
+  });
+
+  it('UNDO: should only undo the last rotation operation, not the shape creation', () => {
+    // 1. Add a shape. This creates the first history entry.
+    const stateWithDrawing: HistoryState = {
+      ...initialState,
+      present: {
+        ...initialState.present,
+        drawingState: {
+          type: 'rectangle',
+          x: 10,
+          y: 10,
+          width: 50,
+          height: 50,
+          startX: 10,
+          startY: 10,
+        },
+      },
+    };
+    let state = historyReducer(stateWithDrawing, { type: 'END_DRAWING' });
+
+    expect(state.past).toHaveLength(1);
+    expect(state.present.shapes).toHaveLength(1);
+    const shapeId = state.present.shapes[0].id;
+
+    // 2. Rotate the shape
+    // 2a. Start rotating.
+    const startRotateAction = {
+      type: 'START_ROTATING' as const,
+      payload: {
+        shapeId,
+        centerX: 35,
+        centerY: 35,
+        startMouseAngle: 0,
+        initialShapeRotation: 0,
+      },
+    };
+    state = historyReducer(state, startRotateAction);
+    const shapesBeforeRotation = state.present.shapes;
+
+    // 2b. Rotate the shape.
+    const rotateShapeAction = {
+      type: 'ROTATE_SHAPE' as const,
+      payload: { angle: 45 },
+    };
+    state = historyReducer(state, rotateShapeAction);
+
+    // 2c. Stop rotating.
+    const stopRotateAction = { type: 'STOP_ROTATING' as const };
+    state = historyReducer(state, stopRotateAction);
+
+    expect(state.past).toHaveLength(2); // History: [initial_empty, pre-rotation_state]
+    // The state before the rotation started should be in the past.
+    expect(state.past[1]).toEqual(shapesBeforeRotation);
+
+    // Check if the shape has rotated.
+    const rotatedShape = state.present.shapes[0] as Extract<ShapeData, { type: 'rectangle' }>;
+    expect(rotatedShape.rotation).toBe(45);
+
+    // 3. Perform UNDO
+    const finalState = historyReducer(state, { type: 'UNDO' });
+
+    // 4. Assert the outcome
+    // The shape should still exist but be back at its original rotation.
+    expect(finalState.present.shapes).toHaveLength(1);
+    const undidShape = finalState.present.shapes[0] as Extract<ShapeData, { type: 'rectangle' }>;
+    expect(undidShape.rotation).toBe(0); // Back to original rotation
+
+    // The history should now contain only the initial state (before shape creation)
+    expect(finalState.past).toHaveLength(1);
+    expect(finalState.past[0]).toEqual([]);
   });
 });

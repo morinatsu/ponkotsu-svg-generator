@@ -69,6 +69,7 @@ const recordableActions = new Set<string>([
   'CLEAR_CANVAS',
   'FINISH_TEXT_EDIT',
   'STOP_DRAGGING',
+  'STOP_ROTATING',
 ]);
 
 // Higher-order reducer to add undo/redo functionality
@@ -160,6 +161,19 @@ export const undoable = (reducer: typeof originalReducer) => {
           // If no change or no shapesBeforeDrag, just return new state
           return { ...state, present: newPresent };
         }
+
+        if (action.type === 'STOP_ROTATING') {
+          const shapesBeforeRotation = present.shapesBeforeRotation;
+          if (shapesBeforeRotation && !isEqual(shapesBeforeRotation, present.shapes)) {
+            return {
+              past: [...past, shapesBeforeRotation], // Push the state BEFORE rotation
+              present: newPresent,
+              future: [],
+            };
+          }
+          return { ...state, present: newPresent };
+        }
+
         // For other recordable actions, update history only if the shapes array actually changed
         else if (
           recordableActions.has(action.type) &&
