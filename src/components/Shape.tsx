@@ -77,6 +77,7 @@ const Shape: React.FC<ShapeProps> = ({
       pointerEvents: isDragging || isDrawingMode ? ('none' as const) : ('visiblePainted' as const),
       cursor: 'grab',
     },
+    'data-export-ignore': 'true',
   };
 
   // The visible shape should never capture pointer events to avoid interfering with the hitbox or group logic?
@@ -133,6 +134,7 @@ const Shape: React.FC<ShapeProps> = ({
             stroke="rgba(0, 160, 255, 0.2)" // Faint blue
             strokeWidth={20} // Covers 10px to 30px
             style={{ pointerEvents: 'none' }}
+            data-export-ignore="true"
           />
         ))}
       </>

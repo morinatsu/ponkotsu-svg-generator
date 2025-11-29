@@ -13,6 +13,12 @@ export const useSvgExport = (svgRef: RefObject<SVGSVGElement | null>) => {
         element.setAttribute('stroke', 'black');
       });
 
+      // Remove elements marked for ignore (rotation handles, hitboxes, etc.)
+      const ignoredElements = svgNode.querySelectorAll('[data-export-ignore="true"]');
+      ignoredElements.forEach((element) => {
+        element.remove();
+      });
+
       const svgContent = svgNode.outerHTML;
       const blob = new Blob([svgContent], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(blob);
