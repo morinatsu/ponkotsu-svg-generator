@@ -5,6 +5,9 @@ import { rotatingReducer } from './reducers/rotatingReducer';
 import type { AppState, Action } from '../types';
 
 export const initialState: AppState = {
+  canvasWidth: 800,
+  canvasHeight: 600,
+  isCanvasInitialized: false,
   shapes: [],
   selectedShapeId: null,
   drawingState: null,
@@ -19,6 +22,14 @@ export const initialState: AppState = {
 // Root reducer that combines all sub-reducers.
 export const reducer = (state: AppState, action: Action): AppState => {
   switch (action.type) {
+    case 'SET_CANVAS_SIZE':
+      return {
+        ...state,
+        canvasWidth: action.payload.width,
+        canvasHeight: action.payload.height,
+        isCanvasInitialized: true,
+      };
+
     // Drawing actions
     case 'START_DRAWING':
     case 'DRAWING':

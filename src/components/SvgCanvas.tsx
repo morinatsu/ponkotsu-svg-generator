@@ -32,8 +32,8 @@ const SvgCanvas: React.FC<SvgCanvasProps> = ({ onShapeMouseDown }) => {
   return (
     <svg
       ref={svgRef}
-      width={800}
-      height={600}
+      width={state.canvasWidth}
+      height={state.canvasHeight}
       style={canvasStyle}
       onClick={handleCanvasClick}
       onMouseDown={handleMouseDown}

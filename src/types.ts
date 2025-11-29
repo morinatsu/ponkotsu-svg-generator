@@ -58,6 +58,9 @@ export type Tool = ShapeData['type'];
 export type AppMode = 'idle' | 'drawing' | 'dragging' | 'rotating';
 
 export interface AppState {
+  canvasWidth: number;
+  canvasHeight: number;
+  isCanvasInitialized: boolean;
   shapes: ShapeData[];
   selectedShapeId: string | null;
   drawingState: DrawingShape | null; // Use a generic rectangle for drawing preview
@@ -83,6 +86,8 @@ export interface AppState {
 
 // Actions that can be dispatched
 export type Action =
+  // Canvas actions
+  | { type: 'SET_CANVAS_SIZE'; payload: { width: number; height: number } }
   // Drawing actions
   | { type: 'START_DRAWING'; payload: { x: number; y: number } }
   | { type: 'DRAWING'; payload: { x: number; y: number } }

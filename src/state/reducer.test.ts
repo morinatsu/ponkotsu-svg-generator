@@ -13,6 +13,17 @@ describe('reducer', () => {
     expect(reducer(initialState, { type: 'UNKNOWN' } as any)).toEqual(initialState);
   });
 
+  it('SET_CANVAS_SIZE: should update canvas dimensions and initialization flag', () => {
+    const action = {
+      type: 'SET_CANVAS_SIZE' as const,
+      payload: { width: 1024, height: 768 },
+    };
+    const newState = reducer(initialState, action);
+    expect(newState.canvasWidth).toBe(1024);
+    expect(newState.canvasHeight).toBe(768);
+    expect(newState.isCanvasInitialized).toBe(true);
+  });
+
   it('SELECT_TOOL: should change the current tool', () => {
     const action = { type: 'SELECT_TOOL' as const, payload: 'ellipse' as const };
     const newState = reducer(initialState, action);

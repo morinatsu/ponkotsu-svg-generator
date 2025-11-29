@@ -6,7 +6,7 @@ import type { ShapeData } from '../types';
 describe('historyReducer (undoable)', () => {
   let historyReducer: (state: HistoryState | undefined, action: HistoryAction) => HistoryState;
   let initialState: HistoryState;
-  const dummyShape: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50 };
+  const dummyShape: ShapeData = { id: '1', type: 'rectangle', x: 10, y: 10, width: 50, height: 50, rotation: 0 };
 
   beforeEach(() => {
     historyReducer = undoable(originalReducer);
