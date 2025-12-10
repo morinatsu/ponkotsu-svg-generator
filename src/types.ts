@@ -1,3 +1,5 @@
+import type { ResizeHandle } from './utils/geometry';
+
 export interface RectangleData {
   id: string;
   type: 'rectangle';
@@ -55,7 +57,7 @@ export type DrawingShape = {
 };
 
 export type Tool = ShapeData['type'];
-export type AppMode = 'idle' | 'drawing' | 'dragging' | 'rotating';
+export type AppMode = 'idle' | 'drawing' | 'dragging' | 'rotating' | 'resizing';
 
 export interface AppState {
   canvasWidth: number;
@@ -82,6 +84,13 @@ export interface AppState {
     centerY: number;
     startMouseAngle: number;
     initialShapeRotation: number;
+  } | null;
+  resizingState: {
+    shapeId: string;
+    handle: ResizeHandle;
+    startX: number;
+    startY: number;
+    initialShape: ShapeData;
   } | null;
 }
 
@@ -110,6 +119,19 @@ export type Action =
     }
   | { type: 'ROTATE_SHAPE'; payload: { angle: number } }
   | { type: 'STOP_ROTATING' }
+  // Resizing actions
+  | {
+      type: 'START_RESIZING';
+      payload: {
+        shapeId: string;
+        handle: ResizeHandle;
+        startX: number;
+        startY: number;
+        initialShape: ShapeData;
+      };
+    }
+  | { type: 'RESIZE_SHAPE'; payload: { x: number; y: number; shiftKey: boolean } }
+  | { type: 'STOP_RESIZING' }
   // Shape actions
   | { type: 'ADD_SHAPE'; payload: ShapeData }
   | { type: 'SELECT_SHAPE'; payload: string | null }

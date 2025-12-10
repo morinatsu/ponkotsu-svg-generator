@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import type { Action, AppState } from '../types';
-import { getRotationHandleAt, getShapeCenter } from '../utils/geometry';
+import { getRotationHandleAt, getResizeHandleAt, getShapeCenter } from '../utils/geometry';
 
 /**
  * Manages drawing and rotation interactions. Dragging is handled separately.
@@ -41,8 +41,20 @@ export const useInteractionManager = (
         return;
       }
       const pos = getMousePosition(e);
-      // If the mouse is over a rotation handle, show the rotation cursor.
-      // Otherwise, let the shape's own CSS handle the cursor (e.g., 'move').
+
+      // Check for resize handle (inner circle) - Priority 1
+      const resizeHandle = getResizeHandleAt(pos, selectedShape);
+      if (resizeHandle) {
+        // Map handle to standard cursors
+        // Ideally we would rotate the cursor, but for now we stick to standard ones
+        // or simple mapping.
+        if (resizeHandle === 'nw' || resizeHandle === 'se') document.body.style.cursor = 'nwse-resize';
+        else if (resizeHandle === 'ne' || resizeHandle === 'sw') document.body.style.cursor = 'nesw-resize';
+        else document.body.style.cursor = 'pointer'; // Fallback for start/end
+        return;
+      }
+
+      // Check for rotation handle (outer ring) - Priority 2
       if (getRotationHandleAt(pos, selectedShape)) {
         document.body.style.cursor = 'alias';
       } else {
@@ -66,17 +78,36 @@ export const useInteractionManager = (
       const pos = getMousePosition(e);
       const selectedShape = state.shapes.find((s) => s.id === selectedShapeId);
 
-      // --- Start a Rotation ---
-      if (selectedShape && getRotationHandleAt(pos, selectedShape)) {
-        e.preventDefault();
-        const center = getShapeCenter(selectedShape);
-        const startMouseAngle = Math.atan2(pos.y - center.y, pos.x - center.x);
-        const initialShapeRotation = 'rotation' in selectedShape ? selectedShape.rotation : 0;
-        dispatch({
-          type: 'START_ROTATING',
-          payload: { shapeId: selectedShape.id, centerX: center.x, centerY: center.y, startMouseAngle, initialShapeRotation },
-        });
-        return;
+      if (selectedShape) {
+        // --- Start Resizing (Priority 1) ---
+        const resizeHandle = getResizeHandleAt(pos, selectedShape);
+        if (resizeHandle) {
+           e.preventDefault();
+           dispatch({
+             type: 'START_RESIZING',
+             payload: {
+               shapeId: selectedShape.id,
+               handle: resizeHandle,
+               startX: pos.x,
+               startY: pos.y,
+               initialShape: selectedShape,
+             }
+           });
+           return;
+        }
+
+        // --- Start Rotating (Priority 2) ---
+        if (getRotationHandleAt(pos, selectedShape)) {
+          e.preventDefault();
+          const center = getShapeCenter(selectedShape);
+          const startMouseAngle = Math.atan2(pos.y - center.y, pos.x - center.x);
+          const initialShapeRotation = 'rotation' in selectedShape ? selectedShape.rotation : 0;
+          dispatch({
+            type: 'START_ROTATING',
+            payload: { shapeId: selectedShape.id, centerX: center.x, centerY: center.y, startMouseAngle, initialShapeRotation },
+          });
+          return;
+        }
       }
 
       const shapeId = (e.target as HTMLElement).closest('[data-shape-id]')?.getAttribute('data-shape-id');
@@ -101,6 +132,8 @@ export const useInteractionManager = (
       dispatch({ type: 'END_DRAWING' });
     } else if (mode === 'rotating') {
       dispatch({ type: 'STOP_ROTATING' });
+    } else if (mode === 'resizing') {
+      dispatch({ type: 'STOP_RESIZING' });
     }
 
     // After a drag/rotate/draw, a click event will often fire. We need to prevent
@@ -139,9 +172,11 @@ export const useInteractionManager = (
           newRotation = Math.round(newRotation / 15) * 15;
         }
         dispatch({ type: 'ROTATE_SHAPE', payload: { angle: newRotation } });
+      } else if (mode === 'resizing' && state.resizingState) {
+        dispatch({ type: 'RESIZE_SHAPE', payload: { x: pos.x, y: pos.y, shiftKey: e.shiftKey } });
       }
     },
-    [getMousePosition, mode, wasDragged, drawingState, handleMouseUp, dispatch, state.rotatingState],
+    [getMousePosition, mode, wasDragged, drawingState, handleMouseUp, dispatch, state.rotatingState, state.resizingState],
   );
 
   useEffect(() => {
@@ -155,7 +190,7 @@ export const useInteractionManager = (
     }
 
     // These listeners are for active drawing/rotating, so they need to be global
-    if (mode === 'drawing' || mode === 'rotating') {
+    if (mode === 'drawing' || mode === 'rotating' || mode === 'resizing') {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     }

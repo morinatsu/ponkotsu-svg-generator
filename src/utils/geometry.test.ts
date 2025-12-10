@@ -1,7 +1,7 @@
 // src/utils/geometry.test.ts
 import { describe, it, expect } from 'vitest';
-import { rotatePoint, getRotatedShapeCorners, getRotationHandleAt } from './geometry';
-import type { RectangleData } from '../types';
+import { rotatePoint, getRotatedShapeCorners, getRotationHandleAt, toLocal, toGlobal, getResizeHandleAt } from './geometry';
+import type { RectangleData, LineData } from '../types';
 
 describe('geometry utils', () => {
   describe('rotatePoint', () => {
@@ -35,6 +35,42 @@ describe('geometry utils', () => {
       // Should be 10 units "left" from the center
       expect(rotated.x).toBeCloseTo(0);
       expect(rotated.y).toBeCloseTo(10);
+    });
+  });
+
+  describe('coordinate transforms', () => {
+    const center = { x: 100, y: 100 };
+    const angle = 90;
+
+    it('toLocal should transform global point to unrotated local offset', () => {
+        // Global point (110, 100) -> 10 units right of center.
+        // If system is rotated 90 deg, this point "was" originally at (100, 90) relative to center?
+        // Wait.
+        // Local: (10, 0) relative to center.
+        // Rotated 90 deg -> (0, 10) relative to center -> Global (100, 110).
+
+        const globalPoint = { x: 100, y: 110 };
+        const local = toLocal(globalPoint, center, angle);
+
+        expect(local.x).toBeCloseTo(10);
+        expect(local.y).toBeCloseTo(0);
+    });
+
+    it('toGlobal should transform local offset to rotated global point', () => {
+        const localPoint = { x: 10, y: 0 };
+        const global = toGlobal(localPoint, center, angle);
+
+        expect(global.x).toBeCloseTo(100);
+        expect(global.y).toBeCloseTo(110);
+    });
+
+    it('should be inverse of each other', () => {
+        const p = { x: 50, y: 50 };
+        const local = toLocal(p, center, 45);
+        const global = toGlobal(local, center, 45);
+
+        expect(global.x).toBeCloseTo(p.x);
+        expect(global.y).toBeCloseTo(p.y);
     });
   });
 
@@ -103,9 +139,7 @@ describe('geometry utils', () => {
     });
 
     it('should only allow rotation from endpoints for lines', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const line: any = {
-        // Using any to bypass strict type check for this test context if needed, or assume LineData matches
+      const line: LineData = {
         id: 'l1',
         type: 'line',
         x1: 100,
@@ -121,6 +155,44 @@ describe('geometry utils', () => {
 
       // Check NE (invalid phantom corner at 200,100)
       expect(getRotationHandleAt({ x: 220, y: 100 }, line)).toBeNull();
+    });
+  });
+
+  describe('getResizeHandleAt', () => {
+    const rect: RectangleData = {
+        id: 'r1',
+        type: 'rectangle',
+        x: 100,
+        y: 100,
+        width: 100,
+        height: 100,
+        rotation: 0,
+      };
+
+    it('should return handle if point is within 10px', () => {
+        expect(getResizeHandleAt({x: 105, y: 100}, rect)).toBe('nw');
+        expect(getResizeHandleAt({x: 95, y: 100}, rect)).toBe('nw');
+    });
+
+    it('should return null if point is > 10px away', () => {
+        expect(getResizeHandleAt({x: 80, y: 100}, rect)).toBeNull(); // This hits rotation handle range
+    });
+
+    it('should handle lines correctly', () => {
+        const line: LineData = {
+            id: 'l1',
+            type: 'line',
+            x1: 100,
+            y1: 100,
+            x2: 200,
+            y2: 200,
+            rotation: 0,
+        };
+
+        expect(getResizeHandleAt({x: 100, y: 100}, line)).toBe('start');
+        expect(getResizeHandleAt({x: 200, y: 200}, line)).toBe('end');
+        // Phantom corners
+        expect(getResizeHandleAt({x: 200, y: 100}, line)).toBeNull();
     });
   });
 });

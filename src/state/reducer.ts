@@ -2,6 +2,7 @@ import { drawingReducer } from './reducers/drawingReducer';
 import { draggingReducer } from './reducers/draggingReducer';
 import { shapeReducer } from './reducers/shapeReducer';
 import { rotatingReducer } from './reducers/rotatingReducer';
+import { resizingReducer } from './reducers/resizingReducer';
 import type { AppState, Action } from '../types';
 
 export const initialState: AppState = {
@@ -18,6 +19,7 @@ export const initialState: AppState = {
   shapesBeforeDrag: null,
   shapesBeforeRotation: null,
   rotatingState: null,
+  resizingState: null,
 };
 
 // Root reducer that combines all sub-reducers.
@@ -48,6 +50,12 @@ export const reducer = (state: AppState, action: Action): AppState => {
     case 'ROTATE_SHAPE':
     case 'STOP_ROTATING':
       return rotatingReducer(state, action);
+
+    // Resizing actions
+    case 'START_RESIZING':
+    case 'RESIZE_SHAPE':
+    case 'STOP_RESIZING':
+      return resizingReducer(state, action);
 
     // Shape and tool actions
     case 'SELECT_TOOL':

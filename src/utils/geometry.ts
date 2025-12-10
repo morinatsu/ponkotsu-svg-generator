@@ -1,6 +1,8 @@
 // src/utils/geometry.ts
 import type { ShapeData, RectangleData, EllipseData, LineData } from '../types';
 
+export type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'start' | 'end';
+
 /**
  * Calculates the center point of a shape.
  */
@@ -84,6 +86,31 @@ export const rotatePoint = (
 };
 
 /**
+ * Transforms a global point to a local coordinate system relative to the center and rotation.
+ * The resulting point is relative to the center (0, 0 is the center).
+ */
+export const toLocal = (
+  point: { x: number; y: number },
+  center: { x: number; y: number },
+  angle: number,
+): { x: number; y: number } => {
+  const unrotated = rotatePoint(point, center, -angle);
+  return { x: unrotated.x - center.x, y: unrotated.y - center.y };
+};
+
+/**
+ * Transforms a local point (relative to center) back to global coordinates.
+ */
+export const toGlobal = (
+  localPoint: { x: number; y: number },
+  center: { x: number; y: number },
+  angle: number,
+): { x: number; y: number } => {
+  const absPoint = { x: localPoint.x + center.x, y: localPoint.y + center.y };
+  return rotatePoint(absPoint, center, angle);
+};
+
+/**
  * Calculates the corners of a shape *after* its rotation is applied.
  */
 export const getRotatedShapeCorners = (
@@ -140,6 +167,59 @@ export const getRotationHandleAt = (
 
     if (distSquared > MIN_DIST_SQUARED && distSquared < MAX_DIST_SQUARED) {
       return key as keyof ShapeCorners;
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Checks if a mouse position is close enough to a resize handle (corner/endpoint).
+ * @param pos The mouse position.
+ * @param shape The shape to check against.
+ * @returns The handle that is being hovered over, or null if none.
+ */
+export const getResizeHandleAt = (
+  pos: { x: number; y: number },
+  shape: ShapeData,
+): ResizeHandle | null => {
+  if (shape.type === 'text') return null;
+
+  const corners = getRotatedShapeCorners(shape as RectangleData | EllipseData | LineData);
+  if (!corners) {
+    return null;
+  }
+
+  // Spec: distance <= 10px
+  const MAX_DIST_SQUARED = 10 * 10;
+
+  for (const key in corners) {
+    // For lines, only allow resizing from the endpoints
+    if (shape.type === 'line') {
+      if (key === 'nw') {
+        // nw is mapped to start
+        const corner = corners.nw;
+        const dx = pos.x - corner.x;
+        const dy = pos.y - corner.y;
+        if (dx * dx + dy * dy <= MAX_DIST_SQUARED) return 'start';
+      } else if (key === 'se') {
+        // se is mapped to end
+        const corner = corners.se;
+        const dx = pos.x - corner.x;
+        const dy = pos.y - corner.y;
+        if (dx * dx + dy * dy <= MAX_DIST_SQUARED) return 'end';
+      }
+      continue;
+    }
+
+    // For other shapes
+    const corner = corners[key as keyof ShapeCorners];
+    const dx = pos.x - corner.x;
+    const dy = pos.y - corner.y;
+    const distSquared = dx * dx + dy * dy;
+
+    if (distSquared <= MAX_DIST_SQUARED) {
+      return key as ResizeHandle;
     }
   }
 
