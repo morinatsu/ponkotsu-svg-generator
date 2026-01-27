@@ -14,7 +14,8 @@
     "test": "vitest run src",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
-    "license-check": "license-checker --production --failOn '*GPL*'",
+    "license-check": "license-checker-rseidelsohn --production --failOn '*GPL*'",
+    "check-updates": "pnpm outdated",
     "prepare": "husky install",
     "preinstall": "npx only-allow pnpm"
   },
@@ -42,7 +43,7 @@
     "happy-dom": "^18.0.1",
     "husky": "^9.1.7",
     "jsdom": "^27.0.0",
-    "license-checker": "^25.0.1",
+    "license-checker-rseidelsohn": "^4.4.2",
     "lint-staged": "^16.2.5",
     "prettier": "^3.6.2",
     "typescript": "~5.8.3",
