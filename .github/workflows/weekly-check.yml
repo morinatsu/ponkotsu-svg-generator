@@ -28,8 +28,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Check Licenses
+      - name: Check Licenses (Allowlist)
         run: pnpm run license-check
 
-      - name: Check for Updates
+      - name: Check for Outdated Packages
         run: pnpm outdated
