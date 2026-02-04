@@ -16,7 +16,7 @@
     "test:e2e": "playwright test",
     "license-check": "license-checker-rseidelsohn --production --excludePrivatePackages --onlyAllow \"MIT;ISC;Apache-2.0;BSD-2-Clause;BSD-3-Clause\"",
     "dependency-check": "pnpm outdated",
-    "prepare": "husky install",
+    "prepare": "husky",
     "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
