@@ -32,4 +32,5 @@ jobs:
         run: pnpm run license-check
 
       - name: Check for Updates
+        if: success() || failure()
         run: pnpm run dependency-check
