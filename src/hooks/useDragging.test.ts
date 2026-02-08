@@ -1,14 +1,13 @@
 // src/hooks/useDragging.test.ts
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useDragging } from './useDragging';
-import type { AppState } from '../types';
 
 describe('useDragging', () => {
     let dispatch: ReturnType<typeof vi.fn>;
     let svgRef: React.RefObject<SVGSVGElement | null>;
-    let addEventListenerSpy: ReturnType<typeof vi.fn>;
-    let removeEventListenerSpy: ReturnType<typeof vi.fn>;
+    let addEventListenerSpy: MockInstance;
+    let removeEventListenerSpy: MockInstance;
 
     beforeEach(() => {
         dispatch = vi.fn();

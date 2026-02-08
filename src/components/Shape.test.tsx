@@ -8,16 +8,20 @@ import { AppContext } from '../state/AppContext';
 // Mock context
 const mockDispatch = vi.fn();
 // We use a factory or reset it in beforeEach
-let mockWasDragged = { current: false };
+const mockWasDragged = { current: false };
 
 const renderShape = (shape: RectangleData | EllipseData | LineData | TextData, props = {}) => {
   return render(
     <AppContext.Provider value={{
         dispatch: mockDispatch,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         state: {} as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         history: {} as any,
         svgRef: { current: null },
-        wasDragged: mockWasDragged
+        wasDragged: mockWasDragged,
+        canUndo: false,
+        canRedo: false,
     }}>
       <svg>
         <Shape
@@ -112,10 +116,14 @@ describe('Shape component', () => {
        render(
         <AppContext.Provider value={{
             dispatch: mockDispatch,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             state: {} as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             history: {} as any,
             svgRef: { current: null },
-            wasDragged: mockWasDragged
+            wasDragged: mockWasDragged,
+            canUndo: false,
+            canRedo: false,
         }}>
           <svg>
             <Shape

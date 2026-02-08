@@ -1,8 +1,8 @@
 // src/hooks/useInteractionManager.test.ts
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useInteractionManager } from './useInteractionManager';
-import type { AppState, Action } from '../types';
+import type { AppState } from '../types';
 import * as geometry from '../utils/geometry';
 
 // Mock dependencies
@@ -21,10 +21,9 @@ describe('useInteractionManager', () => {
   let state: AppState;
   let svgRef: React.RefObject<SVGSVGElement | null>;
   let wasDragged: React.MutableRefObject<boolean>;
-  let addEventListenerSpy: ReturnType<typeof vi.fn>;
-  let removeEventListenerSpy: ReturnType<typeof vi.fn>;
-  let svgAddEventListenerSpy: ReturnType<typeof vi.fn>;
-  let svgRemoveEventListenerSpy: ReturnType<typeof vi.fn>;
+  let addEventListenerSpy: MockInstance;
+  let svgAddEventListenerSpy: MockInstance;
+  let svgRemoveEventListenerSpy: MockInstance;
 
   beforeEach(() => {
     dispatch = vi.fn();
@@ -60,7 +59,7 @@ describe('useInteractionManager', () => {
 
     // Mock global addEventListener
     addEventListenerSpy = vi.spyOn(window, 'addEventListener');
-    removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+    vi.spyOn(window, 'removeEventListener');
   });
 
   afterEach(() => {

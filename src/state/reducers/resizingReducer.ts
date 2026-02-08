@@ -107,8 +107,8 @@ export const resizingReducer = (state: AppState, action: Action): AppState => {
         // Use logic from test: determine dominant dimension change
         // Or simply: use the dimension that has changed the most relative to initial size?
 
-        let newWidth = Math.abs(newLocalBounds.right - newLocalBounds.left);
-        let newHeight = Math.abs(newLocalBounds.bottom - newLocalBounds.top);
+        const newWidth = Math.abs(newLocalBounds.right - newLocalBounds.left);
+        const newHeight = Math.abs(newLocalBounds.bottom - newLocalBounds.top);
 
         // Correct logic: we should project the new point onto the diagonal that preserves aspect ratio.
         // But simply picking the larger dimension works well for UX.
