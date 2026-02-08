@@ -1,4 +1,4 @@
-import React, { useReducer, useRef } from 'react';
+import React, { useReducer, useRef, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { AppContext, type AppContextType } from './AppContext';
 import { reducer, initialState } from './reducer';
@@ -24,15 +24,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Managed with a ref to avoid re-renders.
   const wasDragged = useRef<boolean>(false);
 
-  const value: AppContextType = {
-    state: historyState.present,
-    history: historyState,
-    dispatch,
-    wasDragged,
-    svgRef,
-    canUndo: historyState.past.length > 0,
-    canRedo: historyState.future.length > 0,
-  };
+  const value: AppContextType = useMemo(
+    () => ({
+      state: historyState.present,
+      history: historyState,
+      dispatch,
+      wasDragged,
+      svgRef,
+      canUndo: historyState.past.length > 0,
+      canRedo: historyState.future.length > 0,
+    }),
+    [historyState, dispatch, wasDragged, svgRef],
+  );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
