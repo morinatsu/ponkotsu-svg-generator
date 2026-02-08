@@ -67,16 +67,28 @@ export const getShapeCorners = (shape: ShapeData): ShapeCorners | null => {
  * @param point The point to rotate.
  * @param center The center of rotation.
  * @param angle The angle of rotation in degrees.
+ * @param preCalculatedSin Optional pre-calculated sin value.
+ * @param preCalculatedCos Optional pre-calculated cos value.
  * @returns The new rotated point.
  */
 export const rotatePoint = (
   point: { x: number; y: number },
   center: { x: number; y: number },
   angle: number,
+  preCalculatedSin?: number,
+  preCalculatedCos?: number,
 ): { x: number; y: number } => {
-  const angleRad = (angle * Math.PI) / 180;
-  const cos = Math.cos(angleRad);
-  const sin = Math.sin(angleRad);
+  let sin: number, cos: number;
+
+  if (preCalculatedSin !== undefined && preCalculatedCos !== undefined) {
+    sin = preCalculatedSin;
+    cos = preCalculatedCos;
+  } else {
+    const angleRad = (angle * Math.PI) / 180;
+    cos = Math.cos(angleRad);
+    sin = Math.sin(angleRad);
+  }
+
   const dx = point.x - center.x;
   const dy = point.y - center.y;
   return {
@@ -123,12 +135,15 @@ export const getRotatedShapeCorners = (
 
   const center = getShapeCenter(shape);
   const angle = shape.rotation;
+  const angleRad = (angle * Math.PI) / 180;
+  const cos = Math.cos(angleRad);
+  const sin = Math.sin(angleRad);
 
   return {
-    nw: rotatePoint(corners.nw, center, angle),
-    ne: rotatePoint(corners.ne, center, angle),
-    sw: rotatePoint(corners.sw, center, angle),
-    se: rotatePoint(corners.se, center, angle),
+    nw: rotatePoint(corners.nw, center, angle, sin, cos),
+    ne: rotatePoint(corners.ne, center, angle, sin, cos),
+    sw: rotatePoint(corners.sw, center, angle, sin, cos),
+    se: rotatePoint(corners.se, center, angle, sin, cos),
   };
 };
 
