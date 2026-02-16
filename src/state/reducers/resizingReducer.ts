@@ -73,7 +73,7 @@ export const resizingReducer = (state: AppState, action: Action): AppState => {
           bottom: initialShape.ry,
         };
       } else {
-         return state;
+        return state;
       }
 
       // 4. Calculate NEW local bounds based on the handle being dragged
@@ -107,51 +107,50 @@ export const resizingReducer = (state: AppState, action: Action): AppState => {
         // Use logic from test: determine dominant dimension change
         // Or simply: use the dimension that has changed the most relative to initial size?
 
-        let newWidth = Math.abs(newLocalBounds.right - newLocalBounds.left);
-        let newHeight = Math.abs(newLocalBounds.bottom - newLocalBounds.top);
+        const newWidth = Math.abs(newLocalBounds.right - newLocalBounds.left);
+        const newHeight = Math.abs(newLocalBounds.bottom - newLocalBounds.top);
 
         // Correct logic: we should project the new point onto the diagonal that preserves aspect ratio.
         // But simply picking the larger dimension works well for UX.
 
         // Check which dimension grew/shrank more relative to Aspect Ratio
         if (newWidth / aspectRatio > newHeight) {
-             // Width is the driver, adjust height
-             const targetHeight = newWidth / aspectRatio;
+          // Width is the driver, adjust height
+          const targetHeight = newWidth / aspectRatio;
 
-             if (handle.includes('n')) {
-                 newLocalBounds.top = newLocalBounds.bottom - targetHeight;
-             } else {
-                 newLocalBounds.bottom = newLocalBounds.top + targetHeight;
-             }
+          if (handle.includes('n')) {
+            newLocalBounds.top = newLocalBounds.bottom - targetHeight;
+          } else {
+            newLocalBounds.bottom = newLocalBounds.top + targetHeight;
+          }
         } else {
-             // Height is the driver, adjust width
-             const targetWidth = newHeight * aspectRatio;
+          // Height is the driver, adjust width
+          const targetWidth = newHeight * aspectRatio;
 
-             if (handle.includes('w')) {
-                 newLocalBounds.left = newLocalBounds.right - targetWidth;
-             } else {
-                 newLocalBounds.right = newLocalBounds.left + targetWidth;
-             }
+          if (handle.includes('w')) {
+            newLocalBounds.left = newLocalBounds.right - targetWidth;
+          } else {
+            newLocalBounds.right = newLocalBounds.left + targetWidth;
+          }
         }
       }
 
       // 6. Normalize bounds (handle negative width/height by flipping)
       if (newLocalBounds.left > newLocalBounds.right) {
-          const temp = newLocalBounds.left;
-          newLocalBounds.left = newLocalBounds.right;
-          newLocalBounds.right = temp;
+        const temp = newLocalBounds.left;
+        newLocalBounds.left = newLocalBounds.right;
+        newLocalBounds.right = temp;
       }
       if (newLocalBounds.top > newLocalBounds.bottom) {
-          const temp = newLocalBounds.top;
-          newLocalBounds.top = newLocalBounds.bottom;
-          newLocalBounds.bottom = temp;
+        const temp = newLocalBounds.top;
+        newLocalBounds.top = newLocalBounds.bottom;
+        newLocalBounds.bottom = temp;
       }
-
 
       // 7. Calculate new center in LOCAL coordinates
       const newLocalCenter = {
-          x: (newLocalBounds.left + newLocalBounds.right) / 2,
-          y: (newLocalBounds.top + newLocalBounds.bottom) / 2
+        x: (newLocalBounds.left + newLocalBounds.right) / 2,
+        y: (newLocalBounds.top + newLocalBounds.bottom) / 2,
       };
 
       // 8. Convert new center back to GLOBAL coordinates
@@ -161,17 +160,17 @@ export const resizingReducer = (state: AppState, action: Action): AppState => {
 
       // 9. Update the shape
       if (initialShape.type === 'rectangle') {
-          const rect = newShape as RectangleData;
-          rect.width = newLocalBounds.right - newLocalBounds.left;
-          rect.height = newLocalBounds.bottom - newLocalBounds.top;
-          rect.x = newCenterGlobal.x - rect.width / 2;
-          rect.y = newCenterGlobal.y - rect.height / 2;
+        const rect = newShape as RectangleData;
+        rect.width = newLocalBounds.right - newLocalBounds.left;
+        rect.height = newLocalBounds.bottom - newLocalBounds.top;
+        rect.x = newCenterGlobal.x - rect.width / 2;
+        rect.y = newCenterGlobal.y - rect.height / 2;
       } else if (initialShape.type === 'ellipse') {
-          const ellipse = newShape as EllipseData;
-          ellipse.rx = (newLocalBounds.right - newLocalBounds.left) / 2;
-          ellipse.ry = (newLocalBounds.bottom - newLocalBounds.top) / 2;
-          ellipse.cx = newCenterGlobal.x;
-          ellipse.cy = newCenterGlobal.y;
+        const ellipse = newShape as EllipseData;
+        ellipse.rx = (newLocalBounds.right - newLocalBounds.left) / 2;
+        ellipse.ry = (newLocalBounds.bottom - newLocalBounds.top) / 2;
+        ellipse.cx = newCenterGlobal.x;
+        ellipse.cy = newCenterGlobal.y;
       }
 
       return {

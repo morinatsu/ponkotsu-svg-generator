@@ -22,13 +22,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Flag to track whether a drag operation occurred.
   // Used to prevent the click event from firing and deselecting the shape after a drag ends.
   // Managed with a ref to avoid re-renders.
-  const wasDragged = useRef<boolean>(false);
+  const wasDraggedRef = useRef<boolean>(false);
 
   const value: AppContextType = {
     state: historyState.present,
     history: historyState,
     dispatch,
-    wasDragged,
+    wasDraggedRef,
     svgRef,
     canUndo: historyState.past.length > 0,
     canRedo: historyState.future.length > 0,

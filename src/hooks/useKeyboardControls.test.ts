@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { useKeyboardControls } from './useKeyboardControls';
 import { vi } from 'vitest';
+import type { HistoryAction } from '../state/historyReducer';
 const createMockKeyboardEvent = (
   key: string,
   ctrlKey = false,
@@ -20,10 +21,10 @@ const createMockKeyboardEvent = (
 };
 
 describe('useKeyboardControls', () => {
-  let dispatch: ReturnType<typeof vi.fn>;
+  let dispatch: ReturnType<typeof vi.fn> & React.Dispatch<HistoryAction>;
 
   beforeEach(() => {
-    dispatch = vi.fn();
+    dispatch = vi.fn() as unknown as ReturnType<typeof vi.fn> & React.Dispatch<HistoryAction>;
     vi.spyOn(window, 'addEventListener');
     vi.spyOn(window, 'removeEventListener');
     vi.clearAllMocks();

@@ -9,7 +9,7 @@ export const useInteractionManager = (
   dispatch: React.Dispatch<Action>,
   state: AppState,
   svgRef: React.RefObject<SVGSVGElement | null>,
-  wasDragged: React.MutableRefObject<boolean>,
+  wasDraggedRef: React.MutableRefObject<boolean>,
 ) => {
   const { mode, currentTool, drawingState, selectedShapeId } = state;
 
@@ -48,8 +48,10 @@ export const useInteractionManager = (
         // Map handle to standard cursors
         // Ideally we would rotate the cursor, but for now we stick to standard ones
         // or simple mapping.
-        if (resizeHandle === 'nw' || resizeHandle === 'se') document.body.style.cursor = 'nwse-resize';
-        else if (resizeHandle === 'ne' || resizeHandle === 'sw') document.body.style.cursor = 'nesw-resize';
+        if (resizeHandle === 'nw' || resizeHandle === 'se')
+          document.body.style.cursor = 'nwse-resize';
+        else if (resizeHandle === 'ne' || resizeHandle === 'sw')
+          document.body.style.cursor = 'nesw-resize';
         else document.body.style.cursor = 'pointer'; // Fallback for start/end
         return;
       }
@@ -73,7 +75,8 @@ export const useInteractionManager = (
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (mode !== 'idle') return;
-      wasDragged.current = false;
+
+      wasDraggedRef.current = false;
 
       const pos = getMousePosition(e);
       const selectedShape = state.shapes.find((s) => s.id === selectedShapeId);
@@ -82,18 +85,18 @@ export const useInteractionManager = (
         // --- Start Resizing (Priority 1) ---
         const resizeHandle = getResizeHandleAt(pos, selectedShape);
         if (resizeHandle) {
-           e.preventDefault();
-           dispatch({
-             type: 'START_RESIZING',
-             payload: {
-               shapeId: selectedShape.id,
-               handle: resizeHandle,
-               startX: pos.x,
-               startY: pos.y,
-               initialShape: selectedShape,
-             }
-           });
-           return;
+          e.preventDefault();
+          dispatch({
+            type: 'START_RESIZING',
+            payload: {
+              shapeId: selectedShape.id,
+              handle: resizeHandle,
+              startX: pos.x,
+              startY: pos.y,
+              initialShape: selectedShape,
+            },
+          });
+          return;
         }
 
         // --- Start Rotating (Priority 2) ---
@@ -104,13 +107,21 @@ export const useInteractionManager = (
           const initialShapeRotation = 'rotation' in selectedShape ? selectedShape.rotation : 0;
           dispatch({
             type: 'START_ROTATING',
-            payload: { shapeId: selectedShape.id, centerX: center.x, centerY: center.y, startMouseAngle, initialShapeRotation },
+            payload: {
+              shapeId: selectedShape.id,
+              centerX: center.x,
+              centerY: center.y,
+              startMouseAngle,
+              initialShapeRotation,
+            },
           });
           return;
         }
       }
 
-      const shapeId = (e.target as HTMLElement).closest('[data-shape-id]')?.getAttribute('data-shape-id');
+      const shapeId = (e.target as HTMLElement)
+        .closest('[data-shape-id]')
+        ?.getAttribute('data-shape-id');
       // If clicking on a shape (but not a rotation handle), let the shape's own onMouseDown handle it for dragging.
       if (shapeId) {
         return;
@@ -119,12 +130,15 @@ export const useInteractionManager = (
       e.preventDefault();
       // --- Start a New Drawing or Text ---
       if (currentTool === 'text') {
-        dispatch({ type: 'START_TEXT_EDIT', payload: { id: null, x: pos.x, y: pos.y, content: '' } });
+        dispatch({
+          type: 'START_TEXT_EDIT',
+          payload: { id: null, x: pos.x, y: pos.y, content: '' },
+        });
       } else {
         dispatch({ type: 'START_DRAWING', payload: pos });
       }
     },
-    [dispatch, getMousePosition, mode, currentTool, wasDragged, state.shapes, selectedShapeId],
+    [dispatch, getMousePosition, mode, currentTool, wasDraggedRef, state.shapes, selectedShapeId],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -138,15 +152,15 @@ export const useInteractionManager = (
 
     // After a drag/rotate/draw, a click event will often fire. We need to prevent
     // that click from being handled by the shape's onClick handler.
-    // The wasDragged flag achieves this, but we need to reset it *after* the click
+    // The wasDraggedRef flag achieves this, but we need to reset it *after* the click
     // event has had a chance to be processed. A setTimeout queues the reset
     // to run after the current event loop finishes.
-    if (wasDragged.current) {
+    if (wasDraggedRef.current) {
       setTimeout(() => {
-        wasDragged.current = false;
+        wasDraggedRef.current = false;
       }, 0);
     }
-  }, [mode, dispatch, wasDragged]);
+  }, [mode, dispatch, wasDraggedRef]);
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
@@ -157,7 +171,8 @@ export const useInteractionManager = (
       if (mode === 'idle') return;
 
       const pos = getMousePosition(e);
-      wasDragged.current = true;
+
+      wasDraggedRef.current = true;
 
       if (mode === 'drawing' && drawingState) {
         dispatch({ type: 'DRAWING', payload: pos });
@@ -176,7 +191,16 @@ export const useInteractionManager = (
         dispatch({ type: 'RESIZE_SHAPE', payload: { x: pos.x, y: pos.y, shiftKey: e.shiftKey } });
       }
     },
-    [getMousePosition, mode, wasDragged, drawingState, handleMouseUp, dispatch, state.rotatingState, state.resizingState],
+    [
+      getMousePosition,
+      mode,
+      wasDraggedRef,
+      drawingState,
+      handleMouseUp,
+      dispatch,
+      state.rotatingState,
+      state.resizingState,
+    ],
   );
 
   useEffect(() => {

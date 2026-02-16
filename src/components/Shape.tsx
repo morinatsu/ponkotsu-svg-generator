@@ -22,13 +22,13 @@ const Shape: React.FC<ShapeProps> = ({
   if (!context) {
     throw new Error('Shape must be used within an AppContextProvider');
   }
-  const { dispatch, wasDragged } = context;
+  const { dispatch, wasDraggedRef } = context;
 
   // Event handlers and ID are attached to the parent group.
   const groupProps = {
     onClick: (e: React.MouseEvent) => {
-      if (wasDragged.current) {
-        wasDragged.current = false;
+      if (wasDraggedRef.current) {
+        wasDraggedRef.current = false;
         return;
       }
       // Prevent the click from bubbling up to the canvas and triggering deselection.

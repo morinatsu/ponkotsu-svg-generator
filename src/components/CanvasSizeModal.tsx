@@ -13,14 +13,12 @@ const CanvasSizeModal: React.FC<CanvasSizeModalProps> = ({
 }) => {
   const [width, setWidth] = useState(initialWidth);
   const [height, setHeight] = useState(initialHeight);
-  const [isValid, setIsValid] = useState(true);
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
 
   useEffect(() => {
-    // Update window size on resize, although likely not needed for initial modal
     const handleResize = () => {
       setWindowSize({ width: window.innerWidth, height: window.innerHeight });
     };
@@ -28,22 +26,10 @@ const CanvasSizeModal: React.FC<CanvasSizeModalProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    validate(width, height);
+  // Derived state for validation
+  const isValid = React.useMemo(() => {
+    return !(width < 200 || height < 200 || width > windowSize.width || height > windowSize.height);
   }, [width, height, windowSize]);
-
-  const validate = (w: number, h: number) => {
-    if (
-      w < 200 ||
-      h < 200 ||
-      w > windowSize.width ||
-      h > windowSize.height
-    ) {
-      setIsValid(false);
-    } else {
-      setIsValid(true);
-    }
-  };
 
   const handleConfirm = () => {
     if (isValid) {
@@ -81,11 +67,7 @@ const CanvasSizeModal: React.FC<CanvasSizeModalProps> = ({
             <br />
             高さ: 200 〜 {windowSize.height}
           </p>
-          {!isValid && (
-            <p style={{ color: 'red' }}>
-              入力値が範囲外です。
-            </p>
-          )}
+          {!isValid && <p style={{ color: 'red' }}>入力値が範囲外です。</p>}
         </div>
         <div style={styles.buttons}>
           <button

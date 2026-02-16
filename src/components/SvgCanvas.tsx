@@ -15,10 +15,10 @@ const SvgCanvas: React.FC<SvgCanvasProps> = ({ onShapeMouseDown }) => {
   if (!context) {
     throw new Error('SvgCanvas must be used within an AppContextProvider');
   }
-  const { state, dispatch, svgRef, wasDragged } = context;
+  const { state, dispatch, svgRef, wasDraggedRef } = context;
   const { shapes, selectedShapeId } = state;
 
-  const { handleMouseDown } = useInteractionManager(dispatch, state, svgRef, wasDragged);
+  const { handleMouseDown } = useInteractionManager(dispatch, state, svgRef, wasDraggedRef);
 
   const handleCanvasClick = () => {
     dispatch({ type: 'SELECT_SHAPE', payload: null });
