@@ -129,7 +129,7 @@ export const getRotatedShapeCorners = (
   shape: RectangleData | EllipseData | LineData,
 ): ShapeCorners | null => {
   const corners = getShapeCorners(shape);
-  if (!corners || !('rotation' in shape) || shape.rotation === 0) {
+  if (!corners || !shape.rotation) {
     return corners;
   }
 
