@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Interaction Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await page.getByRole('button', { name: '設定して開始' }).click();
   });
 
   test('should draw a rectangle', async ({ page }) => {

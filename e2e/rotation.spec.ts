@@ -4,6 +4,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Shape Rotation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await page.getByRole('button', { name: '設定して開始' }).click();
     await page.waitForSelector('svg');
   });
 
@@ -27,27 +28,58 @@ test.describe('Shape Rotation', () => {
     await page.mouse.click(startPos.x + 1, startPos.y + 1);
     await expect(visibleRect).toHaveAttribute('stroke', 'blue');
 
-    // 3. Move mouse to the top-right corner and check cursor for rotation
-    await page.mouse.move(endPos.x, startPos.y);
+    // 3. Move mouse to the top-right corner's rotation ring and check cursor for rotation
+    await page.mouse.move(endPos.x + 20, startPos.y - 20);
     await expect(page.locator('body')).toHaveCSS('cursor', 'alias');
 
     // 4. Drag to rotate the shape
     await page.mouse.down();
-    await page.mouse.move(endPos.x + 50, startPos.y + 50); // Rotate roughly 45 degrees
+    await page.mouse.move(endPos.x + 70, startPos.y + 30); // Rotate roughly 45 degrees
     await page.mouse.up();
 
     const transform = await shapeGroup.getAttribute('transform');
     expect(transform).not.toBeNull();
     expect(transform).toContain('rotate(');
 
-    // 5. Verify the shape is still selected and try dragging it
+    // 5. Verify the shape can still be selected and try dragging it
+
+    // Ensure shape is selected again in case 'click' fired after 'setTimeout' cleared wasDraggedRef
+    await shapeGroup.evaluate((node) =>
+      node.dispatchEvent(new MouseEvent('click', { bubbles: true })),
+    );
     await expect(visibleRect).toHaveAttribute('stroke', 'blue');
-    const initialCenter = { x: (startPos.x + endPos.x) / 2, y: (startPos.y + endPos.y) / 2 };
-    await page.mouse.move(initialCenter.x, initialCenter.y);
+
+    // Calculate the rotated top edge center to hover over the stroke safely
+    const transformStr = (await shapeGroup.getAttribute('transform')) || '';
+    const rotateMatch = transformStr.match(/rotate\(([-\d.]+) ([-\d.]+) ([-\d.]+)\)/);
+
+    // We drew at screen box.x + 100, meaning local X was 100.
+    // The rectangle went from local (100,100) to (300,200).
+    // The top middle in local coordinates is thus (200, 100).
+    const localTopMidX = 200;
+    const localTopMidY = 100;
+
+    let newX = startPos.x + 100; // default screen
+    let newY = startPos.y;
+    if (rotateMatch) {
+      const angleDeg = parseFloat(rotateMatch[1]);
+      const cx = parseFloat(rotateMatch[2]);
+      const cy = parseFloat(rotateMatch[3]);
+      const angleRad = (angleDeg * Math.PI) / 180;
+      const dx = localTopMidX - cx;
+      const dy = localTopMidY - cy;
+      const localNewX = cx + dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
+      const localNewY = cy + dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+
+      newX = box.x + localNewX;
+      newY = box.y + localNewY;
+    }
+    await page.mouse.move(newX, newY);
     await expect(page.locator('body')).toHaveCSS('cursor', 'move');
 
     await page.mouse.down();
-    await page.mouse.move(initialCenter.x + 50, initialCenter.y + 50);
+    // Drag the shape by moving the mouse 50px right and down
+    await page.mouse.move(newX + 50, newY + 50);
     await page.mouse.up();
 
     const finalTransform = await shapeGroup.getAttribute('transform');
