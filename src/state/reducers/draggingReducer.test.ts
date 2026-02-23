@@ -10,9 +10,6 @@ describe('draggingReducer', () => {
     y: 10,
     width: 20,
     height: 20,
-    fill: 'none',
-    stroke: 'black',
-    strokeWidth: 2,
     rotation: 0,
   };
 
@@ -23,9 +20,6 @@ describe('draggingReducer', () => {
     cy: 50,
     rx: 20,
     ry: 10,
-    fill: 'none',
-    stroke: 'black',
-    strokeWidth: 2,
     rotation: 0,
   };
 
@@ -36,9 +30,6 @@ describe('draggingReducer', () => {
     y1: 100,
     x2: 200,
     y2: 200,
-    fill: 'none',
-    stroke: 'black',
-    strokeWidth: 2,
     rotation: 0,
   };
 
@@ -173,8 +164,8 @@ describe('draggingReducer', () => {
 
     it('ignores unknown shape types', () => {
       // Though TypeScript prevents this usually, testing fallback coverage.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const weirdShape = { id: 'weird1', type: 'unknown_type' } as any;
+      // @ts-expect-error Testing runtime fallback explicitly
+      const weirdShape: ShapeData = { id: 'weird1', type: 'unknown_type' };
       const weirdState: AppState = {
         ...initialState,
         shapes: [weirdShape],

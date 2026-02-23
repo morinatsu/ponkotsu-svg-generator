@@ -107,9 +107,8 @@ describe('geometry utilities', () => {
     });
 
     it('returns unrotated corners if rotation is undefined', () => {
-      const lineNoRot: LineData = { ...line };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (lineNoRot as any).rotation;
+      // @ts-expect-error Testing runtime fallback explicitly
+      const lineNoRot: LineData = { ...line, rotation: undefined };
       expect(getRotatedShapeCorners(lineNoRot)).toEqual(getShapeCorners(lineNoRot));
     });
 
@@ -129,8 +128,7 @@ describe('geometry utilities', () => {
     it('returns null if no corners exist', () => {
       // Create a mock shape that somehow has rotation but no readable corners
       const weirdShape = { ...text, rotation: 90 };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(getRotationHandleAt({ x: 0, y: 0 }, weirdShape as any)).toBeNull();
+      expect(getRotationHandleAt({ x: 0, y: 0 }, weirdShape)).toBeNull();
     });
 
     it('returns a handle if clicking within 10-30px radius of corner for rectangle', () => {

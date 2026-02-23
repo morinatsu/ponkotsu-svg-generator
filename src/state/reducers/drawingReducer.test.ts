@@ -245,9 +245,10 @@ describe('drawingReducer', () => {
       const state: AppState = {
         ...initialState,
         mode: 'drawing',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        currentTool: 'unknown_tool' as any, // Unsupported tool
+        // @ts-expect-error Testing runtime fallback explicitly
+        currentTool: 'unknown_tool', // Unsupported tool
         drawingState: {
+          // @ts-expect-error Testing runtime invalid tool explicitly
           type: 'unknown_tool',
           x: 0,
           y: 0,
