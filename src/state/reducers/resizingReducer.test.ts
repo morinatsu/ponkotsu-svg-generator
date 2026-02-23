@@ -1,7 +1,7 @@
 // src/state/reducers/resizingReducer.test.ts
 import { describe, it, expect } from 'vitest';
 import { resizingReducer } from './resizingReducer';
-import type { AppState, Action, RectangleData, LineData } from '../../types';
+import type { AppState, Action, RectangleData, LineData, EllipseData } from '../../types';
 
 const initialState: AppState = {
   canvasWidth: 800,
@@ -63,7 +63,15 @@ describe('resizingReducer', () => {
         handle: 'se',
         startX: 0,
         startY: 0,
-        initialShape: { id: '1', type: 'rectangle', x: 0, y: 0, width: 10, height: 10, rotation: 0 },
+        initialShape: {
+          id: '1',
+          type: 'rectangle',
+          x: 0,
+          y: 0,
+          width: 10,
+          height: 10,
+          rotation: 0,
+        },
       },
     };
     const action: Action = { type: 'STOP_RESIZING' };
@@ -219,51 +227,51 @@ describe('resizingReducer', () => {
   });
 
   it('should resize a line (start handle)', () => {
-      const line: LineData = {
-          id: '1',
-          type: 'line',
-          x1: 0,
-          y1: 0,
-          x2: 100,
-          y2: 100,
-          rotation: 0
-      };
+    const line: LineData = {
+      id: '1',
+      type: 'line',
+      x1: 0,
+      y1: 0,
+      x2: 100,
+      y2: 100,
+      rotation: 0,
+    };
 
-      const state: AppState = {
-        ...initialState,
-        shapes: [line],
-        mode: 'resizing',
-        resizingState: {
-          shapeId: '1',
-          handle: 'start',
-          startX: 0,
-          startY: 0,
-          initialShape: line,
-        },
-      };
+    const state: AppState = {
+      ...initialState,
+      shapes: [line],
+      mode: 'resizing',
+      resizingState: {
+        shapeId: '1',
+        handle: 'start',
+        startX: 0,
+        startY: 0,
+        initialShape: line,
+      },
+    };
 
-      const action: Action = {
-        type: 'RESIZE_SHAPE',
-        payload: { x: -10, y: -20, shiftKey: false },
-      };
+    const action: Action = {
+      type: 'RESIZE_SHAPE',
+      payload: { x: -10, y: -20, shiftKey: false },
+    };
 
-      const newState = resizingReducer(state, action);
-      const newLine = newState.shapes[0] as LineData;
+    const newState = resizingReducer(state, action);
+    const newLine = newState.shapes[0] as LineData;
 
-      expect(newLine.x1).toBe(-10);
-      expect(newLine.y1).toBe(-20);
-      expect(newLine.x2).toBe(100); // Unchanged
+    expect(newLine.x1).toBe(-10);
+    expect(newLine.y1).toBe(-20);
+    expect(newLine.x2).toBe(100); // Unchanged
   });
 
   it('should resize a line (end handle)', () => {
     const line: LineData = {
-        id: '1',
-        type: 'line',
-        x1: 0,
-        y1: 0,
-        x2: 100,
-        y2: 100,
-        rotation: 0
+      id: '1',
+      type: 'line',
+      x1: 0,
+      y1: 0,
+      x2: 100,
+      y2: 100,
+      rotation: 0,
     };
 
     const state: AppState = {
@@ -293,123 +301,278 @@ describe('resizingReducer', () => {
   });
 
   it('should maintain aspect ratio when shift key is pressed (SE handle)', () => {
-      const rect: RectangleData = {
-          id: '1',
-          type: 'rectangle',
-          x: 0,
-          y: 0,
-          width: 100,
-          height: 50, // Aspect ratio 2:1
-          rotation: 0,
-      };
+    const rect: RectangleData = {
+      id: '1',
+      type: 'rectangle',
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 50, // Aspect ratio 2:1
+      rotation: 0,
+    };
 
-      const state: AppState = {
-          ...initialState,
-          shapes: [rect],
-          mode: 'resizing',
-          resizingState: {
-              shapeId: '1',
-              handle: 'se',
-              startX: 100,
-              startY: 50,
-              initialShape: rect,
-          }
-      };
+    const state: AppState = {
+      ...initialState,
+      shapes: [rect],
+      mode: 'resizing',
+      resizingState: {
+        shapeId: '1',
+        handle: 'se',
+        startX: 100,
+        startY: 50,
+        initialShape: rect,
+      },
+    };
 
-      // Move mouse to (200, 200). Delta width=100, delta height=150.
-      // Target would be 200x200.
-      // But aspect ratio 2:1 must be maintained.
-      // If we use width (200) as driver, height should be 100.
-      // If we use height (200) as driver, width should be 400.
-      // My implementation takes "larger change"?
-      // Let's see the logic:
-      // currentWidth=200, currentHeight=200.
-      // currentWidth / aspect (200 / 2 = 100) vs currentHeight (200).
-      // 100 < 200. So Height is the driver.
-      // targetWidth = currentHeight * aspect = 200 * 2 = 400.
-      // So result should be 400x200.
+    // Move mouse to (200, 200). Delta width=100, delta height=150.
+    // Target would be 200x200.
+    // But aspect ratio 2:1 must be maintained.
+    // If we use width (200) as driver, height should be 100.
+    // If we use height (200) as driver, width should be 400.
+    // My implementation takes "larger change"?
+    // Let's see the logic:
+    // currentWidth=200, currentHeight=200.
+    // currentWidth / aspect (200 / 2 = 100) vs currentHeight (200).
+    // 100 < 200. So Height is the driver.
+    // targetWidth = currentHeight * aspect = 200 * 2 = 400.
+    // So result should be 400x200.
 
-      const action: Action = {
-          type: 'RESIZE_SHAPE',
-          payload: { x: 200, y: 200, shiftKey: true }
-      };
+    const action: Action = {
+      type: 'RESIZE_SHAPE',
+      payload: { x: 200, y: 200, shiftKey: true },
+    };
 
-      const newState = resizingReducer(state, action);
-      const newRect = newState.shapes[0] as RectangleData;
+    const newState = resizingReducer(state, action);
+    const newRect = newState.shapes[0] as RectangleData;
 
-      expect(newRect.width).toBe(400);
-      expect(newRect.height).toBe(200);
+    expect(newRect.width).toBe(400);
+    expect(newRect.height).toBe(200);
   });
 
   it('should maintain aspect ratio when shift key is pressed (NW handle)', () => {
-      // Test dragging NW to check if position updates correctly with aspect ratio
-      const rect: RectangleData = {
-          id: '1',
-          type: 'rectangle',
-          x: 100,
-          y: 100,
-          width: 100,
-          height: 100, // AR 1:1
-          rotation: 0,
-      };
+    // Test dragging NW to check if position updates correctly with aspect ratio
+    const rect: RectangleData = {
+      id: '1',
+      type: 'rectangle',
+      x: 100,
+      y: 100,
+      width: 100,
+      height: 100, // AR 1:1
+      rotation: 0,
+    };
 
-      const state: AppState = {
-          ...initialState,
-          shapes: [rect],
-          mode: 'resizing',
-          resizingState: {
-              shapeId: '1',
-              handle: 'nw',
-              startX: 100,
-              startY: 100,
-              initialShape: rect,
-          }
-      };
+    const state: AppState = {
+      ...initialState,
+      shapes: [rect],
+      mode: 'resizing',
+      resizingState: {
+        shapeId: '1',
+        handle: 'nw',
+        startX: 100,
+        startY: 100,
+        initialShape: rect,
+      },
+    };
 
-      // Drag NW to (50, 80).
-      // New Width=150, New Height=120.
-      // AR 1:1.
-      // 150 > 120. Width is driver.
-      // Target height = 150.
-      // Since it's NW, we adjust Top.
-      // New Top = Bottom (200) - 150 = 50.
-      // New Left = 50.
-      // Result: x=50, y=50, w=150, h=150.
+    // Drag NW to (50, 80).
+    // New Width=150, New Height=120.
+    // AR 1:1.
+    // 150 > 120. Width is driver.
+    // Target height = 150.
+    // Since it's NW, we adjust Top.
+    // New Top = Bottom (200) - 150 = 50.
+    // New Left = 50.
+    // Result: x=50, y=50, w=150, h=150.
 
-      const action: Action = {
-          type: 'RESIZE_SHAPE',
-          payload: { x: 50, y: 80, shiftKey: true }
-      };
+    const action: Action = {
+      type: 'RESIZE_SHAPE',
+      payload: { x: 50, y: 80, shiftKey: true },
+    };
 
-      const newState = resizingReducer(state, action);
-      const newRect = newState.shapes[0] as RectangleData;
+    const newState = resizingReducer(state, action);
+    const newRect = newState.shapes[0] as RectangleData;
 
-      expect(newRect.width).toBe(150);
-      expect(newRect.height).toBe(150);
-      expect(newRect.x).toBe(50);
-      expect(newRect.y).toBe(50);
+    expect(newRect.width).toBe(150);
+    expect(newRect.height).toBe(150);
+    expect(newRect.x).toBe(50);
+    expect(newRect.y).toBe(50);
   });
 
   it('should ignore text shapes (handled gracefully)', () => {
-     // Text resizing is not supported by this reducer logic directly as per spec
-     // but we should ensure it doesn't crash if passed somehow
-     // actually the reducer logic checks for rect/ellipse/line types explicitly
-     // and returns state for unknown.
+    // Text resizing is not supported by this reducer logic directly as per spec
+    // but we should ensure it doesn't crash if passed somehow
+    // actually the reducer logic checks for rect/ellipse/line types explicitly
+    // and returns state for unknown.
 
-     const state: AppState = {
-         ...initialState,
-         mode: 'resizing',
-         resizingState: {
-             shapeId: '1',
-             handle: 'se',
-             startX: 0,
-             startY: 0,
-             initialShape: { id: '1', type: 'text', x:0, y:0, content:'a', fontSize:10, fill:'black', fontFamily:'sans'}
-         }
-     };
+    const state: AppState = {
+      ...initialState,
+      mode: 'resizing',
+      resizingState: {
+        shapeId: '1',
+        handle: 'se',
+        startX: 0,
+        startY: 0,
+        initialShape: {
+          id: '1',
+          type: 'text',
+          x: 0,
+          y: 0,
+          content: 'a',
+          fontSize: 10,
+          fill: 'black',
+          fontFamily: 'sans',
+        },
+      },
+    };
 
-     const action: Action = { type: 'RESIZE_SHAPE', payload: { x: 10, y: 10, shiftKey: false }};
-     const newState = resizingReducer(state, action);
-     expect(newState).toBe(state);
+    const action: Action = { type: 'RESIZE_SHAPE', payload: { x: 10, y: 10, shiftKey: false } };
+    const newState = resizingReducer(state, action);
+    expect(newState).toBe(state);
+  });
+
+  it('should resize an ellipse (SE handle)', () => {
+    const ellipse: EllipseData = {
+      id: '2',
+      type: 'ellipse',
+      cx: 100,
+      cy: 100,
+      rx: 50,
+      ry: 50,
+      rotation: 0,
+    };
+    const state: AppState = {
+      ...initialState,
+      shapes: [ellipse],
+      mode: 'resizing',
+      resizingState: {
+        shapeId: '2',
+        handle: 'se',
+        startX: 150,
+        startY: 150,
+        initialShape: ellipse,
+      },
+    };
+
+    const action: Action = {
+      type: 'RESIZE_SHAPE',
+      payload: { x: 180, y: 160, shiftKey: false },
+    };
+
+    const newState = resizingReducer(state, action);
+    const newEllipse = newState.shapes[0] as EllipseData;
+
+    expect(newEllipse.rx).toBe(65);
+    expect(newEllipse.cx).toBe(115);
+    expect(newEllipse.ry).toBe(55);
+    expect(newEllipse.cy).toBe(105);
+  });
+
+  it('should maintain aspect ratio when shift key is pressed (SW handle)', () => {
+    const rect: RectangleData = {
+      id: 'r3',
+      type: 'rectangle',
+      x: 100,
+      y: 100,
+      width: 100,
+      height: 50, // AR 2:1
+      rotation: 0,
+    };
+
+    const state: AppState = {
+      ...initialState,
+      shapes: [rect],
+      mode: 'resizing',
+      resizingState: {
+        shapeId: 'r3',
+        handle: 'sw',
+        startX: 100,
+        startY: 150,
+        initialShape: rect,
+      },
+    };
+
+    const action: Action = {
+      type: 'RESIZE_SHAPE',
+      payload: { x: 0, y: 160, shiftKey: true },
+    };
+
+    const newState = resizingReducer(state, action);
+    const newRect = newState.shapes[0] as RectangleData;
+
+    expect(newRect.width).toBe(200);
+    expect(newRect.height).toBe(100);
+  });
+
+  it('should maintain aspect ratio when shift key is pressed (NE handle)', () => {
+    const rect: RectangleData = {
+      id: 'r4',
+      type: 'rectangle',
+      x: 100,
+      y: 100,
+      width: 50,
+      height: 100, // AR 1:2
+      rotation: 0,
+    };
+
+    const state: AppState = {
+      ...initialState,
+      shapes: [rect],
+      mode: 'resizing',
+      resizingState: {
+        shapeId: 'r4',
+        handle: 'ne',
+        startX: 150,
+        startY: 100,
+        initialShape: rect,
+      },
+    };
+
+    const action: Action = {
+      type: 'RESIZE_SHAPE',
+      payload: { x: 200, y: 0, shiftKey: true },
+    };
+
+    const newState = resizingReducer(state, action);
+    const newRect = newState.shapes[0] as RectangleData;
+
+    // Both tie for driving dimension
+    expect(newRect.width).toBe(100);
+    expect(newRect.height).toBe(200);
+  });
+
+  it('should handle negative bounds wrapping (flip dimension manually)', () => {
+    const rect: RectangleData = {
+      id: 'r5',
+      type: 'rectangle',
+      x: 100,
+      y: 100,
+      width: 50,
+      height: 50,
+      rotation: 0,
+    };
+
+    const state: AppState = {
+      ...initialState,
+      shapes: [rect],
+      mode: 'resizing',
+      resizingState: {
+        shapeId: 'r5',
+        handle: 'se',
+        startX: 150,
+        startY: 150,
+        initialShape: rect,
+      },
+    };
+
+    const action: Action = {
+      type: 'RESIZE_SHAPE',
+      payload: { x: 0, y: 0, shiftKey: false },
+    };
+
+    const newState = resizingReducer(state, action);
+    const newRect = newState.shapes[0] as RectangleData;
+
+    expect(newRect.width).toBe(100);
+    expect(newRect.height).toBe(100);
   });
 });

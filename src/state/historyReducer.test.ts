@@ -310,4 +310,44 @@ describe('historyReducer (undoable)', () => {
     expect(finalState.past).toHaveLength(1);
     expect(finalState.past[0]).toEqual([]);
   });
+
+  it('UNDO: should do nothing if past is empty', () => {
+    let state: HistoryState = { ...initialState };
+    state = historyReducer(state, { type: 'UNDO' });
+    expect(state).toEqual(initialState);
+  });
+
+  it('REDO: should do nothing if future is empty', () => {
+    let state: HistoryState = { ...initialState };
+    state = historyReducer(state, { type: 'REDO' });
+    expect(state).toEqual(initialState);
+  });
+
+  it('should not record STOP_DRAGGING history if shapes did not change', () => {
+    const stateWithDrawing: HistoryState = {
+      ...initialState,
+      present: {
+        ...initialState.present,
+        shapes: [dummyShape],
+        shapesBeforeDrag: [dummyShape], // Same instance
+      },
+    };
+
+    const finalState = historyReducer(stateWithDrawing, { type: 'STOP_DRAGGING' });
+    expect(finalState.past).toHaveLength(0);
+  });
+
+  it('should not record STOP_ROTATING history if shapes did not change', () => {
+    const stateWithDrawing: HistoryState = {
+      ...initialState,
+      present: {
+        ...initialState.present,
+        shapes: [dummyShape],
+        shapesBeforeRotation: [dummyShape], // Same instance
+      },
+    };
+
+    const finalState = historyReducer(stateWithDrawing, { type: 'STOP_ROTATING' });
+    expect(finalState.past).toHaveLength(0);
+  });
 });

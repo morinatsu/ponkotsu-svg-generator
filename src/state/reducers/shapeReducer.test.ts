@@ -114,65 +114,103 @@ describe('shapeReducer', () => {
   });
 
   it('should start text edit', () => {
-      const action: Action = {
-          type: 'START_TEXT_EDIT',
-          payload: { id: null, x: 100, y: 100, content: '' }
-      };
-      const newState = shapeReducer(initialState, action);
-      expect(newState.editingText).toEqual({ id: null, x: 100, y: 100, content: '' });
+    const action: Action = {
+      type: 'START_TEXT_EDIT',
+      payload: { id: null, x: 100, y: 100, content: '' },
+    };
+    const newState = shapeReducer(initialState, action);
+    expect(newState.editingText).toEqual({ id: null, x: 100, y: 100, content: '' });
   });
 
   it('should finish text edit (add new)', () => {
-      const state: AppState = {
-          ...initialState,
-          editingText: { id: null, x: 100, y: 100, content: '' }
-      };
-      const action: Action = {
-          type: 'FINISH_TEXT_EDIT',
-          payload: { content: 'Hello' }
-      };
-      const newState = shapeReducer(state, action);
-      expect(newState.shapes).toHaveLength(1);
-      expect(newState.shapes[0].type).toBe('text');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((newState.shapes[0] as any).content).toBe('Hello');
-      expect(newState.editingText).toBeNull();
+    const state: AppState = {
+      ...initialState,
+      editingText: { id: null, x: 100, y: 100, content: '' },
+    };
+    const action: Action = {
+      type: 'FINISH_TEXT_EDIT',
+      payload: { content: 'Hello' },
+    };
+    const newState = shapeReducer(state, action);
+    expect(newState.shapes).toHaveLength(1);
+    expect(newState.shapes[0].type).toBe('text');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((newState.shapes[0] as any).content).toBe('Hello');
+    expect(newState.editingText).toBeNull();
   });
 
   it('should finish text edit (update existing)', () => {
-       const textShape = {
-          id: 't1',
-          type: 'text' as const,
-          x: 100,
-          y: 100,
-          content: 'Old',
-          fontSize: 16,
-          fill: 'black',
-          fontFamily: 'sans-serif'
-       };
-       const state: AppState = {
-          ...initialState,
-          shapes: [textShape],
-          editingText: { id: 't1', x: 100, y: 100, content: 'Old' }
-       };
-       const action: Action = {
-           type: 'FINISH_TEXT_EDIT',
-           payload: { content: 'New' }
-       };
-       const newState = shapeReducer(state, action);
-       expect(newState.shapes).toHaveLength(1);
-       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-       expect((newState.shapes[0] as any).content).toBe('New');
-       expect(newState.editingText).toBeNull();
+    const textShape = {
+      id: 't1',
+      type: 'text' as const,
+      x: 100,
+      y: 100,
+      content: 'Old',
+      fontSize: 16,
+      fill: 'black',
+      fontFamily: 'sans-serif',
+    };
+    const state: AppState = {
+      ...initialState,
+      shapes: [textShape],
+      editingText: { id: 't1', x: 100, y: 100, content: 'Old' },
+    };
+    const action: Action = {
+      type: 'FINISH_TEXT_EDIT',
+      payload: { content: 'New' },
+    };
+    const newState = shapeReducer(state, action);
+    expect(newState.shapes).toHaveLength(1);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((newState.shapes[0] as any).content).toBe('New');
+    expect(newState.editingText).toBeNull();
   });
 
   it('should cancel text edit', () => {
-      const state: AppState = {
-          ...initialState,
-          editingText: { id: null, x: 100, y: 100, content: '' }
-      };
-      const action: Action = { type: 'CANCEL_TEXT_EDIT' };
-      const newState = shapeReducer(state, action);
-      expect(newState.editingText).toBeNull();
+    const state: AppState = {
+      ...initialState,
+      editingText: { id: null, x: 100, y: 100, content: '' },
+    };
+    const action: Action = { type: 'CANCEL_TEXT_EDIT' };
+    const newState = shapeReducer(state, action);
+    expect(newState.editingText).toBeNull();
+  });
+
+  it('should ignore FINISH_TEXT_EDIT if content is empty (Line 61-62)', () => {
+    const state: AppState = {
+      ...initialState,
+      editingText: { id: null, x: 100, y: 100, content: '' },
+    };
+    const action: Action = {
+      type: 'FINISH_TEXT_EDIT',
+      payload: { content: '   ' }, // Empty or whitespace only
+    };
+    const newState = shapeReducer(state, action);
+
+    // Should clear editingText without adding a shape
+    expect(newState.shapes).toHaveLength(0);
+    expect(newState.editingText).toBeNull();
+  });
+
+  it('should return untouched state if FINISH_TEXT_EDIT is called while editingText is null', () => {
+    const action: Action = {
+      type: 'FINISH_TEXT_EDIT',
+      payload: { content: 'Hello' },
+    };
+    const newState = shapeReducer(initialState, action);
+    expect(newState).toBe(initialState);
+  });
+
+  it('should return untouched state if DELETE_SELECTED_SHAPE is called while selectedShapeId is null', () => {
+    const action: Action = { type: 'DELETE_SELECTED_SHAPE' };
+    const newState = shapeReducer(initialState, action);
+    expect(newState).toBe(initialState);
+  });
+
+  it('should return default state for unknown actions (Line 99)', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const action: Action = { type: 'UNKNOWN_ACTION' } as any;
+    const newState = shapeReducer(initialState, action);
+    expect(newState).toBe(initialState);
   });
 });
