@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import type { Action, AppState } from '../types';
 import { getRotationHandleAt, getResizeHandleAt, getShapeCenter } from '../utils/geometry';
+import { updateCursorForShape } from '../utils/cursor';
 
 /**
  * Manages drawing and rotation interactions. Dragging is handled separately.
@@ -42,32 +43,8 @@ export const useInteractionManager = (
       }
       const pos = getMousePosition(e);
 
-      // Check for resize handle (inner circle) - Priority 1
-      const resizeHandle = getResizeHandleAt(pos, selectedShape);
-      if (resizeHandle) {
-        // Map handle to standard cursors
-        // Ideally we would rotate the cursor, but for now we stick to standard ones
-        // or simple mapping.
-        if (resizeHandle === 'nw' || resizeHandle === 'se')
-          document.body.style.cursor = 'nwse-resize';
-        else if (resizeHandle === 'ne' || resizeHandle === 'sw')
-          document.body.style.cursor = 'nesw-resize';
-        else document.body.style.cursor = 'pointer'; // Fallback for start/end
-        return;
-      }
-
-      // Check for rotation handle (outer ring) - Priority 2
-      if (getRotationHandleAt(pos, selectedShape)) {
-        document.body.style.cursor = 'alias';
-      } else {
-        // Find the shape group under the cursor to determine if we should show 'move'
-        const shapeElement = (e.target as HTMLElement).closest('[data-shape-id]');
-        if (shapeElement) {
-          document.body.style.cursor = 'move';
-        } else {
-          document.body.style.cursor = 'default';
-        }
-      }
+      // Delegated to cursor.ts
+      updateCursorForShape(pos, selectedShape, e.target as HTMLElement);
     },
     [mode, selectedShapeId, state.shapes, getMousePosition],
   );
