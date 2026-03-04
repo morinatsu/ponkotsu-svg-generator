@@ -21,6 +21,7 @@ describe('rotatingReducer', () => {
     content: 'Hello',
     fontSize: 16,
     fontFamily: 'Arial',
+    fill: 'black',
   };
 
   const initialState: AppState = {

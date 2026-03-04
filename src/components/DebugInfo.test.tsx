@@ -29,8 +29,8 @@ describe('DebugInfo', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_DEBUG_MODE', 'true');
     // Mock URL.createObjectURL and URL.revokeObjectURL
-    global.URL.createObjectURL = vi.fn(() => 'mock-url');
-    global.URL.revokeObjectURL = vi.fn();
+    globalThis.URL.createObjectURL = vi.fn(() => 'mock-url');
+    globalThis.URL.revokeObjectURL = vi.fn();
   });
 
   afterEach(() => {
@@ -76,8 +76,8 @@ describe('DebugInfo', () => {
     fireEvent.click(exportButtons[0]);
 
     // Check if Blob was created (indirectly via createObjectURL)
-    expect(global.URL.createObjectURL).toHaveBeenCalled();
-    const blob = (global.URL.createObjectURL as unknown as ReturnType<typeof vi.fn>).mock
+    expect(globalThis.URL.createObjectURL).toHaveBeenCalled();
+    const blob = (globalThis.URL.createObjectURL as unknown as ReturnType<typeof vi.fn>).mock
       .calls[0][0];
     expect(blob).toBeInstanceOf(Blob);
 
@@ -97,6 +97,6 @@ describe('DebugInfo', () => {
     expect(clickSpy).toHaveBeenCalled();
     expect(removeChildSpy).toHaveBeenCalledWith(appendedElement);
 
-    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('mock-url');
+    expect(globalThis.URL.revokeObjectURL).toHaveBeenCalledWith('mock-url');
   });
 });
