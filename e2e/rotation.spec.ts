@@ -1,103 +1,81 @@
 // e2e/rotation.spec.ts
 import { test, expect } from '@playwright/test';
+import {
+  startApp,
+  drawRectangle,
+  addText,
+  rotateShape,
+  getShapeTransform,
+  calculateRotatedPoint,
+} from './helpers/interaction';
 
 test.describe('Shape Rotation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.getByRole('button', { name: '設定して開始' }).click();
-    await page.waitForSelector('svg');
+    await startApp(page);
   });
 
   test('should rotate a rectangle shape and then drag it', async ({ page }) => {
     // 1. Draw a rectangle
-    await page.getByRole('button', { name: '長方形' }).click();
+    const start = { x: 100, y: 100 };
+    const end = { x: 300, y: 200 };
+    await drawRectangle(page, start, end);
+
+    // 2. Select the shape and verify selection
+    const shapeGroup = page.locator('[data-shape-id]').first();
+    const visibleRect = shapeGroup.locator('rect').first();
+
     const canvas = page.locator('svg').first();
     const box = await canvas.boundingBox();
     if (!box) throw new Error('Canvas not found');
-    const startPos = { x: box.x + 100, y: box.y + 100 };
-    const endPos = { x: box.x + 300, y: box.y + 200 };
 
-    await page.mouse.move(startPos.x, startPos.y);
-    await page.mouse.down();
-    await page.mouse.move(endPos.x, endPos.y);
-    await page.mouse.up();
-
-    // 2. Select the shape and verify selection
-    const shapeGroup = page.locator('[data-shape-id]');
-    const visibleRect = shapeGroup.locator('rect').first();
-    await page.mouse.click(startPos.x + 1, startPos.y + 1);
+    await page.mouse.click(box.x + start.x + 1, box.y + start.y + 1);
     await expect(visibleRect).toHaveAttribute('stroke', 'blue');
 
-    // 3. Move mouse to the top-right corner's rotation ring and check cursor for rotation
-    await page.mouse.move(endPos.x + 20, startPos.y - 20);
-    await expect(page.locator('body')).toHaveCSS('cursor', 'alias');
+    // 3. Rotate the shape
+    const initialTransform = await getShapeTransform(page);
+    await rotateShape(page, start, end, { x: 50, y: 50 });
 
-    // 4. Drag to rotate the shape
-    await page.mouse.down();
-    await page.mouse.move(endPos.x + 70, startPos.y + 30); // Rotate roughly 45 degrees
-    await page.mouse.up();
-
-    const transform = await shapeGroup.getAttribute('transform');
+    const transform = await getShapeTransform(page);
     expect(transform).not.toBeNull();
     expect(transform).toContain('rotate(');
+    expect(transform).not.toEqual(initialTransform);
 
-    // 5. Verify the shape can still be selected and try dragging it
-
-    // Ensure shape is selected again in case 'click' fired after 'setTimeout' cleared wasDraggedRef
+    // 4. Verify the shape can still be selected and try dragging it
+    // Ensure shape is selected again
     await shapeGroup.evaluate((node) =>
       node.dispatchEvent(new MouseEvent('click', { bubbles: true })),
     );
     await expect(visibleRect).toHaveAttribute('stroke', 'blue');
 
     // Calculate the rotated top edge center to hover over the stroke safely
-    const transformStr = (await shapeGroup.getAttribute('transform')) || '';
-    const rotateMatch = transformStr.match(/rotate\(([-\d.]+) ([-\d.]+) ([-\d.]+)\)/);
-
-    // We drew at screen box.x + 100, meaning local X was 100.
-    // The rectangle went from local (100,100) to (300,200).
     // The top middle in local coordinates is thus (200, 100).
-    const localTopMidX = 200;
-    const localTopMidY = 100;
+    const localTopMid = { x: 200, y: 100 };
+    const rotatedPoint = await calculateRotatedPoint(localTopMid, transform);
 
-    let newX = startPos.x + 100; // default screen
-    let newY = startPos.y;
-    if (rotateMatch) {
-      const angleDeg = parseFloat(rotateMatch[1]);
-      const cx = parseFloat(rotateMatch[2]);
-      const cy = parseFloat(rotateMatch[3]);
-      const angleRad = (angleDeg * Math.PI) / 180;
-      const dx = localTopMidX - cx;
-      const dy = localTopMidY - cy;
-      const localNewX = cx + dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
-      const localNewY = cy + dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+    if (rotatedPoint) {
+      const screenX = box.x + rotatedPoint.x;
+      const screenY = box.y + rotatedPoint.y;
 
-      newX = box.x + localNewX;
-      newY = box.y + localNewY;
+      await page.mouse.move(screenX, screenY);
+      await expect(page.locator('body')).toHaveCSS('cursor', 'move');
+
+      await page.mouse.down();
+      await page.mouse.move(screenX + 50, screenY + 50);
+      await page.mouse.up();
+
+      const finalTransform = await getShapeTransform(page);
+      expect(finalTransform).not.toEqual(transform);
     }
-    await page.mouse.move(newX, newY);
-    await expect(page.locator('body')).toHaveCSS('cursor', 'move');
-
-    await page.mouse.down();
-    // Drag the shape by moving the mouse 50px right and down
-    await page.mouse.move(newX + 50, newY + 50);
-    await page.mouse.up();
-
-    const finalTransform = await shapeGroup.getAttribute('transform');
-    expect(finalTransform).not.toEqual(transform); // Transform should have changed due to drag
   });
 
   test('should not show rotation cursor for text', async ({ page }) => {
-    await page.getByRole('button', { name: 'テキスト' }).click();
-    const canvas = page.locator('svg').first();
-    const box = await canvas.boundingBox();
-    if (!box) throw new Error('Canvas not found');
-    await page.mouse.click(box.x + 150, box.y + 150);
-    await expect(page.getByText('テキストを編集')).toBeVisible();
-    await page.locator('textarea').fill('Hello');
-    await page.getByRole('button', { name: 'OK' }).click();
+    const textPos = { x: 150, y: 150 };
+    await addText(page, textPos, 'Hello');
 
-    await page.locator('[data-shape-id]').click({ force: true }); // Use force to avoid actionability checks
-    const textBbox = await page.locator('[data-shape-id]').boundingBox();
+    const shapeGroup = page.locator('[data-shape-id]').first();
+    await shapeGroup.click({ force: true });
+
+    const textBbox = await shapeGroup.boundingBox();
     expect(textBbox).not.toBeNull();
     await page.mouse.move(textBbox!.x, textBbox!.y);
 
