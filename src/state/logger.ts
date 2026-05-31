@@ -24,14 +24,16 @@ export const logger = <S, A extends { type: string }>(
       return reducer(state, action);
     }
 
-    console.group(`Action: ${action.type}`);
-    console.log('%cPrevious State:', 'color: #9E9E9E; font-weight: 700;', state);
-    console.log('%cAction:', 'color: #03A9F4; font-weight: 700;', action);
-
     const nextState = reducer(state, action);
 
-    console.log('%cNext State:', 'color: #4CAF50; font-weight: 700;', nextState);
-    console.groupEnd();
+    // Defer console logging to avoid blocking the main thread during state updates
+    setTimeout(() => {
+      console.group(`Action: ${action.type}`);
+      console.log('%cPrevious State:', 'color: #9E9E9E; font-weight: 700;', state);
+      console.log('%cAction:', 'color: #03A9F4; font-weight: 700;', action);
+      console.log('%cNext State:', 'color: #4CAF50; font-weight: 700;', nextState);
+      console.groupEnd();
+    }, 0);
 
     return nextState;
   };
