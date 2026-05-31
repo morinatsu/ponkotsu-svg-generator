@@ -1,5 +1,4 @@
 import React, { useContext } from 'react';
-import type { ShapeData, DrawingShape } from '../types'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { AppContext } from '../state/AppContext';
 import Shape from './Shape';
 import { useInteractionManager } from '../hooks/useInteractionManager';
