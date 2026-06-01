@@ -60,7 +60,15 @@ const DebugSection: React.FC<DebugSectionProps> = ({ label, data, filename }) =>
 
   const handleExport = () => {
     try {
-      const jsonString = JSON.stringify(data, null, 2);
+      const sensitiveKeys = /(password|token|secret|auth|key|credential|cookie)/i;
+      const replacer = (key: string, value: unknown) => {
+        if (sensitiveKeys.test(key) && typeof value === 'string') {
+          return '[REDACTED]';
+        }
+        return value;
+      };
+
+      const jsonString = JSON.stringify(data, replacer, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
