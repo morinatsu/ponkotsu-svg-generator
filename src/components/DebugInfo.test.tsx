@@ -99,4 +99,44 @@ describe('DebugInfo', () => {
 
     expect(globalThis.URL.revokeObjectURL).toHaveBeenCalledWith('mock-url');
   });
+
+  it('redacts sensitive information when exporting JSON', async () => {
+    const appendChildSpy = vi.spyOn(document.body, 'appendChild');
+    vi.spyOn(document.body, 'removeChild');
+    vi.spyOn(HTMLAnchorElement.prototype, 'click');
+
+    const historyWithSensitiveData: HistoryState = {
+      ...mockHistory,
+      present: {
+        ...mockHistory.present,
+        // @ts-expect-error - simulating a potential leak of untyped state
+        password: 'my-super-secret-password',
+        // @ts-expect-error - simulating a potential leak of untyped state
+        apiKey: '12345-abcde',
+        // @ts-expect-error - simulating a potential leak of untyped state
+        authToken: 'jwt-token-string',
+        // @ts-expect-error - simulating a potential leak of untyped state
+        normalData: 'should-not-be-redacted'
+      },
+    };
+
+    render(<DebugInfo history={historyWithSensitiveData} />);
+    appendChildSpy.mockClear();
+
+    const exportButtons = screen.getAllByText('Export JSON');
+    // Click the second one (Present)
+    fireEvent.click(exportButtons[1]);
+
+    const blob = (globalThis.URL.createObjectURL as unknown as ReturnType<typeof vi.fn>).mock
+      .calls[0][0] as Blob;
+
+    const text = await blob.text();
+    const parsed = JSON.parse(text);
+
+    expect(parsed.password).toBe('[REDACTED]');
+    expect(parsed.apiKey).toBe('[REDACTED]');
+    expect(parsed.authToken).toBe('[REDACTED]');
+    expect(parsed.normalData).toBe('should-not-be-redacted');
+    expect(parsed.canvasWidth).toBe(800);
+  });
 });
