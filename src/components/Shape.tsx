@@ -33,8 +33,8 @@ const Shape: React.FC<ShapeProps> = ({
   const { dispatch, wasDraggedRef } = context;
 
   // Event handlers and ID are attached to the parent group.
-  const groupProps = {
-    onClick: (e: React.MouseEvent) => {
+  const groupProps: React.SVGProps<SVGGElement> & { 'data-shape-id': string } = {
+    onClick: (e: React.MouseEvent<SVGGElement, MouseEvent>) => {
       if (wasDraggedRef.current) {
         wasDraggedRef.current = false;
         return;
@@ -65,8 +65,7 @@ const Shape: React.FC<ShapeProps> = ({
 
   if ('rotation' in shape && shape.rotation !== 0) {
     const center = getShapeCenter(shape);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (groupProps as any).transform = `rotate(${shape.rotation} ${center.x} ${center.y})`;
+    groupProps.transform = `rotate(${shape.rotation} ${center.x} ${center.y})`;
   }
 
   // Props for the hitbox element, which is responsible for capturing all pointer events.
