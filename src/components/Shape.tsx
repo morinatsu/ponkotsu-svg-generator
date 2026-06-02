@@ -15,6 +15,10 @@ interface ShapeProps {
   onMouseDown: (shapeId: string, e: React.MouseEvent) => void;
 }
 
+const assertNever = (x: never): void => {
+  console.warn('Unexpected shape type:', x);
+};
+
 const Shape: React.FC<ShapeProps> = ({
   shape,
   isSelected,
@@ -133,8 +137,7 @@ const Shape: React.FC<ShapeProps> = ({
       );
     }
     default: {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const _exhaustiveCheck: never = shape;
+      assertNever(shape);
       return null;
     }
   }
