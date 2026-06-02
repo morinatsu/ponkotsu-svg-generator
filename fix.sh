@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > src/components/Shape.tsx
 import React, { useContext } from 'react';
 import type { ShapeData } from '../types';
 import { AppContext } from '../state/AppContext';
@@ -139,3 +140,4 @@ const Shape: React.FC<ShapeProps> = ({
 };
 
 export default Shape;
+INNER_EOF

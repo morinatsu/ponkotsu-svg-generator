@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > src/components/Shape.tsx
 import React, { useContext } from 'react';
 import type { ShapeData } from '../types';
 import { AppContext } from '../state/AppContext';
@@ -6,6 +7,7 @@ import Rectangle from './shapes/Rectangle';
 import Ellipse from './shapes/Ellipse';
 import Line from './shapes/Line';
 import Text from './shapes/Text';
+import { assertNever } from '../utils/assert';
 
 interface ShapeProps {
   shape: ShapeData;
@@ -133,9 +135,10 @@ const Shape: React.FC<ShapeProps> = ({
       );
     }
     default: {
-      return shape;
+      return assertNever(shape);
     }
   }
 };
 
 export default Shape;
+INNER_EOF
