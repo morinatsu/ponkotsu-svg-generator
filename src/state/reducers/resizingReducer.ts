@@ -25,7 +25,7 @@ export const resizingReducer = (state: AppState, action: Action): AppState => {
       const { x: mouseX, y: mouseY, shiftKey } = action.payload;
 
       // Deep copy initial shape to avoid mutation
-      const newShape = JSON.parse(JSON.stringify(initialShape));
+      const newShape = { ...initialShape };
 
       // Handle Line resizing (simpler case)
       if (initialShape.type === 'line') {
