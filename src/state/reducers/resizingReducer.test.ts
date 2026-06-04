@@ -300,6 +300,88 @@ describe('resizingReducer', () => {
     expect(newLine.y2).toBe(150);
   });
 
+  it('should resize a rotated line (start handle)', () => {
+    // Initial line: (100, 100) to (200, 100) in local, rotated 45 around center (150, 100)
+    // Global fixed point (end): x2=185.355339, y2=135.355339
+    const line: LineData = {
+      id: '1',
+      type: 'line',
+      x1: 100,
+      y1: 100,
+      x2: 200,
+      y2: 100,
+      rotation: 45,
+    };
+
+    const state: AppState = {
+      ...initialState,
+      shapes: [line],
+      mode: 'resizing',
+      resizingState: {
+        shapeId: '1',
+        handle: 'start',
+        startX: 114.64466,
+        startY: 64.64466,
+        initialShape: line,
+      },
+    };
+
+    const action: Action = {
+      type: 'RESIZE_SHAPE',
+      payload: { x: 100, y: 50, shiftKey: false },
+    };
+
+    const newState = resizingReducer(state, action);
+    const newLine = newState.shapes[0] as LineData;
+
+    expect(newLine.rotation).toBe(0);
+    expect(newLine.x1).toBe(100);
+    expect(newLine.y1).toBe(50);
+    expect(newLine.x2).toBeCloseTo(185.355);
+    expect(newLine.y2).toBeCloseTo(135.355);
+  });
+
+  it('should resize a rotated line (end handle)', () => {
+    // Initial line: (100, 100) to (200, 100) in local, rotated 45 around center (150, 100)
+    // Global fixed point (start): x1=114.64466, y1=64.64466
+    const line: LineData = {
+      id: '1',
+      type: 'line',
+      x1: 100,
+      y1: 100,
+      x2: 200,
+      y2: 100,
+      rotation: 45,
+    };
+
+    const state: AppState = {
+      ...initialState,
+      shapes: [line],
+      mode: 'resizing',
+      resizingState: {
+        shapeId: '1',
+        handle: 'end',
+        startX: 185.355339,
+        startY: 135.355339,
+        initialShape: line,
+      },
+    };
+
+    const action: Action = {
+      type: 'RESIZE_SHAPE',
+      payload: { x: 220, y: 150, shiftKey: false },
+    };
+
+    const newState = resizingReducer(state, action);
+    const newLine = newState.shapes[0] as LineData;
+
+    expect(newLine.rotation).toBe(0);
+    expect(newLine.x1).toBeCloseTo(114.644);
+    expect(newLine.y1).toBeCloseTo(64.644);
+    expect(newLine.x2).toBe(220);
+    expect(newLine.y2).toBe(150);
+  });
+
   it('should maintain aspect ratio when shift key is pressed (SE handle)', () => {
     const rect: RectangleData = {
       id: '1',

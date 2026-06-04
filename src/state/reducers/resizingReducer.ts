@@ -1,6 +1,6 @@
 // src/state/reducers/resizingReducer.ts
 import type { AppState, Action, RectangleData, EllipseData, LineData } from '../../types';
-import { getShapeCenter, toLocal, toGlobal } from '../../utils/geometry';
+import { getShapeCenter, toLocal, toGlobal, rotatePoint } from '../../utils/geometry';
 
 export const resizingReducer = (state: AppState, action: Action): AppState => {
   switch (action.type) {
@@ -30,10 +30,25 @@ export const resizingReducer = (state: AppState, action: Action): AppState => {
       // Handle Line resizing (simpler case)
       if (initialShape.type === 'line') {
         const line = newShape as LineData;
+        const rotation = initialShape.rotation || 0;
+        const center = getShapeCenter(initialShape);
+
+        // Calculate the global coordinates of the fixed point before starting dragging
+        const fixedLocal =
+          handle === 'start'
+            ? { x: initialShape.x2, y: initialShape.y2 }
+            : { x: initialShape.x1, y: initialShape.y1 };
+        const fixedGlobal = rotatePoint(fixedLocal, center, rotation);
+
+        line.rotation = 0; // Reset rotation so the coordinates are absolute/global
         if (handle === 'start') {
           line.x1 = mouseX;
           line.y1 = mouseY;
+          line.x2 = fixedGlobal.x;
+          line.y2 = fixedGlobal.y;
         } else if (handle === 'end') {
+          line.x1 = fixedGlobal.x;
+          line.y1 = fixedGlobal.y;
           line.x2 = mouseX;
           line.y2 = mouseY;
         }
