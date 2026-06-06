@@ -71,6 +71,7 @@ export const reducer = (state: AppState, action: Action): AppState => {
     case 'HIDE_CONTEXT_MENU':
     case 'MOVE_TO_FRONT':
     case 'MOVE_TO_BACK':
+    case 'UPDATE_SELECTED_SHAPE_STROKE':
       return shapeReducer(state, action);
 
     default:

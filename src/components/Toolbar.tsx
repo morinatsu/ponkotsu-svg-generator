@@ -9,10 +9,13 @@ const Toolbar: React.FC = () => {
     throw new Error('Toolbar must be used within an AppContextProvider');
   }
   const { state, dispatch, canUndo, canRedo, svgRef } = context;
-  const { currentTool, shapes } = state;
+  const { currentTool, shapes, selectedShapeId } = state;
   const { handleExport } = useSvgExport(svgRef);
 
   const isActive = (tool: Tool) => tool === currentTool;
+
+  const selectedShape = shapes.find((s) => s.id === selectedShapeId);
+  const currentStrokeColor = selectedShape?.stroke || '#000000';
 
   const handleToolSelect = (tool: Tool) => {
     dispatch({ type: 'SELECT_TOOL', payload: tool });
@@ -68,6 +71,38 @@ const Toolbar: React.FC = () => {
       </div>
       <div className="tool-group">
         <span>Shapes: {shapes.length}</span>
+      </div>
+      <div
+        className="tool-group"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          opacity: selectedShapeId ? 1 : 0.4,
+          pointerEvents: selectedShapeId ? 'auto' : 'none',
+          transition: 'opacity 0.2s ease',
+        }}
+      >
+        <label htmlFor="stroke-color-picker" style={{ fontSize: '14px', fontWeight: 'bold' }}>
+          線の色:
+        </label>
+        <input
+          id="stroke-color-picker"
+          type="color"
+          value={currentStrokeColor}
+          onChange={(e) =>
+            dispatch({ type: 'UPDATE_SELECTED_SHAPE_STROKE', payload: e.target.value })
+          }
+          disabled={!selectedShapeId}
+          style={{
+            cursor: selectedShapeId ? 'pointer' : 'default',
+            width: '32px',
+            height: '32px',
+            padding: '0',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+          }}
+        />
       </div>
     </div>
   );

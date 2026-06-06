@@ -133,6 +133,16 @@ export const shapeReducer = (state: AppState, action: Action): AppState => {
       };
     }
 
+    case 'UPDATE_SELECTED_SHAPE_STROKE': {
+      if (!state.selectedShapeId) return state;
+      return {
+        ...state,
+        shapes: state.shapes.map((s) =>
+          s.id === state.selectedShapeId ? { ...s, stroke: action.payload } : s,
+        ),
+      };
+    }
+
     default:
       return state;
   }

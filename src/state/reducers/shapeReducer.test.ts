@@ -299,5 +299,29 @@ describe('shapeReducer', () => {
       const newState = shapeReducer(stateWithShapes, action);
       expect(newState).toBe(stateWithShapes);
     });
+
+    it('should update selected shape stroke color', () => {
+      const stateWithShapes: AppState = {
+        ...initialState,
+        shapes: [shape1, shape2],
+        selectedShapeId: 's1',
+      };
+      const action: Action = { type: 'UPDATE_SELECTED_SHAPE_STROKE', payload: '#ff0000' };
+      const newState = shapeReducer(stateWithShapes, action);
+
+      expect(newState.shapes[0].stroke).toBe('#ff0000');
+      expect(newState.shapes[1].stroke).toBeUndefined();
+    });
+
+    it('should return untouched state if UPDATE_SELECTED_SHAPE_STROKE is called but no shape is selected', () => {
+      const stateWithShapes: AppState = {
+        ...initialState,
+        shapes: [shape1, shape2],
+        selectedShapeId: null,
+      };
+      const action: Action = { type: 'UPDATE_SELECTED_SHAPE_STROKE', payload: '#ff0000' };
+      const newState = shapeReducer(stateWithShapes, action);
+      expect(newState).toBe(stateWithShapes);
+    });
   });
 });

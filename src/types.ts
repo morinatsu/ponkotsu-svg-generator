@@ -8,6 +8,7 @@ export interface RectangleData {
   width: number;
   height: number;
   rotation: number;
+  stroke?: string;
 }
 
 export interface EllipseData {
@@ -18,6 +19,7 @@ export interface EllipseData {
   rx: number;
   ry: number;
   rotation: number;
+  stroke?: string;
 }
 
 export interface LineData {
@@ -28,6 +30,7 @@ export interface LineData {
   x2: number;
   y2: number;
   rotation: number;
+  stroke?: string;
 }
 
 export interface TextData {
@@ -39,6 +42,7 @@ export interface TextData {
   fontSize: number;
   fill: string;
   fontFamily: string;
+  stroke?: string;
 }
 
 export type ShapeData = RectangleData | EllipseData | LineData | TextData;
@@ -154,4 +158,5 @@ export type Action =
   | { type: 'SHOW_CONTEXT_MENU'; payload: { x: number; y: number; shapeId: string } }
   | { type: 'HIDE_CONTEXT_MENU' }
   | { type: 'MOVE_TO_FRONT'; payload: string }
-  | { type: 'MOVE_TO_BACK'; payload: string };
+  | { type: 'MOVE_TO_BACK'; payload: string }
+  | { type: 'UPDATE_SELECTED_SHAPE_STROKE'; payload: string };
