@@ -213,4 +213,115 @@ describe('shapeReducer', () => {
     const newState = shapeReducer(initialState, action);
     expect(newState).toBe(initialState);
   });
+
+  describe('context menu and z-order actions', () => {
+    it('should show context menu', () => {
+      const action: Action = {
+        type: 'SHOW_CONTEXT_MENU',
+        payload: { x: 100, y: 150, shapeId: 's1' },
+      };
+      const newState = shapeReducer(initialState, action);
+      expect(newState.contextMenu).toEqual({ x: 100, y: 150, shapeId: 's1' });
+    });
+
+    it('should hide context menu', () => {
+      const stateWithMenu: AppState = {
+        ...initialState,
+        contextMenu: { x: 100, y: 150, shapeId: 's1' },
+      };
+      const action: Action = { type: 'HIDE_CONTEXT_MENU' };
+      const newState = shapeReducer(stateWithMenu, action);
+      expect(newState.contextMenu).toBeNull();
+    });
+
+    const shape1: RectangleData = {
+      id: 's1',
+      type: 'rectangle',
+      x: 10,
+      y: 10,
+      width: 50,
+      height: 50,
+      rotation: 0,
+    };
+    const shape2: RectangleData = {
+      id: 's2',
+      type: 'rectangle',
+      x: 20,
+      y: 20,
+      width: 50,
+      height: 50,
+      rotation: 0,
+    };
+    const shape3: RectangleData = {
+      id: 's3',
+      type: 'rectangle',
+      x: 30,
+      y: 30,
+      width: 50,
+      height: 50,
+      rotation: 0,
+    };
+
+    it('should move shape to front', () => {
+      const stateWithShapes: AppState = {
+        ...initialState,
+        shapes: [shape1, shape2, shape3],
+        contextMenu: { x: 100, y: 150, shapeId: 's1' },
+      };
+      const action: Action = { type: 'MOVE_TO_FRONT', payload: 's1' };
+      const newState = shapeReducer(stateWithShapes, action);
+
+      // Order should be s2, s3, s1 (s1 moved to end)
+      expect(newState.shapes.map((s) => s.id)).toEqual(['s2', 's3', 's1']);
+      expect(newState.contextMenu).toBeNull(); // Should close context menu
+    });
+
+    it('should move shape to back', () => {
+      const stateWithShapes: AppState = {
+        ...initialState,
+        shapes: [shape1, shape2, shape3],
+        contextMenu: { x: 100, y: 150, shapeId: 's3' },
+      };
+      const action: Action = { type: 'MOVE_TO_BACK', payload: 's3' };
+      const newState = shapeReducer(stateWithShapes, action);
+
+      // Order should be s3, s1, s2 (s3 moved to start)
+      expect(newState.shapes.map((s) => s.id)).toEqual(['s3', 's1', 's2']);
+      expect(newState.contextMenu).toBeNull(); // Should close context menu
+    });
+
+    it('should return untouched state if target shape for z-order action is not found', () => {
+      const stateWithShapes: AppState = {
+        ...initialState,
+        shapes: [shape1, shape2],
+      };
+      const action: Action = { type: 'MOVE_TO_FRONT', payload: 'invalid-id' };
+      const newState = shapeReducer(stateWithShapes, action);
+      expect(newState).toBe(stateWithShapes);
+    });
+
+    it('should update selected shape stroke color', () => {
+      const stateWithShapes: AppState = {
+        ...initialState,
+        shapes: [shape1, shape2],
+        selectedShapeId: 's1',
+      };
+      const action: Action = { type: 'UPDATE_SELECTED_SHAPE_STROKE', payload: '#ff0000' };
+      const newState = shapeReducer(stateWithShapes, action);
+
+      expect(newState.shapes[0].stroke).toBe('#ff0000');
+      expect(newState.shapes[1].stroke).toBeUndefined();
+    });
+
+    it('should return untouched state if UPDATE_SELECTED_SHAPE_STROKE is called but no shape is selected', () => {
+      const stateWithShapes: AppState = {
+        ...initialState,
+        shapes: [shape1, shape2],
+        selectedShapeId: null,
+      };
+      const action: Action = { type: 'UPDATE_SELECTED_SHAPE_STROKE', payload: '#ff0000' };
+      const newState = shapeReducer(stateWithShapes, action);
+      expect(newState).toBe(stateWithShapes);
+    });
+  });
 });

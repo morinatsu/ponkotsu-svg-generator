@@ -46,6 +46,19 @@ const Shape: React.FC<ShapeProps> = ({
     onMouseDown: (e: React.MouseEvent) => {
       onMouseDown(shape.id, e);
     },
+    onContextMenu: (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch({ type: 'SELECT_SHAPE', payload: shape.id });
+      dispatch({
+        type: 'SHOW_CONTEXT_MENU',
+        payload: {
+          x: e.clientX,
+          y: e.clientY,
+          shapeId: shape.id,
+        },
+      });
+    },
     onDoubleClick: () => {
       if (shape.type === 'text') {
         dispatch({

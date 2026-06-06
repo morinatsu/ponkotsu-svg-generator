@@ -25,7 +25,7 @@ const Line: React.FC<LineProps> = ({
       y1={shape.y1}
       x2={shape.x2}
       y2={shape.y2}
-      stroke={isSelected ? 'blue' : 'black'}
+      stroke={isSelected ? 'blue' : shape.stroke || 'black'}
       strokeWidth={2}
       style={visibleShapeStyle}
     />

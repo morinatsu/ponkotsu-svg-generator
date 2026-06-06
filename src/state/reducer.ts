@@ -20,6 +20,7 @@ export const initialState: AppState = {
   shapesBeforeRotation: null,
   rotatingState: null,
   resizingState: null,
+  contextMenu: null,
 };
 
 // Root reducer that combines all sub-reducers.
@@ -66,6 +67,11 @@ export const reducer = (state: AppState, action: Action): AppState => {
     case 'START_TEXT_EDIT':
     case 'FINISH_TEXT_EDIT':
     case 'CANCEL_TEXT_EDIT':
+    case 'SHOW_CONTEXT_MENU':
+    case 'HIDE_CONTEXT_MENU':
+    case 'MOVE_TO_FRONT':
+    case 'MOVE_TO_BACK':
+    case 'UPDATE_SELECTED_SHAPE_STROKE':
       return shapeReducer(state, action);
 
     default:

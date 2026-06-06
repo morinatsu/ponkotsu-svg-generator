@@ -1,0 +1,15 @@
+# Packages and lockfiles
+pnpm-lock.yaml
+node_modules
+dist
+coverage
+
+# GitHub configs
+.github
+
+# Documentation and general markdown files
+docs/
+*.md
+
+# Config files
+.agent/

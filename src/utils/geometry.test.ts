@@ -1,6 +1,13 @@
 // src/utils/geometry.test.ts
 import { describe, it, expect } from 'vitest';
-import { rotatePoint, getRotatedShapeCorners, getRotationHandleAt, toLocal, toGlobal, getResizeHandleAt } from './geometry';
+import {
+  rotatePoint,
+  getRotatedShapeCorners,
+  getRotationHandleAt,
+  toLocal,
+  toGlobal,
+  getResizeHandleAt,
+} from './geometry';
 import type { RectangleData, LineData } from '../types';
 
 describe('geometry utils', () => {
@@ -43,34 +50,34 @@ describe('geometry utils', () => {
     const angle = 90;
 
     it('toLocal should transform global point to unrotated local offset', () => {
-        // Global point (110, 100) -> 10 units right of center.
-        // If system is rotated 90 deg, this point "was" originally at (100, 90) relative to center?
-        // Wait.
-        // Local: (10, 0) relative to center.
-        // Rotated 90 deg -> (0, 10) relative to center -> Global (100, 110).
+      // Global point (110, 100) -> 10 units right of center.
+      // If system is rotated 90 deg, this point "was" originally at (100, 90) relative to center?
+      // Wait.
+      // Local: (10, 0) relative to center.
+      // Rotated 90 deg -> (0, 10) relative to center -> Global (100, 110).
 
-        const globalPoint = { x: 100, y: 110 };
-        const local = toLocal(globalPoint, center, angle);
+      const globalPoint = { x: 100, y: 110 };
+      const local = toLocal(globalPoint, center, angle);
 
-        expect(local.x).toBeCloseTo(10);
-        expect(local.y).toBeCloseTo(0);
+      expect(local.x).toBeCloseTo(10);
+      expect(local.y).toBeCloseTo(0);
     });
 
     it('toGlobal should transform local offset to rotated global point', () => {
-        const localPoint = { x: 10, y: 0 };
-        const global = toGlobal(localPoint, center, angle);
+      const localPoint = { x: 10, y: 0 };
+      const global = toGlobal(localPoint, center, angle);
 
-        expect(global.x).toBeCloseTo(100);
-        expect(global.y).toBeCloseTo(110);
+      expect(global.x).toBeCloseTo(100);
+      expect(global.y).toBeCloseTo(110);
     });
 
     it('should be inverse of each other', () => {
-        const p = { x: 50, y: 50 };
-        const local = toLocal(p, center, 45);
-        const global = toGlobal(local, center, 45);
+      const p = { x: 50, y: 50 };
+      const local = toLocal(p, center, 45);
+      const global = toGlobal(local, center, 45);
 
-        expect(global.x).toBeCloseTo(p.x);
-        expect(global.y).toBeCloseTo(p.y);
+      expect(global.x).toBeCloseTo(p.x);
+      expect(global.y).toBeCloseTo(p.y);
     });
   });
 
@@ -160,39 +167,39 @@ describe('geometry utils', () => {
 
   describe('getResizeHandleAt', () => {
     const rect: RectangleData = {
-        id: 'r1',
-        type: 'rectangle',
-        x: 100,
-        y: 100,
-        width: 100,
-        height: 100,
-        rotation: 0,
-      };
+      id: 'r1',
+      type: 'rectangle',
+      x: 100,
+      y: 100,
+      width: 100,
+      height: 100,
+      rotation: 0,
+    };
 
     it('should return handle if point is within 10px', () => {
-        expect(getResizeHandleAt({x: 105, y: 100}, rect)).toBe('nw');
-        expect(getResizeHandleAt({x: 95, y: 100}, rect)).toBe('nw');
+      expect(getResizeHandleAt({ x: 105, y: 100 }, rect)).toBe('nw');
+      expect(getResizeHandleAt({ x: 95, y: 100 }, rect)).toBe('nw');
     });
 
     it('should return null if point is > 10px away', () => {
-        expect(getResizeHandleAt({x: 80, y: 100}, rect)).toBeNull(); // This hits rotation handle range
+      expect(getResizeHandleAt({ x: 80, y: 100 }, rect)).toBeNull(); // This hits rotation handle range
     });
 
     it('should handle lines correctly', () => {
-        const line: LineData = {
-            id: 'l1',
-            type: 'line',
-            x1: 100,
-            y1: 100,
-            x2: 200,
-            y2: 200,
-            rotation: 0,
-        };
+      const line: LineData = {
+        id: 'l1',
+        type: 'line',
+        x1: 100,
+        y1: 100,
+        x2: 200,
+        y2: 200,
+        rotation: 0,
+      };
 
-        expect(getResizeHandleAt({x: 100, y: 100}, line)).toBe('start');
-        expect(getResizeHandleAt({x: 200, y: 200}, line)).toBe('end');
-        // Phantom corners
-        expect(getResizeHandleAt({x: 200, y: 100}, line)).toBeNull();
+      expect(getResizeHandleAt({ x: 100, y: 100 }, line)).toBe('start');
+      expect(getResizeHandleAt({ x: 200, y: 200 }, line)).toBe('end');
+      // Phantom corners
+      expect(getResizeHandleAt({ x: 200, y: 100 }, line)).toBeNull();
     });
   });
 });

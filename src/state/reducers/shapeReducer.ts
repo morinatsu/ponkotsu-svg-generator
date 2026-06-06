@@ -95,6 +95,54 @@ export const shapeReducer = (state: AppState, action: Action): AppState => {
         editingText: null,
       };
 
+    case 'SHOW_CONTEXT_MENU':
+      return {
+        ...state,
+        contextMenu: {
+          x: action.payload.x,
+          y: action.payload.y,
+          shapeId: action.payload.shapeId,
+        },
+      };
+
+    case 'HIDE_CONTEXT_MENU':
+      return {
+        ...state,
+        contextMenu: null,
+      };
+
+    case 'MOVE_TO_FRONT': {
+      const targetId = action.payload;
+      const targetShape = state.shapes.find((s) => s.id === targetId);
+      if (!targetShape) return state;
+      return {
+        ...state,
+        shapes: [...state.shapes.filter((s) => s.id !== targetId), targetShape],
+        contextMenu: null,
+      };
+    }
+
+    case 'MOVE_TO_BACK': {
+      const targetId = action.payload;
+      const targetShape = state.shapes.find((s) => s.id === targetId);
+      if (!targetShape) return state;
+      return {
+        ...state,
+        shapes: [targetShape, ...state.shapes.filter((s) => s.id !== targetId)],
+        contextMenu: null,
+      };
+    }
+
+    case 'UPDATE_SELECTED_SHAPE_STROKE': {
+      if (!state.selectedShapeId) return state;
+      return {
+        ...state,
+        shapes: state.shapes.map((s) =>
+          s.id === state.selectedShapeId ? { ...s, stroke: action.payload } : s,
+        ),
+      };
+    }
+
     default:
       return state;
   }
