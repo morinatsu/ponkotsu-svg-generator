@@ -142,4 +142,4 @@ const Shape: React.FC<ShapeProps> = ({
   }
 };
 
-export default Shape;
+export default React.memo(Shape);
