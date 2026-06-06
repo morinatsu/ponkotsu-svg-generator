@@ -16,7 +16,8 @@ const AppContent: React.FC = () => {
     throw new Error('AppContent must be used within an AppContextProvider');
   }
   const { state, dispatch, history, svgRef } = context;
-  const { editingText, selectedShapeId, mode, isCanvasInitialized, canvasWidth, canvasHeight } = state;
+  const { editingText, selectedShapeId, mode, isCanvasInitialized, canvasWidth, canvasHeight } =
+    state;
 
   useKeyboardControls(dispatch, selectedShapeId);
   const { handleMouseDownOnShape } = useDragging(dispatch, mode, svgRef);

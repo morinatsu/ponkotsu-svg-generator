@@ -92,6 +92,11 @@ export interface AppState {
     startY: number;
     initialShape: ShapeData;
   } | null;
+  contextMenu: {
+    x: number;
+    y: number;
+    shapeId: string;
+  } | null;
 }
 
 // Actions that can be dispatched
@@ -144,4 +149,9 @@ export type Action =
       payload: { id: string | null; x: number; y: number; content: string };
     }
   | { type: 'FINISH_TEXT_EDIT'; payload: { content: string } }
-  | { type: 'CANCEL_TEXT_EDIT' };
+  | { type: 'CANCEL_TEXT_EDIT' }
+  // Context menu and Z-order actions
+  | { type: 'SHOW_CONTEXT_MENU'; payload: { x: number; y: number; shapeId: string } }
+  | { type: 'HIDE_CONTEXT_MENU' }
+  | { type: 'MOVE_TO_FRONT'; payload: string }
+  | { type: 'MOVE_TO_BACK'; payload: string };

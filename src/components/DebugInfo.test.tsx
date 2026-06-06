@@ -116,7 +116,7 @@ describe('DebugInfo', () => {
         // @ts-expect-error - simulating a potential leak of untyped state
         authToken: 'jwt-token-string',
         // @ts-expect-error - simulating a potential leak of untyped state
-        normalData: 'should-not-be-redacted'
+        normalData: 'should-not-be-redacted',
       },
     };
 

@@ -4,6 +4,7 @@ import Shape from './Shape';
 import { useInteractionManager } from '../hooks/useInteractionManager';
 
 import DrawingPreview from './DrawingPreview';
+import ContextMenu from './ContextMenu';
 
 interface SvgCanvasProps {
   onShapeMouseDown: (shapeId: string, e: React.MouseEvent) => void;
@@ -29,30 +30,43 @@ const SvgCanvas: React.FC<SvgCanvasProps> = ({ onShapeMouseDown }) => {
   };
 
   return (
-    <svg
-      ref={svgRef}
-      width={state.canvasWidth}
-      height={state.canvasHeight}
-      style={canvasStyle}
-      onClick={handleCanvasClick}
-      onMouseDown={handleMouseDown}
-    >
-      {shapes.map((shape) => (
-        <Shape
-          key={shape.id}
-          shape={shape}
-          isSelected={selectedShapeId === shape.id}
-          // When another shape is being dragged, prevent interaction.
-          isDragging={
-            state.mode === 'dragging' && !!selectedShapeId && selectedShapeId !== shape.id
-          }
-          // When drawing a new shape, prevent interaction with existing shapes.
-          isDrawingMode={state.mode === 'drawing'}
-          onMouseDown={onShapeMouseDown}
+    <>
+      <svg
+        ref={svgRef}
+        width={state.canvasWidth}
+        height={state.canvasHeight}
+        style={canvasStyle}
+        onClick={handleCanvasClick}
+        onMouseDown={handleMouseDown}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          dispatch({ type: 'HIDE_CONTEXT_MENU' });
+        }}
+      >
+        {shapes.map((shape) => (
+          <Shape
+            key={shape.id}
+            shape={shape}
+            isSelected={selectedShapeId === shape.id}
+            // When another shape is being dragged, prevent interaction.
+            isDragging={
+              state.mode === 'dragging' && !!selectedShapeId && selectedShapeId !== shape.id
+            }
+            // When drawing a new shape, prevent interaction with existing shapes.
+            isDrawingMode={state.mode === 'drawing'}
+            onMouseDown={onShapeMouseDown}
+          />
+        ))}
+        <DrawingPreview />
+      </svg>
+      {state.contextMenu && (
+        <ContextMenu
+          x={state.contextMenu.x}
+          y={state.contextMenu.y}
+          shapeId={state.contextMenu.shapeId}
         />
-      ))}
-      <DrawingPreview />
-    </svg>
+      )}
+    </>
   );
 };
 
