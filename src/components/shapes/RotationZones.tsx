@@ -6,6 +6,15 @@ interface RotationZonesProps {
   isSelected: boolean;
 }
 
+/**
+ * Renders the visual rotation guides at the corners/endpoints of the selected shape.
+ *
+ * Note: These guide rings are purely visual. They are set to `pointerEvents: 'none'`.
+ * The actual mouse hit testing is calculated dynamically in `useInteractionManager.ts`
+ * using the mouse coordinates relative to the shape corners.
+ * - Distance between 10px and 30px from the corner triggers the rotation gesture.
+ * - Distance less than 10px (the inner hole of the guide ring) triggers the resizing gesture.
+ */
 const RotationZones: React.FC<RotationZonesProps> = ({ shape, isSelected }) => {
   if (!isSelected || !('rotation' in shape)) return null;
 
@@ -38,10 +47,10 @@ const RotationZones: React.FC<RotationZonesProps> = ({ shape, isSelected }) => {
           key={`rot-zone-${i}`}
           cx={corner.x}
           cy={corner.y}
-          r={20}
+          r={20} // Radius of 20px
           fill="none"
-          stroke="rgba(0, 160, 255, 0.2)"
-          strokeWidth={20}
+          stroke="rgba(0, 160, 255, 0.2)" // Semitransparent blue ring
+          strokeWidth={20} // Width of 20px (covering from 10px to 30px distance)
           style={{ pointerEvents: 'none' }}
           data-export-ignore="true"
         />
