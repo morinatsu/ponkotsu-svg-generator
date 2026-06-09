@@ -6,9 +6,9 @@ import type { LineData } from '../../types';
 
 // Mock the RotationZones component
 vi.mock('./RotationZones', () => ({
-  default: ({ shape, isSelected }: { shape: { id: string }, isSelected: boolean }) => (
+  default: ({ shape, isSelected }: { shape: { id: string }; isSelected: boolean }) => (
     <g data-testid="mock-rotation-zones" data-shape-id={shape.id} data-selected={isSelected} />
-  )
+  ),
 }));
 
 describe('Line Component', () => {
@@ -34,7 +34,7 @@ describe('Line Component', () => {
     const { container } = render(
       <svg>
         <Line {...defaultProps} />
-      </svg>
+      </svg>,
     );
 
     const lines = container.querySelectorAll('line');
@@ -65,7 +65,7 @@ describe('Line Component', () => {
     const { container } = render(
       <svg>
         <Line {...defaultProps} isSelected={true} />
-      </svg>
+      </svg>,
     );
 
     const visibleLine = container.querySelectorAll('line')[0];
@@ -77,7 +77,7 @@ describe('Line Component', () => {
     const { container } = render(
       <svg>
         <Line {...defaultProps} shape={shapeWithColor} />
-      </svg>
+      </svg>,
     );
 
     const visibleLine = container.querySelectorAll('line')[0];
@@ -88,7 +88,7 @@ describe('Line Component', () => {
     const { getByTestId } = render(
       <svg>
         <Line {...defaultProps} />
-      </svg>
+      </svg>,
     );
 
     const group = getByTestId('line-group');
@@ -100,7 +100,7 @@ describe('Line Component', () => {
     const { getByTestId } = render(
       <svg>
         <Line {...defaultProps} isSelected={true} />
-      </svg>
+      </svg>,
     );
 
     const rotationZones = getByTestId('mock-rotation-zones');

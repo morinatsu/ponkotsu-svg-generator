@@ -10,6 +10,10 @@ import { AppContext } from './state/AppContext';
 import { AppProvider } from './state/AppProvider';
 import './App.css';
 
+/**
+ * Main application content component.
+ * It consumes AppContext and sets up event handlers and modal overlays.
+ */
 const AppContent: React.FC = () => {
   const context = useContext(AppContext);
   if (!context) {
@@ -19,12 +23,17 @@ const AppContent: React.FC = () => {
   const { editingText, selectedShapeId, mode, isCanvasInitialized, canvasWidth, canvasHeight } =
     state;
 
+  // Set up global keyboard shortcuts (Undo, Redo, Delete)
   useKeyboardControls(dispatch, selectedShapeId);
+
+  // Set up global drag-and-drop mouse handlers for shapes
   const { handleMouseDownOnShape } = useDragging(dispatch, mode, svgRef);
 
   return (
     <div className="App">
       <h1>ぽんこつSVGジェネレーター</h1>
+
+      {/* Show initial canvas size setting dialog if not initialized */}
       {!isCanvasInitialized && (
         <CanvasSizeModal
           initialWidth={canvasWidth}
@@ -34,10 +43,16 @@ const AppContent: React.FC = () => {
           }}
         />
       )}
+
       <Toolbar />
+
+      {/* SVG canvas workspace */}
       <SvgCanvas onShapeMouseDown={handleMouseDownOnShape} />
+
+      {/* Debug console, rendered only when VITE_DEBUG_MODE is 'true' */}
       <DebugInfo history={history} />
 
+      {/* Text creation / editing modal */}
       {editingText && (
         <TextInputModal
           initialContent={editingText.content}
@@ -53,6 +68,9 @@ const AppContent: React.FC = () => {
   );
 };
 
+/**
+ * Root App component wrapped with state provider.
+ */
 function App() {
   return (
     <AppProvider>

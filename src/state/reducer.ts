@@ -5,6 +5,9 @@ import { rotatingReducer } from './reducers/rotatingReducer';
 import { resizingReducer } from './reducers/resizingReducer';
 import type { AppState, Action } from '../types';
 
+/**
+ * Initial state tree for the application.
+ */
 export const initialState: AppState = {
   canvasWidth: 800,
   canvasHeight: 600,
@@ -23,7 +26,16 @@ export const initialState: AppState = {
   contextMenu: null,
 };
 
-// Root reducer that combines all sub-reducers.
+/**
+ * Root Reducer that aggregates and delegates actions to specialized sub-reducers.
+ *
+ * - SET_CANVAS_SIZE: Updates canvas size properties.
+ * - drawingReducer: Handles START_DRAWING, DRAWING, END_DRAWING.
+ * - draggingReducer: Handles START_DRAGGING, DRAG_SHAPE, STOP_DRAGGING.
+ * - rotatingReducer: Handles START_ROTATING, ROTATE_SHAPE, STOP_ROTATING.
+ * - resizingReducer: Handles START_RESIZING, RESIZE_SHAPE, STOP_RESIZING.
+ * - shapeReducer: Handles tool/shape updates, selections, and context menu commands.
+ */
 export const reducer = (state: AppState, action: Action): AppState => {
   switch (action.type) {
     case 'SET_CANVAS_SIZE':
@@ -34,31 +46,31 @@ export const reducer = (state: AppState, action: Action): AppState => {
         isCanvasInitialized: true,
       };
 
-    // Drawing actions
+    // Drawing actions (delegated to drawingReducer)
     case 'START_DRAWING':
     case 'DRAWING':
     case 'END_DRAWING':
       return drawingReducer(state, action);
 
-    // Dragging actions
+    // Dragging actions (delegated to draggingReducer)
     case 'START_DRAGGING':
     case 'DRAG_SHAPE':
     case 'STOP_DRAGGING':
       return draggingReducer(state, action);
 
-    // Rotating actions
+    // Rotating actions (delegated to rotatingReducer)
     case 'START_ROTATING':
     case 'ROTATE_SHAPE':
     case 'STOP_ROTATING':
       return rotatingReducer(state, action);
 
-    // Resizing actions
+    // Resizing actions (delegated to resizingReducer)
     case 'START_RESIZING':
     case 'RESIZE_SHAPE':
     case 'STOP_RESIZING':
       return resizingReducer(state, action);
 
-    // Shape and tool actions
+    // Shape, tool, context menu, and Z-Index actions (delegated to shapeReducer)
     case 'SELECT_TOOL':
     case 'ADD_SHAPE':
     case 'SELECT_SHAPE':

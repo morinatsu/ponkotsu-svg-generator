@@ -33,7 +33,7 @@ describe('Ellipse component', () => {
     const { getByTestId, container } = render(
       <svg>
         <Ellipse {...defaultProps} />
-      </svg>
+      </svg>,
     );
 
     // Check group props
@@ -45,7 +45,7 @@ describe('Ellipse component', () => {
     const ellipses = container.querySelectorAll('ellipse');
     expect(ellipses.length).toBe(2);
 
-    const visibleEllipse = Array.from(ellipses).find(e => e.getAttribute('stroke-width') === '2');
+    const visibleEllipse = Array.from(ellipses).find((e) => e.getAttribute('stroke-width') === '2');
     expect(visibleEllipse).not.toBeNull();
     expect(visibleEllipse).toHaveAttribute('cx', '100');
     expect(visibleEllipse).toHaveAttribute('cy', '150');
@@ -74,11 +74,11 @@ describe('Ellipse component', () => {
     const { container, getByTestId } = render(
       <svg>
         <Ellipse {...defaultProps} isSelected={true} />
-      </svg>
+      </svg>,
     );
 
     const ellipses = container.querySelectorAll('ellipse');
-    const visibleEllipse = Array.from(ellipses).find(e => e.getAttribute('stroke-width') === '2');
+    const visibleEllipse = Array.from(ellipses).find((e) => e.getAttribute('stroke-width') === '2');
     expect(visibleEllipse).toHaveAttribute('stroke', 'blue');
 
     const rotationZones = getByTestId('rotation-zones');
@@ -93,11 +93,11 @@ describe('Ellipse component', () => {
     const { container } = render(
       <svg>
         <Ellipse {...defaultProps} shape={shapeWithStroke} />
-      </svg>
+      </svg>,
     );
 
     const ellipses = container.querySelectorAll('ellipse');
-    const visibleEllipse = Array.from(ellipses).find(e => e.getAttribute('stroke-width') === '2');
+    const visibleEllipse = Array.from(ellipses).find((e) => e.getAttribute('stroke-width') === '2');
     expect(visibleEllipse).toHaveAttribute('stroke', 'red');
   });
 });
