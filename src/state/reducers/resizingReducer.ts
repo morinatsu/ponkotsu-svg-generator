@@ -9,6 +9,7 @@ export const resizingReducer = (state: AppState, action: Action): AppState => {
       return {
         ...state,
         mode: 'resizing',
+        shapesBeforeResize: state.shapes,
         resizingState: {
           shapeId,
           handle,
@@ -198,6 +199,7 @@ export const resizingReducer = (state: AppState, action: Action): AppState => {
         ...state,
         mode: 'idle',
         resizingState: null,
+        shapesBeforeResize: null,
       };
     }
     default:

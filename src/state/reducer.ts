@@ -21,6 +21,7 @@ export const initialState: AppState = {
   draggingState: null,
   shapesBeforeDrag: null,
   shapesBeforeRotation: null,
+  shapesBeforeResize: null,
   rotatingState: null,
   resizingState: null,
   contextMenu: null,
