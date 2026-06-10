@@ -350,4 +350,84 @@ describe('historyReducer (undoable)', () => {
     const finalState = historyReducer(stateWithDrawing, { type: 'STOP_ROTATING' });
     expect(finalState.past).toHaveLength(0);
   });
+
+  it('UNDO: should only undo the last resize operation, not the shape creation', () => {
+    // 1. Add a shape. This creates the first history entry.
+    const stateWithDrawing: HistoryState = {
+      ...initialState,
+      present: {
+        ...initialState.present,
+        drawingState: {
+          type: 'rectangle',
+          x: 10,
+          y: 10,
+          width: 50,
+          height: 50,
+          startX: 10,
+          startY: 10,
+        },
+      },
+    };
+    let state = historyReducer(stateWithDrawing, { type: 'END_DRAWING' });
+
+    expect(state.past).toHaveLength(1);
+    expect(state.present.shapes).toHaveLength(1);
+    const shapeId = state.present.shapes[0].id;
+    const initialShape = state.present.shapes[0];
+
+    // 2. Resize the shape
+    // 2a. Start resizing.
+    const startResizeAction = {
+      type: 'START_RESIZING' as const,
+      payload: {
+        shapeId,
+        handle: 'se' as const,
+        startX: 60,
+        startY: 60,
+        initialShape,
+      },
+    };
+    state = historyReducer(state, startResizeAction);
+    const shapesBeforeResize = state.present.shapes;
+
+    // 2b. Resize shape.
+    const resizeShapeAction = {
+      type: 'RESIZE_SHAPE' as const,
+      payload: { x: 100, y: 100, shiftKey: false },
+    };
+    state = historyReducer(state, resizeShapeAction);
+
+    // 2c. Stop resizing.
+    const stopResizeAction = { type: 'STOP_RESIZING' as const };
+    state = historyReducer(state, stopResizeAction);
+
+    expect(state.past).toHaveLength(2); // History should contain: [initial_empty, pre-resize_state]
+    expect(state.past[1]).toEqual(shapesBeforeResize);
+
+    // Check if the shape has resized.
+    const resizedShape = state.present.shapes[0] as Extract<ShapeData, { type: 'rectangle' }>;
+    expect(resizedShape.width).not.toBe(50);
+
+    // 3. Perform UNDO
+    const finalState = historyReducer(state, { type: 'UNDO' });
+
+    // 4. Assert the outcome
+    expect(finalState.present.shapes).toHaveLength(1);
+    const undidShape = finalState.present.shapes[0] as Extract<ShapeData, { type: 'rectangle' }>;
+    expect(undidShape.width).toBe(50); // Back to original size
+  });
+
+  it('should not record STOP_RESIZING history if shapes did not change', () => {
+    const stateWithDrawing: HistoryState = {
+      ...initialState,
+      present: {
+        ...initialState.present,
+        shapes: [dummyShape],
+        shapesBeforeResize: [dummyShape],
+      },
+    };
+
+    const finalState = historyReducer(stateWithDrawing, { type: 'STOP_RESIZING' });
+    expect(finalState.past).toHaveLength(0);
+  });
 });
