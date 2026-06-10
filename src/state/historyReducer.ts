@@ -70,6 +70,7 @@ const recordableActions = new Set<string>([
   'FINISH_TEXT_EDIT',
   'STOP_DRAGGING',
   'STOP_ROTATING',
+  'STOP_RESIZING',
 ]);
 
 // Higher-order reducer to add undo/redo functionality
@@ -167,6 +168,18 @@ export const undoable = (reducer: typeof originalReducer) => {
           if (shapesBeforeRotation && !isEqual(shapesBeforeRotation, present.shapes)) {
             return {
               past: [...past, shapesBeforeRotation], // Push the state BEFORE rotation
+              present: newPresent,
+              future: [],
+            };
+          }
+          return { ...state, present: newPresent };
+        }
+
+        if (action.type === 'STOP_RESIZING') {
+          const shapesBeforeResize = present.shapesBeforeResize;
+          if (shapesBeforeResize && !isEqual(shapesBeforeResize, present.shapes)) {
+            return {
+              past: [...past, shapesBeforeResize], // Push the state BEFORE resize
               present: newPresent,
               future: [],
             };

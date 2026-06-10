@@ -82,6 +82,7 @@ export interface AppState {
   } | null;
   shapesBeforeDrag: ShapeData[] | null;
   shapesBeforeRotation: ShapeData[] | null;
+  shapesBeforeResize: ShapeData[] | null;
   rotatingState: {
     shapeId: string;
     centerX: number;
