@@ -22,7 +22,6 @@ describe('useInteractionManager', () => {
   let svgRef: React.RefObject<SVGSVGElement | null>;
   let wasDraggedRef: React.MutableRefObject<boolean>;
   let addEventListenerSpy: ReturnType<typeof vi.fn>;
-  // let removeEventListenerSpy: ReturnType<typeof vi.fn>; // Unused
   let svgAddEventListenerSpy: ReturnType<typeof vi.fn>;
   let svgRemoveEventListenerSpy: ReturnType<typeof vi.fn>;
 
@@ -64,7 +63,6 @@ describe('useInteractionManager', () => {
 
     // Mock global addEventListener
     addEventListenerSpy = vi.spyOn(window, 'addEventListener');
-    // removeEventListenerSpy = vi.spyOn(window, 'removeEventListener'); // Unused
   });
 
   afterEach(() => {
