@@ -42,8 +42,12 @@ describe('Text component', () => {
     expect(textElement).toHaveAttribute('fill', 'black');
     expect(textElement).toHaveAttribute('stroke', 'none');
 
-    // Pointer events are "all" when not dragging/drawing
-    expect(textElement).toHaveStyle({ pointerEvents: 'all' });
+    // Check styles including pointer events, cursor, and user-select
+    expect(textElement).toHaveStyle({
+      pointerEvents: 'all',
+      cursor: 'grab',
+      userSelect: 'none',
+    });
 
     const tspans = container.querySelectorAll('tspan');
     expect(tspans.length).toBe(1);
@@ -93,6 +97,51 @@ describe('Text component', () => {
     const { container } = render(
       <svg>
         <Text {...defaultProps} isDragging={true} />
+      </svg>,
+    );
+
+    const textElement = container.querySelector('text');
+    expect(textElement).toHaveStyle({ pointerEvents: 'none' });
+  });
+
+  it('spreads groupProps to the wrapping <g> element', () => {
+    const customGroupProps = {
+      'data-testid': 'custom-group',
+      id: 'group-id',
+      className: 'group-class',
+    };
+    const { getByTestId } = render(
+      <svg>
+        <Text {...defaultProps} groupProps={customGroupProps} />
+      </svg>,
+    );
+
+    const group = getByTestId('custom-group');
+    expect(group).toHaveAttribute('id', 'group-id');
+    expect(group).toHaveAttribute('class', 'group-class');
+  });
+
+  it('handles empty content correctly', () => {
+    const emptyShape: TextData = {
+      ...defaultShape,
+      content: '',
+    };
+    const { container } = render(
+      <svg>
+        <Text {...defaultProps} shape={emptyShape} />
+      </svg>,
+    );
+
+    const tspans = container.querySelectorAll('tspan');
+    expect(tspans.length).toBe(1);
+    expect(tspans[0]).toHaveTextContent('');
+    expect(tspans[0]).toHaveAttribute('dy', '0');
+  });
+
+  it('disables pointer events when both dragging and drawing mode are true', () => {
+    const { container } = render(
+      <svg>
+        <Text {...defaultProps} isDragging={true} isDrawingMode={true} />
       </svg>,
     );
 
