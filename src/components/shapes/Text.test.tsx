@@ -42,8 +42,12 @@ describe('Text component', () => {
     expect(textElement).toHaveAttribute('fill', 'black');
     expect(textElement).toHaveAttribute('stroke', 'none');
 
-    // Pointer events are "all" when not dragging/drawing
-    expect(textElement).toHaveStyle({ pointerEvents: 'all' });
+    // Check styles including pointer events, cursor, and user-select
+    expect(textElement).toHaveStyle({
+      pointerEvents: 'all',
+      cursor: 'grab',
+      userSelect: 'none',
+    });
 
     const tspans = container.querySelectorAll('tspan');
     expect(tspans.length).toBe(1);
