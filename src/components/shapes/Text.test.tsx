@@ -159,4 +159,45 @@ describe('Text component', () => {
     const textElement = container.querySelector('text');
     expect(textElement).toHaveStyle({ pointerEvents: 'none' });
   });
+
+  it('renders correctly when selected and dragging', () => {
+    const { container } = render(
+      <svg>
+        <Text {...defaultProps} isSelected={true} isDragging={true} />
+      </svg>,
+    );
+
+    const textElement = container.querySelector('text');
+    expect(textElement).toHaveAttribute('fill', 'blue');
+    expect(textElement).toHaveStyle({ pointerEvents: 'none' });
+  });
+
+  it('renders correctly when selected and in drawing mode', () => {
+    const { container } = render(
+      <svg>
+        <Text {...defaultProps} isSelected={true} isDrawingMode={true} />
+      </svg>,
+    );
+
+    const textElement = container.querySelector('text');
+    expect(textElement).toHaveAttribute('fill', 'blue');
+    expect(textElement).toHaveStyle({ pointerEvents: 'none' });
+  });
+
+  it('renders correctly when selected, dragging, and in drawing mode', () => {
+    const { container } = render(
+      <svg>
+        <Text
+          {...defaultProps}
+          isSelected={true}
+          isDragging={true}
+          isDrawingMode={true}
+        />
+      </svg>,
+    );
+
+    const textElement = container.querySelector('text');
+    expect(textElement).toHaveAttribute('fill', 'blue');
+    expect(textElement).toHaveStyle({ pointerEvents: 'none' });
+  });
 });
