@@ -2,15 +2,79 @@
 import { describe, it, expect } from 'vitest';
 import {
   rotatePoint,
+  getShapeCenter,
   getRotatedShapeCorners,
   getRotationHandleAt,
   toLocal,
   toGlobal,
   getResizeHandleAt,
 } from './geometry';
-import type { RectangleData, LineData } from '../types';
+import type { RectangleData, LineData, EllipseData, TextData } from '../types';
 
 describe('geometry utils', () => {
+  describe('getShapeCenter', () => {
+    it('should calculate the center of a rectangle', () => {
+      const rect: RectangleData = {
+        id: 'rect1',
+        type: 'rectangle',
+        x: 10,
+        y: 20,
+        width: 100,
+        height: 50,
+        rotation: 0,
+      };
+      const center = getShapeCenter(rect);
+      expect(center.x).toBe(60); // 10 + 100 / 2
+      expect(center.y).toBe(45); // 20 + 50 / 2
+    });
+
+    it('should calculate the center of an ellipse', () => {
+      const ellipse: EllipseData = {
+        id: 'ellipse1',
+        type: 'ellipse',
+        cx: 50,
+        cy: 60,
+        rx: 30,
+        ry: 40,
+        rotation: 0,
+      };
+      const center = getShapeCenter(ellipse);
+      expect(center.x).toBe(50);
+      expect(center.y).toBe(60);
+    });
+
+    it('should calculate the center of a line', () => {
+      const line: LineData = {
+        id: 'line1',
+        type: 'line',
+        x1: 10,
+        y1: 10,
+        x2: 50,
+        y2: 50,
+        rotation: 0,
+      };
+      const center = getShapeCenter(line);
+      expect(center.x).toBe(30); // (10 + 50) / 2
+      expect(center.y).toBe(30); // (10 + 50) / 2
+    });
+
+    it('should approximate the center of a text shape', () => {
+      const text: TextData = {
+        id: 'text1',
+        type: 'text',
+        x: 100,
+        y: 200,
+        content: 'Hello World',
+        fontSize: 16,
+        fill: '#000000',
+        fontFamily: 'Arial',
+      };
+      const center = getShapeCenter(text);
+      expect(center.x).toBe(100);
+      expect(center.y).toBe(200);
+    });
+  });
+
   describe('rotatePoint', () => {
     const center = { x: 10, y: 10 };
     it('should not move the point when rotated 0 degrees', () => {
