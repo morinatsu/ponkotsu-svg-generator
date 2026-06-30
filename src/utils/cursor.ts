@@ -1,5 +1,5 @@
-import { getResizeHandleAt, getRotationHandleAt } from './geometry';
-import type { ShapeData } from '../types';
+import { getResizeHandleAt, getRotationHandleAt, getRotatedShapeCorners } from './geometry';
+import type { ShapeData, RectangleData, EllipseData, LineData } from '../types';
 
 export const updateCursorForShape = (
   pos: { x: number; y: number },
@@ -11,8 +11,13 @@ export const updateCursorForShape = (
     return;
   }
 
+  // Pre-calculate corners for rotation and resize handles to avoid redundant calculation
+  const corners = selectedShape.type !== 'text'
+    ? getRotatedShapeCorners(selectedShape as RectangleData | EllipseData | LineData)
+    : null;
+
   // Check for resize handle (inner circle) - Priority 1
-  const resizeHandle = getResizeHandleAt(pos, selectedShape);
+  const resizeHandle = getResizeHandleAt(pos, selectedShape, corners);
   if (resizeHandle) {
     if (resizeHandle === 'nw' || resizeHandle === 'se') {
       document.body.style.cursor = 'nwse-resize';
@@ -25,7 +30,7 @@ export const updateCursorForShape = (
   }
 
   // Check for rotation handle (outer ring) - Priority 2
-  if (getRotationHandleAt(pos, selectedShape)) {
+  if (getRotationHandleAt(pos, selectedShape, corners)) {
     document.body.style.cursor = 'alias';
     return;
   }

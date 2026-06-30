@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, MockInstance } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { updateCursorForShape } from './cursor';
 import * as geometry from './geometry';
 import type { ShapeData } from '../types';
@@ -6,6 +7,7 @@ import type { ShapeData } from '../types';
 vi.mock('./geometry', () => ({
   getResizeHandleAt: vi.fn(),
   getRotationHandleAt: vi.fn(),
+  getRotatedShapeCorners: vi.fn(),
 }));
 
 describe('updateCursorForShape', () => {

@@ -151,16 +151,20 @@ export const getRotatedShapeCorners = (
  * Checks if a mouse position is close enough to a rotation handle (corner).
  * @param pos The mouse position.
  * @param shape The shape to check against.
+ * @param precalculatedCorners Optional pre-calculated corners to avoid redundant work.
  * @returns The corner that is being hovered over, or null if none.
  */
 export const getRotationHandleAt = (
   pos: { x: number; y: number },
   shape: ShapeData,
+  precalculatedCorners?: ShapeCorners | null,
 ): keyof ShapeCorners | null => {
   if (!('rotation' in shape)) {
     return null;
   }
-  const corners = getRotatedShapeCorners(shape as RectangleData | EllipseData | LineData);
+  const corners = precalculatedCorners !== undefined
+    ? precalculatedCorners
+    : getRotatedShapeCorners(shape as RectangleData | EllipseData | LineData);
   if (!corners) {
     return null;
   }
@@ -192,15 +196,19 @@ export const getRotationHandleAt = (
  * Checks if a mouse position is close enough to a resize handle (corner/endpoint).
  * @param pos The mouse position.
  * @param shape The shape to check against.
+ * @param precalculatedCorners Optional pre-calculated corners to avoid redundant work.
  * @returns The handle that is being hovered over, or null if none.
  */
 export const getResizeHandleAt = (
   pos: { x: number; y: number },
   shape: ShapeData,
+  precalculatedCorners?: ShapeCorners | null,
 ): ResizeHandle | null => {
   if (shape.type === 'text') return null;
 
-  const corners = getRotatedShapeCorners(shape as RectangleData | EllipseData | LineData);
+  const corners = precalculatedCorners !== undefined
+    ? precalculatedCorners
+    : getRotatedShapeCorners(shape as RectangleData | EllipseData | LineData);
   if (!corners) {
     return null;
   }
