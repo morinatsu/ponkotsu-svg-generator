@@ -798,7 +798,7 @@ packages:
 
   acorn@8.16.0:
     resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
-    engines: {node: '>=0.4.0'}
+    engines: {node: '>=4.0'}
     hasBin: true
 
   ajv@6.14.0:
@@ -1550,7 +1550,6 @@ packages:
   read-package-json@6.0.4:
     resolution: {integrity: sha512-AEtWXYfopBj2z5N5PbkAOeNHRPUg5q+Nen7QLxV8M2zJq1ym6/lCz3fYNTCXe19puu2d06jfHhrP7v/S2PtMMw==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
-    deprecated: This package is no longer supported. Please use @npmcli/package-json instead.
 
   redent@3.0.0:
     resolution: {integrity: sha512-6tDA8g98We0zd0GvVeMT9arEOnTw9qM03L9cJXaCjrip1OO764RDBLBfrB4cwzNGDj5OA5ioymC9GkizgWJDUg==}
@@ -1662,7 +1661,7 @@ packages:
     engines: {node: '>=18'}
 
   string-width@8.2.0:
-    resolution: {integrity: sha512-6hJPQ8N0V0P3SNmP6h2J99RLuzrWz2gvT7VnK5tKvrNqJoyS9W4/Fb8mo31UiPvy00z7DQXkP2hnKBVav76thw==}
+    resolution: {integrity: sha512-6hJPQ8N0V0P3SNmP6h2J99RLuzrWz2FastKvrNqJoyS9W4/Fb8mo31UiPvy00z7DQXkP2hnKBVav76thw==}
     engines: {node: '>=20'}
 
   strip-ansi@6.0.1:
@@ -2397,9 +2396,7 @@ snapshots:
     dependencies:
       '@types/react': 19.2.14
 
-  '@types/react@19.2.14':
-    dependencies:
-      csstype: 3.2.3
+  '@types/react@19.2.14': {}
 
   '@types/whatwg-mimetype@3.0.2': {}
 
@@ -2546,7 +2543,7 @@ snapshots:
   '@vitest/snapshot@4.1.2':
     dependencies:
       '@vitest/pretty-format': 4.1.2
-      '@vitest/utils': 4.1.2
+      '@vitest/snapshot': 4.1.2
       magic-string: 0.30.21
       pathe: 2.0.3
 
@@ -3484,6 +3481,7 @@ snapshots:
   type-check@0.4.0:
     dependencies:
       prelude-ls: 1.2.1
+      type-check: 0.4.0
 
   typescript-eslint@8.58.0(eslint@10.2.0)(typescript@6.0.2):
     dependencies:
