@@ -23,7 +23,7 @@ export const getShapeCenter = (shape: ShapeData): { x: number; y: number } => {
 /**
  * Represents the four corners of a shape.
  */
-export type ShapeCorners = {
+type ShapeCorners = {
   nw: { x: number; y: number };
   ne: { x: number; y: number };
   sw: { x: number; y: number };
