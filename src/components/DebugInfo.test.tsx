@@ -51,17 +51,6 @@ describe('DebugInfo', () => {
     expect(screen.getByText('Future (0)')).toBeInTheDocument();
   });
 
-  it('logs to console when "Log to Console" is clicked', () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    render(<DebugInfo history={mockHistory} />);
-
-    // There are 3 "Log to Console" buttons. Click the first one (Past).
-    const logButtons = screen.getAllByText('Log to Console');
-    fireEvent.click(logButtons[0]);
-
-    expect(consoleSpy).toHaveBeenCalledWith('[DebugInfo] Past (0):', mockHistory.past);
-  });
-
   it('exports JSON when "Export JSON" is clicked', () => {
     const appendChildSpy = vi.spyOn(document.body, 'appendChild');
     const removeChildSpy = vi.spyOn(document.body, 'removeChild');

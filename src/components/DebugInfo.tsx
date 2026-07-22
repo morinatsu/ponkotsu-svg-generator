@@ -54,10 +54,6 @@ interface DebugSectionProps {
 }
 
 const DebugSection: React.FC<DebugSectionProps> = ({ label, data, filename }) => {
-  const handleLog = () => {
-    console.log(`[DebugInfo] ${label}:`, data);
-  };
-
   const handleExport = () => {
     try {
       const sensitiveKeys = /(password|token|secret|auth|key|credential|cookie)/i;
@@ -88,9 +84,6 @@ const DebugSection: React.FC<DebugSectionProps> = ({ label, data, filename }) =>
     <div style={sectionStyles}>
       <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#fff' }}>{label}</div>
       <div style={buttonGroupStyles}>
-        <button style={buttonStyles} onClick={handleLog}>
-          Log to Console
-        </button>
         <button style={buttonStyles} onClick={handleExport}>
           Export JSON
         </button>
