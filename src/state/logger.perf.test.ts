@@ -3,8 +3,7 @@ import { logger } from './logger';
 
 describe('Logger Performance Benchmark', () => {
   it('measures execution time of high-frequency actions', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dummyReducer = (state: any) => state;
+    const dummyReducer = (state: { count: number }) => state;
     const wrappedReducer = logger(dummyReducer);
     const initialState = { count: 0 };
     const action = { type: 'DRAG_SHAPE', payload: { x: 10, y: 10 } };
