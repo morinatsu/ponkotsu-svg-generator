@@ -58,7 +58,7 @@ const DebugSection: React.FC<DebugSectionProps> = ({ label, data, filename }) =>
     try {
       const sensitiveKeys = /(password|token|secret|auth|key|credential|cookie)/i;
       const replacer = (key: string, value: unknown) => {
-        if (sensitiveKeys.test(key) && typeof value === 'string') {
+        if (sensitiveKeys.test(key)) {
           return '[REDACTED]';
         }
         return value;

@@ -106,6 +106,13 @@ describe('DebugInfo', () => {
         authToken: 'jwt-token-string',
         // @ts-expect-error - simulating a potential leak of untyped state
         normalData: 'should-not-be-redacted',
+        // @ts-expect-error - simulating array of sensitive values
+        credentials: ['secret-token-1', 'secret-token-2'],
+        // @ts-expect-error - simulating object of sensitive values
+        auth: {
+          sessionToken: 'jwt-1234',
+          refreshToken: 'jwt-5678',
+        }
       },
     };
 
@@ -125,6 +132,8 @@ describe('DebugInfo', () => {
     expect(parsed.password).toBe('[REDACTED]');
     expect(parsed.apiKey).toBe('[REDACTED]');
     expect(parsed.authToken).toBe('[REDACTED]');
+    expect(parsed.credentials).toBe('[REDACTED]');
+    expect(parsed.auth).toBe('[REDACTED]');
     expect(parsed.normalData).toBe('should-not-be-redacted');
     expect(parsed.canvasWidth).toBe(800);
   });
