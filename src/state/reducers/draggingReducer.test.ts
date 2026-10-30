@@ -45,6 +45,8 @@ describe('draggingReducer', () => {
     editingText: null,
     shapesBeforeDrag: null,
     shapesBeforeRotation: null,
+    shapesBeforeResize: null,
+    contextMenu: null,
     isCanvasInitialized: true,
     canvasWidth: 800,
     canvasHeight: 600,

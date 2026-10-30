@@ -16,8 +16,10 @@ describe('drawingReducer', () => {
     draggingState: null,
     shapesBeforeDrag: null,
     shapesBeforeRotation: null,
+    shapesBeforeResize: null,
     rotatingState: null,
     resizingState: null,
+    contextMenu: null,
   };
 
   describe('START_DRAWING', () => {

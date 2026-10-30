@@ -40,8 +40,10 @@ describe('useInteractionManager', () => {
       draggingState: null,
       shapesBeforeDrag: null,
       shapesBeforeRotation: null,
+      shapesBeforeResize: null,
       rotatingState: null,
       resizingState: null,
+      contextMenu: null,
     };
 
     // Create a mock SVG element with getScreenCTM

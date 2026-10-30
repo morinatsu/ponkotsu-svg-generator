@@ -20,8 +20,10 @@ describe('DebugInfo', () => {
       draggingState: null,
       shapesBeforeDrag: null,
       shapesBeforeRotation: null,
+      shapesBeforeResize: null,
       rotatingState: null,
       resizingState: null,
+      contextMenu: null,
     },
     future: [],
   };
@@ -98,22 +100,16 @@ describe('DebugInfo', () => {
       ...mockHistory,
       present: {
         ...mockHistory.present,
-        // @ts-expect-error - simulating a potential leak of untyped state
         password: 'my-super-secret-password',
-        // @ts-expect-error - simulating a potential leak of untyped state
         apiKey: '12345-abcde',
-        // @ts-expect-error - simulating a potential leak of untyped state
         authToken: 'jwt-token-string',
-        // @ts-expect-error - simulating a potential leak of untyped state
         normalData: 'should-not-be-redacted',
-        // @ts-expect-error - simulating array of sensitive values
         credentials: ['secret-token-1', 'secret-token-2'],
-        // @ts-expect-error - simulating object of sensitive values
         auth: {
           sessionToken: 'jwt-1234',
           refreshToken: 'jwt-5678',
-        }
-      },
+        },
+      } as unknown as HistoryState['present'],
     };
 
     render(<DebugInfo history={historyWithSensitiveData} />);
